@@ -126,7 +126,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
 
       {/* Metrics */}
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className={`grid grid-cols-1 ${actionType === 'visitaPromotoria' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mb-6`}>
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <div className="text-sm text-gray-500 dark:text-gray-400">Costo de Ejecución</div>
             <div className="text-xl font-bold text-gray-900 dark:text-white">
@@ -142,13 +142,126 @@ export default function AccionesView({ data }: AccionesViewProps) {
               {formatNumber(actionData.valorPotencial.cantidad)} unidades
             </div>
           </div>
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-            <div className="text-sm text-blue-600 dark:text-blue-400">ROI</div>
-            <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-              {getROI(actionData.valorPotencial.pesos, actionData.costoEjecucion)}
+          {actionType !== 'visitaPromotoria' && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+              <div className="text-sm text-blue-600 dark:text-blue-400">ROI</div>
+              <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                {getROI(actionData.valorPotencial.pesos, actionData.costoEjecucion)}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Phone Mockup for Visita Promotoria */}
+        {actionType === 'visitaPromotoria' && (
+          <div className="mb-6 flex justify-center">
+            <div className="relative w-80 h-[600px] bg-gray-900 rounded-[3rem] shadow-2xl border-8 border-gray-800">
+              {/* Phone notch */}
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-gray-900 rounded-b-3xl z-10"></div>
+
+              {/* Phone screen */}
+              <div className="absolute inset-2 bg-white rounded-[2.5rem] overflow-hidden">
+                {/* Status bar */}
+                <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-3 flex justify-between items-center text-white text-xs">
+                  <span>9:41</span>
+                  <div className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    </svg>
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M17.778 8.222c-4.296-4.296-11.26-4.296-15.556 0A1 1 0 01.808 6.808c5.076-5.077 13.308-5.077 18.384 0a1 1 0 01-1.414 1.414zM14.95 11.05a7 7 0 00-9.9 0 1 1 0 01-1.414-1.414 9 9 0 0112.728 0 1 1 0 01-1.414 1.414zM12.12 13.88a3 3 0 00-4.242 0 1 1 0 01-1.415-1.415 5 5 0 017.072 0 1 1 0 01-1.415 1.415zM9 16a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* App header */}
+                <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4 text-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-bold">VEMIO Field App</h3>
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-xs opacity-90">Visita de Promotoría</p>
+                </div>
+
+                {/* App content */}
+                <div className="p-4 space-y-4 overflow-y-auto h-[calc(100%-140px)]">
+                  {/* Store info */}
+                  <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <h4 className="font-semibold text-gray-900 text-sm">Supercito Oriente</h4>
+                    </div>
+                    <p className="text-xs text-gray-600">Zona Oriente</p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Crítica</span>
+                      <span className="text-xs text-gray-500">Venta: $3,200</span>
+                    </div>
+                  </div>
+
+                  {/* Task checklist */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-3">
+                    <h4 className="font-semibold text-gray-900 text-sm mb-3">Tareas de Visita</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-xs">
+                        <input type="checkbox" className="rounded text-purple-600" />
+                        <span>Verificar exhibición en anaquel</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs">
+                        <input type="checkbox" className="rounded text-purple-600" />
+                        <span>Revisar precios y señalética</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs">
+                        <input type="checkbox" className="rounded text-purple-600" />
+                        <span>Validar inventario disponible</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-xs">
+                        <input type="checkbox" className="rounded text-purple-600" />
+                        <span>Implementar degustación</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Photo capture section */}
+                  <div className="bg-blue-50 rounded-lg border border-blue-200 p-3">
+                    <h4 className="font-semibold text-gray-900 text-sm mb-3">Evidencia Fotográfica</h4>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-medium text-sm flex items-center justify-center gap-2 shadow-lg">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Tomar Foto
+                    </button>
+                  </div>
+
+                  {/* Submit button */}
+                  <button className="w-full bg-green-600 text-white py-3 rounded-lg font-medium text-sm shadow-lg">
+                    Completar Visita
+                  </button>
+                </div>
+              </div>
+
+              {/* Home button */}
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gray-700 rounded-full"></div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3">
