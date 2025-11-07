@@ -1128,7 +1128,7 @@ export const vemioMockData: VemioData = {
   },
   acciones: {
     minimizarAgotados: {
-      insight: "Reabastecer las tiendas/SKU críticos que se agotarán en los siguientes 10 días",
+      insight: "Focalizado en tiendas de alto desempeño para evitar pérdida de ventas",
       costoEjecucion: 0, // No hay costo directo, solo riesgo a mitigar
       valorPotencial: {
         pesos: 47500,
@@ -1259,7 +1259,7 @@ export const vemioMockData: VemioData = {
       }
     },
     promocionesSlow: {
-      insight: "Activar promociones para incrementar el sell through de productos críticos a caducar",
+      insight: "Focalizado en tiendas de bajo desempeño para reducir riesgo de caducidad.",
       costoEjecucion: 15800,
       valorPotencial: {
         pesos: 52300,

@@ -6,11 +6,20 @@ interface AccionesViewProps {
   data: VemioData["acciones"];
 }
 
-type ActionType = 'minimizarAgotados' | 'exhibicionesAdicionales' | 'promocionesHot' | 'promocionesSlow' | 'visitaPromotoria';
+type ActionType = 'minimizarAgotados' | 'exhibicionesAdicionales' | 'promocionesSlow' | 'visitaPromotoria';
 
 export default function AccionesView({ data }: AccionesViewProps) {
   const [expandedAction, setExpandedAction] = useState<ActionType | null>(null);
   const [showVemioAgent, setShowVemioAgent] = useState<ActionType | null>(null);
+
+  // State for Promociones Slow configuration
+  const [maxDescuento, setMaxDescuento] = useState(45);
+  const [elasticidadPapas, setElasticidadPapas] = useState(1.5);
+  const [elasticidadTotopos, setElasticidadTotopos] = useState(1.8);
+
+  // State for Minimizar Agotados detail views
+  const [showDetailBySKU, setShowDetailBySKU] = useState(false);
+  const [showDetailByTienda, setShowDetailByTienda] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -38,12 +47,6 @@ export default function AccionesView({ data }: AccionesViewProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         );
-      case 'promocionesHot':
-        return (
-          <svg className="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        );
       case 'promocionesSlow':
         return (
           <svg className="h-6 w-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,13 +66,11 @@ export default function AccionesView({ data }: AccionesViewProps) {
   const getActionTitle = (actionType: ActionType) => {
     switch (actionType) {
       case 'minimizarAgotados':
-        return 'Minimizar Agotados';
+        return 'Reabasto Urgente (Tiendas HOT y Balanceadas)';
       case 'exhibicionesAdicionales':
         return 'Exhibiciones Adicionales';
-      case 'promocionesHot':
-        return 'Promociones HOT';
       case 'promocionesSlow':
-        return 'Promociones SLOW';
+        return 'Promoción para Evacuar Inventario (Tiendas Slow y Dead)';
       case 'visitaPromotoria':
         return 'Visita Promotoría';
     }
@@ -126,31 +127,299 @@ export default function AccionesView({ data }: AccionesViewProps) {
 
       {/* Metrics */}
       <div className="p-6">
-        <div className={`grid grid-cols-1 ${actionType === 'visitaPromotoria' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mb-6`}>
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <div className="text-sm text-gray-500 dark:text-gray-400">Costo de Ejecución</div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">
-              {actionData.costoEjecucion === 0 ? "Sin costo directo" : formatCurrency(actionData.costoEjecucion)}
-            </div>
-          </div>
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-            <div className="text-sm text-green-600 dark:text-green-400">Valor Potencial</div>
-            <div className="text-xl font-bold text-green-700 dark:text-green-300">
-              {formatCurrency(actionData.valorPotencial.pesos)}
-            </div>
-            <div className="text-sm text-green-600 dark:text-green-400">
-              {formatNumber(actionData.valorPotencial.cantidad)} unidades
-            </div>
-          </div>
-          {actionType !== 'visitaPromotoria' && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-              <div className="text-sm text-blue-600 dark:text-blue-400">ROI</div>
-              <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                {getROI(actionData.valorPotencial.pesos, actionData.costoEjecucion)}
+        {actionType === 'minimizarAgotados' ? (
+          <>
+            {/* Metrics Cards for Minimizar Agotados */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <div className="text-sm text-blue-600 dark:text-blue-400">Monto Total</div>
+                <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                  {formatCurrency(actionData.valorPotencial.pesos)}
+                </div>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                <div className="text-sm text-green-600 dark:text-green-400">Unidades Totales</div>
+                <div className="text-xl font-bold text-green-700 dark:text-green-300">
+                  {formatNumber(actionData.valorPotencial.cantidad)}
+                </div>
+              </div>
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                <div className="text-sm text-purple-600 dark:text-purple-400">Tiendas Impactadas</div>
+                <div className="text-xl font-bold text-purple-700 dark:text-purple-300">
+                  {actionData.valorPotencial.tiendasImpacto}
+                </div>
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Detail View Buttons */}
+            <div className="flex flex-wrap gap-3 mb-6">
+              <button
+                onClick={() => setShowDetailBySKU(!showDetailBySKU)}
+                className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailBySKU
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+                  }`}
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Ver detalle por SKU
+              </button>
+              <button
+                onClick={() => setShowDetailByTienda(!showDetailByTienda)}
+                className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailByTienda
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+                  }`}
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Ver detalle por Tienda
+              </button>
+            </div>
+
+            {/* Detail by SKU */}
+            {showDetailBySKU && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 border border-gray-200 dark:border-gray-700">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Detalle por SKU</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead>
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tiendas</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unidades</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      <tr>
+                        <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">Producto A Premium</td>
+                        <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">2</td>
+                        <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">80</td>
+                        <td className="px-3 py-2 text-sm text-green-600 font-medium">{formatCurrency(17000)}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">Producto C Económico</td>
+                        <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">2</td>
+                        <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">120</td>
+                        <td className="px-3 py-2 text-sm text-green-600 font-medium">{formatCurrency(30500)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Detail by Tienda */}
+            {showDetailByTienda && actionData.detalles?.tiendas && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 border border-gray-200 dark:border-gray-700">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Detalle por Tienda</h4>
+                <div className="space-y-4">
+                  {actionData.detalles.tiendas.map((tienda: Record<string, any>) => (
+                    <div key={tienda.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900 dark:text-white mb-3">{tienda.nombre}</h5>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                          <thead>
+                            <tr>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Días Agotado</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Inv. Actual</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Inv. Óptimo</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pedido</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                            {tienda.skus.map((sku: Record<string, any>) => (
+                              <tr key={sku.id}>
+                                <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">{sku.nombre}</td>
+                                <td className="px-3 py-2 text-sm text-red-600 font-medium">{sku.diasAgotado}</td>
+                                <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">{sku.inventarioActual}</td>
+                                <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">{sku.inventarioOptimo}</td>
+                                <td className="px-3 py-2 text-sm text-green-600 font-medium">{sku.pedidoSugerido}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : actionType === 'promocionesSlow' ? (
+          <>
+            {/* Configuration Card for Promociones Slow */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Configuración de Promoción</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Máximo Descuento (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={maxDescuento}
+                    onChange={(e) => setMaxDescuento(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Elasticidad Papas
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={elasticidadPapas}
+                    onChange={(e) => setElasticidadPapas(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Sugerido: 1.5</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Elasticidad Totopos
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={elasticidadTotopos}
+                    onChange={(e) => setElasticidadTotopos(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Sugerido: 1.8</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Existing Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                <div className="text-sm text-red-600 dark:text-red-400">Costo Promoción</div>
+                <div className="text-xl font-bold text-red-700 dark:text-red-300">
+                  {formatCurrency(actionData.costoEjecucion)}
+                </div>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                <div className="text-sm text-green-600 dark:text-green-400">Valor a Capturar</div>
+                <div className="text-xl font-bold text-green-700 dark:text-green-300">
+                  {formatCurrency(actionData.valorPotencial.pesos)}
+                </div>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <div className="text-sm text-blue-600 dark:text-blue-400">Inventario Post</div>
+                <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                  {actionData.valorPotencial.inventarioEvacuado}%
+                </div>
+              </div>
+            </div>
+
+            {/* Product Category Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* PAPAS Card */}
+              <div className="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-lg p-5 border-2 border-orange-200 dark:border-orange-800">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h5 className="text-lg font-bold text-gray-900 dark:text-white">PAPAS 41% descuento</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">7 SKUs en 46 tiendas</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Reducción riesgo</div>
+                    <div className="text-xl font-bold text-orange-600 dark:text-orange-400">61.1%</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-white dark:bg-gray-800 rounded p-3">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Inv. Inicial</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">2,450</div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded p-3">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Ventas +</div>
+                    <div className="text-sm font-semibold text-green-600">1,497</div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded p-3">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Costo</div>
+                    <div className="text-sm font-semibold text-red-600">$8,200</div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded p-3">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Valor</div>
+                    <div className="text-sm font-semibold text-blue-600">$27,500</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* TOTOPOS Card */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-5 border-2 border-blue-200 dark:border-blue-800">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h5 className="text-lg font-bold text-gray-900 dark:text-white">TOTOPOS 38% descuento</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">2 SKUs en 46 tiendas</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Reducción riesgo</div>
+                    <div className="text-xl font-bold text-blue-600 dark:text-blue-400">68.4%</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-white dark:bg-gray-800 rounded p-3">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Inv. Inicial</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">1,820</div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded p-3">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Ventas +</div>
+                    <div className="text-sm font-semibold text-green-600">1,245</div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded p-3">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Costo</div>
+                    <div className="text-sm font-semibold text-red-600">$7,600</div>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 rounded p-3">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Valor</div>
+                    <div className="text-sm font-semibold text-blue-600">$24,800</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculation Badge */}
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">Cálculo:</span> Incremento ventas = Elasticidad × % Descuento |
+                <span className="font-semibold"> Ejemplo:</span> Con 41% descuento y elasticidad 1.5, las ventas de papas aumentan 62%.
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className={`grid grid-cols-1 ${actionType === 'visitaPromotoria' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mb-6`}>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <div className="text-sm text-gray-500 dark:text-gray-400">Costo de Ejecución</div>
+              <div className="text-xl font-bold text-gray-900 dark:text-white">
+                {actionData.costoEjecucion === 0 ? "Sin costo directo" : formatCurrency(actionData.costoEjecucion)}
+              </div>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+              <div className="text-sm text-green-600 dark:text-green-400">Valor Potencial</div>
+              <div className="text-xl font-bold text-green-700 dark:text-green-300">
+                {formatCurrency(actionData.valorPotencial.pesos)}
+              </div>
+              <div className="text-sm text-green-600 dark:text-green-400">
+                {formatNumber(actionData.valorPotencial.cantidad)} unidades
+              </div>
+            </div>
+            {actionType !== 'visitaPromotoria' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <div className="text-sm text-blue-600 dark:text-blue-400">ROI</div>
+                <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                  {getROI(actionData.valorPotencial.pesos, actionData.costoEjecucion)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Phone Mockup for Visita Promotoria */}
         {actionType === 'visitaPromotoria' && (
@@ -468,9 +737,11 @@ export default function AccionesView({ data }: AccionesViewProps) {
 
       {/* Action Cards */}
       <div className="space-y-6">
-        {Object.entries(data).map(([actionType, actionData], index) =>
-          renderActionCard(actionType as ActionType, actionData, index + 1)
-        )}
+        {Object.entries(data)
+          .filter(([actionType]) => actionType !== 'promocionesHot')
+          .map(([actionType, actionData], index) =>
+            renderActionCard(actionType as ActionType, actionData, index + 1)
+          )}
       </div>
     </div>
   );
