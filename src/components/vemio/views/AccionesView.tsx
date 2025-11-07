@@ -68,7 +68,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
       case 'minimizarAgotados':
         return 'Reabasto Urgente (Tiendas HOT y Balanceadas)';
       case 'exhibicionesAdicionales':
-        return 'Exhibiciones Adicionales';
+        return 'Exhibiciones Adicionales (Sin Oportunidades Viables)';
       case 'promocionesSlow':
         return 'Promoción para Evacuar Inventario (Tiendas Slow y Dead)';
       case 'visitaPromotoria':
@@ -393,6 +393,12 @@ export default function AccionesView({ data }: AccionesViewProps) {
               </p>
             </div>
           </>
+        ) : actionType === 'exhibicionesAdicionales' ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500 dark:text-gray-400 italic">
+              No hay oportunidades viables detectadas en este momento.
+            </p>
+          </div>
         ) : (
           <div className={`grid grid-cols-1 ${actionType === 'visitaPromotoria' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mb-6`}>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -533,35 +539,37 @@ export default function AccionesView({ data }: AccionesViewProps) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => handleExecuteAction(actionType)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Ejecutar Automáticamente
-          </button>
-          <button
-            onClick={() => handleVemioAgent(actionType)}
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            Agente VEMIO
-          </button>
-          <button
-            onClick={() => toggleExpanded(actionType)}
-            className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Ver Detalles
-          </button>
-        </div>
+        {actionType !== 'exhibicionesAdicionales' && (
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => handleExecuteAction(actionType)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Ejecutar Automáticamente
+            </button>
+            <button
+              onClick={() => handleVemioAgent(actionType)}
+              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Agente VEMIO
+            </button>
+            <button
+              onClick={() => toggleExpanded(actionType)}
+              className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Ver Detalles
+            </button>
+          </div>
+        )}
       </div>
 
       {/* VEMIO Agent Chat */}
