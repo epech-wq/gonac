@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     // Handle specific segment query
     if (segment) {
       const segmentData = await service.getSegmentMetrics(segment);
-      
+
       if (!segmentData) {
         return NextResponse.json(
           {
@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
  * POST /api/segmentacion/refresh
  * Refresh the materialized view
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const supabase = createServerSupabaseClient();
     const repository = new SegmentacionRepository(supabase);

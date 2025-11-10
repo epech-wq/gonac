@@ -101,9 +101,8 @@ function KPICard({ card }: KPICardProps) {
         <h3 className="text-sm font-medium text-gray-600">{card.label}</h3>
         {card.trend && (
           <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${
-              trendColors[card.trend]
-            }`}
+            className={`px-2 py-1 rounded text-xs font-semibold ${trendColors[card.trend]
+              }`}
           >
             {trendIcons[card.trend]}
           </span>
@@ -121,14 +120,14 @@ function KPICard({ card }: KPICardProps) {
  * Simple metrics display (alternative to cards)
  */
 export function SimpleMetricsDisplay() {
-  const { data, loading, error } = useMetricasCards({ autoFetch: true });
+  const { cards, loading, error } = useMetricasCards({ autoFetch: true });
 
   if (loading) return <div>Cargando métricas...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      {data?.cards.map((card) => (
+      {cards?.map((card) => (
         <div key={card.id} className="p-4 bg-white rounded shadow">
           <div className="text-sm text-gray-600">{card.label}</div>
           <div className="text-xl font-bold">{card.formatted_value}</div>

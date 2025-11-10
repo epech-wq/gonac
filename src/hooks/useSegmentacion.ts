@@ -55,7 +55,7 @@ interface UseSegmentacionCardsReturn {
  * Hook return type for single segment
  */
 interface UseSegmentReturn {
-  data: SegmentacionMetrics | null;
+  data: SegmentacionMetrics | SegmentacionMetrics[] | null;
   loading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
@@ -485,7 +485,7 @@ export function useMultipleSegments(
   }, [autoFetch, fetchData]);
 
   return {
-    data: data as any,
+    data: data as SegmentacionMetrics | SegmentacionMetrics[] | null,
     loading,
     error,
     refetch: fetchData,

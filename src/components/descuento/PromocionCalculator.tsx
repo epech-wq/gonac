@@ -18,8 +18,10 @@ export default function PromocionCalculator() {
   const handleCalcular = async () => {
     await calcular({
       descuento: descuento / 100, // Convert percentage to decimal
-      elasticidad_papas: elasticidadPapas,
-      elasticidad_totopos: elasticidadTotopos,
+      items: [
+        { elasticidad: elasticidadPapas, categoria: 'PAPAS' },
+        { elasticidad: elasticidadTotopos, categoria: 'TOTOPOS' },
+      ],
     });
   };
 
@@ -133,7 +135,7 @@ export default function PromocionCalculator() {
               </p>
               <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">
                 {formatCurrency(
-                  (data.papas?.costo_promocion || 0) + (data.totopos?.costo_promocion || 0)
+                  Object.values(data.items).reduce((sum, item) => sum + item.costo, 0)
                 )}
               </p>
             </div>
@@ -144,7 +146,7 @@ export default function PromocionCalculator() {
               </p>
               <p className="text-2xl font-bold text-green-900 dark:text-green-200">
                 {formatCurrency(
-                  (data.papas?.valor_capturar || 0) + (data.totopos?.valor_capturar || 0)
+                  Object.values(data.items).reduce((sum, item) => sum + item.valor, 0)
                 )}
               </p>
             </div>
@@ -155,7 +157,7 @@ export default function PromocionCalculator() {
               </p>
               <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
                 {formatNumber(
-                  (data.papas?.inventario_post || 0) + (data.totopos?.inventario_post || 0)
+                  Object.values(data.items).reduce((sum, item) => sum + (item.inventario_inicial_total - item.ventas_plus), 0)
                 )}
               </p>
             </div>
@@ -166,20 +168,20 @@ export default function PromocionCalculator() {
       {/* Category Results */}
       {data && (
         <div className="space-y-4">
-          {/* PAPAS Section */}
-          {data.papas && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+          {/* Dynamic Category Sections */}
+          {Object.entries(data.items).map(([categoria, metrics]) => (
+            <div key={categoria} className="bg-white dark:bg-gray-800 rounded-lg shadow">
               <div className="bg-red-50 dark:bg-red-900/20 px-6 py-4 border-b border-red-200 dark:border-red-800">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                    PAPAS {descuento}% descuento
+                    {categoria.toUpperCase()} {descuento}% descuento
                   </h3>
                   <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm font-semibold">
-                    Reducción riesgo {data.papas.reduccion_riesgo.toFixed(1)}%
+                    Reducción riesgo {metrics.reduccion.toFixed(1)}%
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {data.papas.ventas_plus.toLocaleString()} SKUs en {formatNumber(data.papas.inventario_inicial_total)} tiendas
+                  {formatNumber(metrics.ventas_plus)} unidades adicionales
                 </p>
               </div>
 
@@ -190,7 +192,7 @@ export default function PromocionCalculator() {
                       Inv. Inicial
                     </p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {formatNumber(data.papas.inventario_inicial_total)}
+                      {formatNumber(metrics.inventario_inicial_total)}
                     </p>
                   </div>
 
@@ -199,7 +201,7 @@ export default function PromocionCalculator() {
                       Ventas +
                     </p>
                     <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                      {formatNumber(data.papas.ventas_plus)}
+                      {formatNumber(metrics.ventas_plus)}
                     </p>
                   </div>
 
@@ -208,7 +210,7 @@ export default function PromocionCalculator() {
                       Costo
                     </p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {formatCurrency(data.papas.costo)}
+                      {formatCurrency(metrics.costo)}
                     </p>
                   </div>
 
@@ -217,7 +219,7 @@ export default function PromocionCalculator() {
                       Valor
                     </p>
                     <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                      {formatCurrency(data.papas.valor)}
+                      {formatCurrency(metrics.valor)}
                     </p>
                   </div>
 
@@ -226,97 +228,31 @@ export default function PromocionCalculator() {
                       Reducción
                     </p>
                     <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                      {formatCurrency(data.papas.reduccion)}
+                      {metrics.reduccion.toFixed(1)}%
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* TOTOPOS Section */}
-          {data.totopos && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-              <div className="bg-orange-50 dark:bg-orange-900/20 px-6 py-4 border-b border-orange-200 dark:border-orange-800">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                    TOTOPOS {descuento}% descuento
-                  </h3>
-                  <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm font-semibold">
-                    Reducción riesgo {data.totopos.reduccion_riesgo.toFixed(1)}%
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {data.totopos.ventas_plus.toLocaleString()} SKUs en {formatNumber(data.totopos.inventario_inicial_total)} tiendas
-                </p>
-              </div>
-
-              <div className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Inv. Inicial
-                    </p>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {formatNumber(data.totopos.inventario_inicial_total)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Ventas +
-                    </p>
-                    <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                      {formatNumber(data.totopos.ventas_plus)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Costo
-                    </p>
-                    <p className="text-xl font-bold text-gray-900 dark:text-white">
-                      {formatCurrency(data.totopos.costo)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Valor
-                    </p>
-                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                      {formatCurrency(data.totopos.valor)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Reducción
-                    </p>
-                    <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                      {formatCurrency(data.totopos.reduccion)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          ))}
+        </div >
       )}
 
       {/* Calculation Info */}
-      {data && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-start gap-2">
-            <span className="text-blue-600 dark:text-blue-400">💡</span>
-            <p className="text-sm text-blue-800 dark:text-blue-300">
-              <strong>Cálculo:</strong> Incremento ventas = Elasticidad × % Descuento | 
-              Ejemplo: Con {descuento}% descuento y elasticidad {elasticidadPapas}, 
-              las ventas de papas aumentan {((elasticidadPapas * descuento) / 100 * 100).toFixed(0)}%
-            </p>
+      {
+        data && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-start gap-2">
+              <span className="text-blue-600 dark:text-blue-400">💡</span>
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                <strong>Cálculo:</strong> Incremento ventas = Elasticidad × % Descuento |
+                Ejemplo: Con {descuento}% descuento y elasticidad {elasticidadPapas},
+                las ventas de papas aumentan {((elasticidadPapas * descuento) / 100 * 100).toFixed(0)}%
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Action Buttons */}
       <div className="flex gap-4">
@@ -351,13 +287,15 @@ export default function PromocionCalculator() {
       </div>
 
       {/* Error Display */}
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
-          <p className="text-red-800 dark:text-red-300 font-semibold">Error</p>
-          <p className="text-red-600 dark:text-red-400 text-sm">{error.message}</p>
-        </div>
-      )}
-    </div>
+      {
+        error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
+            <p className="text-red-800 dark:text-red-300 font-semibold">Error</p>
+            <p className="text-red-600 dark:text-red-400 text-sm">{error.message}</p>
+          </div>
+        )
+      }
+    </div >
   );
 }
 

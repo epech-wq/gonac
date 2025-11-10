@@ -6,7 +6,7 @@ import { SegmentacionMetrics, StoreDetails } from '@/types/segmentacion';
  * Handles all database operations related to store segmentation metrics
  */
 export class SegmentacionRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient) { }
 
   /**
    * Get all segmentation metrics
@@ -27,7 +27,7 @@ export class SegmentacionRepository {
       return [];
     }
 
-    return data.map((item: any) => ({
+    return data.map((item: Record<string, unknown>) => ({
       segment: String(item.segment || ''),
       ventas_valor: Number(item.ventas_valor) || 0,
       ventas_unidades: Number(item.ventas_unidades) || 0,
@@ -103,7 +103,7 @@ export class SegmentacionRepository {
       return [];
     }
 
-    return data.map((item: any) => ({
+    return data.map((item: Record<string, unknown>) => ({
       segment: String(item.segment || ''),
       ventas_valor: Number(item.ventas_valor) || 0,
       ventas_unidades: Number(item.ventas_unidades) || 0,
@@ -137,7 +137,7 @@ export class SegmentacionRepository {
       return [];
     }
 
-    return data.map((item: any) => ({
+    return data.map((item: Record<string, unknown>) => ({
       segment: String(item.segment || ''),
       ventas_valor: Number(item.ventas_valor) || 0,
       ventas_unidades: Number(item.ventas_unidades) || 0,
@@ -197,8 +197,8 @@ export class SegmentacionRepository {
     }
 
     // Transform the nested structure to flat StoreDetails objects
-    return data.map((item: any) => {
-      const metrics = item.core_store_metrics;
+    return data.map((item: Record<string, unknown>) => {
+      const metrics = item.core_store_metrics as Record<string, unknown> | undefined;
       return {
         id_store: Number(item.id_store),
         segment: String(item.segment || ''),
@@ -241,7 +241,7 @@ export class SegmentacionRepository {
     }
 
     // Get all store IDs
-    const storeIds = segmentData.map((item: any) => item.id_store);
+    const storeIds = segmentData.map((item: Record<string, unknown>) => item.id_store);
 
     // Fetch metrics for these stores
     const { data: metricsData, error: metricsError } = await this.supabase
@@ -256,12 +256,12 @@ export class SegmentacionRepository {
 
     // Create a map of store metrics by id_store
     const metricsMap = new Map(
-      metricsData.map((item: any) => [Number(item.id_store), item])
+      metricsData.map((item: Record<string, unknown>) => [Number(item.id_store), item])
     );
 
     // Join the data
     return segmentData
-      .map((item: any) => {
+      .map((item: Record<string, unknown>) => {
         const metrics = metricsMap.get(Number(item.id_store));
         if (!metrics) {
           return null; // Skip if no metrics found

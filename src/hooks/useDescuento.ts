@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
-import { 
-  PromocionResponse, 
+import {
+  PromocionResponse,
   CalcularPromocionRequest,
   TopCategoriasExpiracionResponse,
-  CategoriaConCaducidad,
   PromocionItem,
   CategoryStatsResponse
 } from '@/types/descuento';

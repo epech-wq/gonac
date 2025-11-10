@@ -74,14 +74,14 @@ export class DescuentoService {
 
     const rawMetrics = await this.repository.calcularMetricasDescuento(params);
 
-    // Calculate additional business metrics
-    const inventario_post =
-      rawMetrics.inventario_inicial_total - rawMetrics.ventas_plus;
+    // Calculate additional business metrics (kept for future use)
+    // const inventario_post =
+    //   rawMetrics.inventario_inicial_total - rawMetrics.ventas_plus;
 
-    const reduccion_riesgo = this.calcularReduccionRiesgo(
-      rawMetrics.inventario_inicial_total,
-      rawMetrics.ventas_plus
-    );
+    // const reduccion_riesgo = this.calcularReduccionRiesgo(
+    //   rawMetrics.inventario_inicial_total,
+    //   rawMetrics.ventas_plus
+    // );
 
     return {
       ...rawMetrics,
@@ -284,18 +284,18 @@ export class DescuentoService {
 
       const stats = await this.repository.getCategoryStats(categories);
 
-      // Calculate totals across all categories
-      const total_products = new Set<string>();
-      const total_stores = new Set<string>();
+      // Calculate totals across all categories (kept for future use)
+      // const total_products = new Set<string>();
+      // const total_stores = new Set<string>();
 
       // Note: We need to fetch the raw data again to calculate totals properly
       // because the stats are already aggregated per category
-      const allStats = await Promise.all(
-        categories.map(async (category) => {
-          const categoryStats = stats.find(s => s.category === category);
-          return categoryStats;
-        })
-      );
+      // const allStats = await Promise.all(
+      //   categories.map(async (category) => {
+      //     const categoryStats = stats.find(s => s.category === category);
+      //     return categoryStats;
+      //   })
+      // );
 
       // Sum up unique counts
       const totalProducts = stats.reduce((sum, stat) => sum + stat.unique_products, 0);

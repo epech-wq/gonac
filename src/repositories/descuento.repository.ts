@@ -98,7 +98,7 @@ export class DescuentoRepository {
     }
 
     // Get unique categories
-    const categorias = [...new Set(data.map((item: any) => item.category))];
+    const categorias = [...new Set(data.map((item: { category: string }) => item.category))];
     return categorias;
   }
 
@@ -116,14 +116,14 @@ export class DescuentoRepository {
       throw new Error(`Error fetching stores: ${error.message}`);
     }
 
-    const storeIds = [...new Set(data.map((item: any) => item.id_store))];
+    const storeIds = [...new Set(data.map((item: { id_store: string }) => item.id_store))];
     return storeIds;
   }
 
   /**
    * Get SKU details for a category
    */
-  async getSkusByCategoria(categoria: string, segments: string[] = ['Slow', 'Dead']): Promise<any[]> {
+  async getSkusByCategoria(categoria: string, segments: string[] = ['Slow', 'Dead']): Promise<Record<string, unknown>[]> {
     // First get stores in the segments
     const stores = await this.getStoresBySegment(segments);
 
@@ -176,8 +176,9 @@ export class DescuentoRepository {
     // Aggregate by category in JavaScript (GROUP BY ccp.category)
     const categoryImpactMap = new Map<string, number>();
 
-    caducidadData.forEach((item: any) => {
-      const category = item.core_cat_product?.category;
+    caducidadData.forEach((item: Record<string, unknown>) => {
+      const coreProduct = item.core_cat_product as { category?: string } | { category?: string }[] | undefined;
+      const category = Array.isArray(coreProduct) ? coreProduct[0]?.category : coreProduct?.category;
       if (category) {
         const currentImpact = categoryImpactMap.get(category) || 0;
         categoryImpactMap.set(category, currentImpact + (Number(item.impacto) || 0));
@@ -238,7 +239,7 @@ export class DescuentoRepository {
     }
 
     // Get all SKUs for the filtered categories
-    const skus = productData.map((item: any) => item.sku);
+    const skus = productData.map((item: { sku: string }) => item.sku);
 
     // Fetch store metrics for these SKUs
     const { data: storeData, error: storeError } = await this.supabase
@@ -263,7 +264,7 @@ export class DescuentoRepository {
     });
 
     // Add unique products
-    productData.forEach((item: any) => {
+    productData.forEach((item: { category: string; sku: string }) => {
       const category = item.category;
       if (categoryStatsMap.has(category)) {
         categoryStatsMap.get(category)!.products.add(item.sku);
@@ -272,9 +273,9 @@ export class DescuentoRepository {
 
     // Add unique stores (LEFT JOIN behavior)
     if (storeData && storeData.length > 0) {
-      storeData.forEach((item: any) => {
+      storeData.forEach((item: { sku: string; id_store: string }) => {
         // Find which category this SKU belongs to
-        const productItem = productData.find((p: any) => p.sku === item.sku);
+        const productItem = productData.find((p: { sku: string }) => p.sku === item.sku);
         if (productItem) {
           const category = productItem.category;
           if (categoryStatsMap.has(category)) {

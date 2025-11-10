@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Valorizacion API Error:', error);
-    
+
     return NextResponse.json(
       {
         success: false,
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
  * POST /api/valorizacion/refresh
  * Manually trigger data refresh (if needed for caching)
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const supabase = createServerSupabaseClient();
     const repository = new ValorizacionRepository(supabase);
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Valorizacion Refresh Error:', error);
-    
+
     return NextResponse.json(
       {
         success: false,

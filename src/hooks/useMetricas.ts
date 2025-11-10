@@ -187,6 +187,7 @@ export function useMetricasFormatted(
       }
 
       // Extract the formatted data (without timestamp/source)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { timestamp, source, ...formattedData } = result;
       setData(formattedData as MetricasConsolidadasFormatted);
     } catch (err) {

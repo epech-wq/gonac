@@ -1,6 +1,5 @@
 import { MetricasRepository } from '@/repositories/metricas.repository';
 import {
-  MetricasConsolidadas,
   MetricasConsolidadasResponse,
   MetricasConsolidadasFormatted,
   KPICard,
@@ -11,7 +10,7 @@ import {
  * Contains business logic for consolidated metrics and KPIs
  */
 export class MetricasService {
-  constructor(private repository: MetricasRepository) {}
+  constructor(private repository: MetricasRepository) { }
 
   /**
    * Get consolidated metrics for home page KPIs

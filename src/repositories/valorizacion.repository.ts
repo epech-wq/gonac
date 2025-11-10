@@ -72,8 +72,8 @@ export class ValorizacionRepository {
       throw new Error(`Agotado query error: ${error.message}`);
     }
 
-    const uniqueStores = new Set(data.map((item: any) => item.id_store));
-    const totalImpacto = data.reduce((sum: number, item: any) => sum + (item.impacto || 0), 0);
+    const uniqueStores = new Set(data.map((item: Record<string, unknown>) => item.id_store));
+    const totalImpacto = data.reduce((sum: number, item: Record<string, unknown>) => sum + (Number(item.impacto) || 0), 0);
 
     return {
       valorizacion: 'Agotado',
@@ -95,8 +95,8 @@ export class ValorizacionRepository {
       throw new Error(`Caducidad query error: ${error.message}`);
     }
 
-    const uniqueStores = new Set(data.map((item: any) => item.id_store));
-    const totalImpacto = data.reduce((sum: number, item: any) => sum + (item.impacto || 0), 0);
+    const uniqueStores = new Set(data.map((item: Record<string, unknown>) => item.id_store));
+    const totalImpacto = data.reduce((sum: number, item: Record<string, unknown>) => sum + (Number(item.impacto) || 0), 0);
 
     return {
       valorizacion: 'Caducidad',
@@ -118,8 +118,8 @@ export class ValorizacionRepository {
       throw new Error(`Sin Ventas query error: ${error.message}`);
     }
 
-    const uniqueStores = new Set(data.map((item: any) => item.id_store));
-    const totalImpacto = data.reduce((sum: number, item: any) => sum + (item.impacto || 0), 0);
+    const uniqueStores = new Set(data.map((item: Record<string, unknown>) => item.id_store));
+    const totalImpacto = data.reduce((sum: number, item: Record<string, unknown>) => sum + (Number(item.impacto) || 0), 0);
 
     return {
       valorizacion: 'Sin Ventas',

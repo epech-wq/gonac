@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
  *   "message": "Materialized view refreshed successfully"
  * }
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const supabase = createServerSupabaseClient();
     const repository = new MetricasRepository(supabase);

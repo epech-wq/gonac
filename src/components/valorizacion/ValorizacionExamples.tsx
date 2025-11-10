@@ -5,12 +5,13 @@
  * These are reference examples - you can copy and adapt them to your needs
  */
 
-import { 
-  useValorizacion, 
+import {
+  useValorizacion,
   useValorizacionSummary,
   useValorizacionPercentages,
-  useValorizacionCritical 
+  useValorizacionCritical
 } from '@/hooks/useValorizacion';
+import { ValorizacionResponse } from '@/types/valorizacion';
 
 // ============================================================================
 // EXAMPLE 1: Basic Usage - Full Data
@@ -26,7 +27,7 @@ export function Example1_BasicUsage() {
       <h2>Basic Usage</h2>
       <p>Total Stores: {data?.totalTiendas}</p>
       <p>Total Impact: ${data?.totalImpacto.toLocaleString()}</p>
-      
+
       {data?.data.map((item) => (
         <div key={item.valorizacion}>
           <h3>{item.valorizacion}</h3>
@@ -53,13 +54,13 @@ export function Example2_SummaryFormat() {
         <p>{data?.agotado.tiendas} stores</p>
         <p>${data?.agotado.impacto.toLocaleString()}</p>
       </div>
-      
+
       <div className="card">
         <h3>Caducidad</h3>
         <p>{data?.caducidad.tiendas} stores</p>
         <p>${data?.caducidad.impacto.toLocaleString()}</p>
       </div>
-      
+
       <div className="card">
         <h3>Sin Ventas</h3>
         <p>{data?.sinVentas.tiendas} stores</p>
@@ -87,7 +88,7 @@ export function Example3_WithPercentages() {
             <span>{item.percentage.toFixed(1)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded">
-            <div 
+            <div
               className="bg-blue-600 h-4 rounded"
               style={{ width: `${item.percentage}%` }}
             />
@@ -136,7 +137,7 @@ export function Example5_WithRefresh() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2>Valorizacion Data</h2>
-        <button 
+        <button
           onClick={refetch}
           disabled={loading}
           className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
@@ -144,7 +145,7 @@ export function Example5_WithRefresh() {
           {loading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
-      
+
       {data && (
         <div>
           <p className="text-sm text-gray-500 mb-4">
@@ -173,7 +174,7 @@ export function Example6_AutoRefresh() {
           {loading ? 'Updating...' : 'Live data (auto-refresh every 5 min)'}
         </span>
       </div>
-      
+
       {data && (
         <div>
           {/* Your data display here */}
@@ -188,26 +189,26 @@ export function Example6_AutoRefresh() {
 // EXAMPLE 7: Specific Type Only
 // ============================================================================
 export function Example7_SpecificType() {
-  const { data: agotado } = useValorizacion<any>({ 
-    type: 'Agotado' 
+  const { data: agotado } = useValorizacion<ValorizacionResponse>({
+    type: 'Agotado'
   });
-  
-  const { data: caducidad } = useValorizacion<any>({ 
-    type: 'Caducidad' 
+
+  const { data: caducidad } = useValorizacion<ValorizacionResponse>({
+    type: 'Caducidad'
   });
 
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="p-4 bg-red-50 rounded">
         <h3>Agotado</h3>
-        <p>{agotado?.tiendas} stores</p>
-        <p>${agotado?.impacto.toLocaleString()}</p>
+        <p>{agotado?.data[0]?.tiendas} stores</p>
+        <p>${agotado?.data[0]?.impacto.toLocaleString()}</p>
       </div>
-      
+
       <div className="p-4 bg-orange-50 rounded">
         <h3>Caducidad</h3>
-        <p>{caducidad?.tiendas} stores</p>
-        <p>${caducidad?.impacto.toLocaleString()}</p>
+        <p>{caducidad?.data[0]?.tiendas} stores</p>
+        <p>${caducidad?.data[0]?.impacto.toLocaleString()}</p>
       </div>
     </div>
   );
@@ -238,7 +239,7 @@ export function Example8_WithSkeleton() {
           ${data?.agotado.impacto.toLocaleString()}
         </p>
       </div>
-      
+
       <div className="p-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg">
         <h3 className="text-sm font-medium opacity-90">Caducidad</h3>
         <p className="text-3xl font-bold">{data?.caducidad.tiendas}</p>
@@ -254,7 +255,7 @@ export function Example8_WithSkeleton() {
 // EXAMPLE 9: Error Handling with Retry
 // ============================================================================
 export function Example9_ErrorHandling() {
-  const { data, loading, error, refetch } = useValorizacion();
+  const { loading, error, refetch } = useValorizacion();
   const [retryCount, setRetryCount] = React.useState(0);
 
   React.useEffect(() => {
@@ -278,7 +279,7 @@ export function Example9_ErrorHandling() {
             Retrying... (Attempt {retryCount + 1}/3)
           </p>
         )}
-        <button 
+        <button
           onClick={refetch}
           className="mt-3 px-4 py-2 bg-red-600 text-white rounded text-sm"
         >
@@ -318,13 +319,13 @@ export function Example10_CombinedDashboard() {
           <p className="text-2xl font-bold text-red-600">{summary?.agotado.tiendas}</p>
           <p className="text-sm text-gray-500">${summary?.agotado.impacto.toLocaleString()}</p>
         </div>
-        
+
         <div className="p-4 bg-white shadow rounded-lg">
           <h4 className="text-gray-600 text-sm">Caducidad</h4>
           <p className="text-2xl font-bold text-orange-600">{summary?.caducidad.tiendas}</p>
           <p className="text-sm text-gray-500">${summary?.caducidad.impacto.toLocaleString()}</p>
         </div>
-        
+
         <div className="p-4 bg-white shadow rounded-lg">
           <h4 className="text-gray-600 text-sm">Sin Ventas</h4>
           <p className="text-2xl font-bold text-yellow-600">{summary?.sinVentas.tiendas}</p>
@@ -342,7 +343,7 @@ export function Example10_CombinedDashboard() {
               <span>{item.percentage.toFixed(1)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-blue-600 h-2 rounded-full transition-all"
                 style={{ width: `${item.percentage}%` }}
               />

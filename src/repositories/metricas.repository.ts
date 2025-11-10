@@ -6,7 +6,7 @@ import { MetricasConsolidadas } from '@/types/metricas';
  * Handles all database operations related to consolidated metrics
  */
 export class MetricasRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient) { }
 
   /**
    * Get consolidated metrics from materialized view
@@ -99,7 +99,7 @@ export class MetricasRepository {
       return [];
     }
 
-    return data.map((item: any) => ({
+    return data.map((item: Record<string, unknown>) => ({
       ventas_totales_pesos: Number(item.ventas_totales_pesos) || 0,
       crecimiento_vs_semana_anterior_pct: Number(item.crecimiento_vs_semana_anterior_pct) || 0,
       ventas_totales_unidades: Number(item.ventas_totales_unidades) || 0,
