@@ -8,7 +8,7 @@ import { SegmentacionService } from '@/services/segmentacion.service';
  * Get store segmentation metrics
  * 
  * Query Parameters:
- * - format: 'raw' | 'formatted' | 'cards' | 'summary' (default: 'raw')
+ * - format: 'raw' | 'formatted' | 'cards' | 'summary' | 'stores' (default: 'raw')
  * - segment: specific segment name (optional)
  * - segments: comma-separated segment names (optional)
  * - limit: number of top segments to return (optional, for top segments)
@@ -18,6 +18,8 @@ import { SegmentacionService } from '@/services/segmentacion.service';
  * - GET /api/segmentacion?format=formatted
  * - GET /api/segmentacion?format=cards
  * - GET /api/segmentacion?format=summary
+ * - GET /api/segmentacion?format=stores (get store details with stats)
+ * - GET /api/segmentacion?format=stores&segment=Hot (filter by segment)
  * - GET /api/segmentacion?segment=Slow
  * - GET /api/segmentacion?segments=Slow,Dead
  * - GET /api/segmentacion?limit=3
@@ -107,6 +109,15 @@ export async function GET(request: NextRequest) {
 
       const data = await service.getTopSegments(limit);
       return NextResponse.json({ success: true, ...data });
+    }
+
+    // Handle store details format
+    if (format === 'stores') {
+      const storeDetails = await service.getStoreDetails(segment || undefined);
+      return NextResponse.json({
+        success: true,
+        ...storeDetails,
+      });
     }
 
     // Handle different formats

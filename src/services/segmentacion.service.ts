@@ -6,6 +6,8 @@ import {
   SegmentacionMetricsFormatted,
   SegmentComparison,
   SegmentCard,
+  StoreDetails,
+  StoreDetailsResponse,
 } from '@/types/segmentacion';
 
 /**
@@ -258,6 +260,45 @@ export class SegmentacionService {
         : null,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Get store details with stats for each segment group
+   * 
+   * @param segment - Optional filter by specific segment (Hot, Balanceadas, Slow, Criticas)
+   */
+  async getStoreDetails(segment?: string): Promise<StoreDetailsResponse> {
+    try {
+      const stores = await this.repository.getStoreDetails(segment);
+
+      // Group stores by segment
+      const groupedBySegment: { [segment: string]: StoreDetails[] } = {};
+      const storesBySegment: { [segment: string]: number } = {};
+
+      stores.forEach((store) => {
+        const seg = store.segment;
+        if (!groupedBySegment[seg]) {
+          groupedBySegment[seg] = [];
+          storesBySegment[seg] = 0;
+        }
+        groupedBySegment[seg].push(store);
+        storesBySegment[seg]++;
+      });
+
+      return {
+        stores,
+        grouped_by_segment: groupedBySegment,
+        summary: {
+          total_stores: stores.length,
+          stores_by_segment: storesBySegment,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Service error getting store details: ${(error as Error).message}`
+      );
+    }
   }
 
   /**

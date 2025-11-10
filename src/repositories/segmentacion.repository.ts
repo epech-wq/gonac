@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { SegmentacionMetrics } from '@/types/segmentacion';
+import { SegmentacionMetrics, StoreDetails } from '@/types/segmentacion';
 
 /**
  * Segmentacion Repository
@@ -148,6 +148,144 @@ export class SegmentacionRepository {
       ventas_semana_promedio_tienda_pesos: Number(item.ventas_semana_promedio_tienda_pesos) || 0,
       ventas_semana_promedio_tienda_unidades: Number(item.ventas_semana_promedio_tienda_unidades) || 0,
     }));
+  }
+
+  /**
+   * Get store details with stats for each segment group
+   * Joins core_segmentacion_tiendas with core_store_metrics
+   * 
+   * @param segment - Optional filter by specific segment (Hot, Balanceadas, Slow, Criticas)
+   */
+  async getStoreDetails(segment?: string): Promise<StoreDetails[]> {
+    let query = this.supabase
+      .schema('gonac')
+      .from('core_segmentacion_tiendas')
+      .select(`
+        id_store,
+        segment,
+        core_store_metrics!inner(
+          ventas_totales_pesos,
+          ventas_totales_unidades,
+          venta_promedio_diaria,
+          inventario_inicial,
+          inventario_final,
+          dias_inventario,
+          sell_through_pct,
+          dias_con_venta,
+          dias_en_periodo,
+          inserted_at,
+          venta_promedio_semanal,
+          venta_promedio_diaria_pesos,
+          precio_sku_promedio
+        )
+      `);
+
+    // Filter by segment if provided
+    if (segment) {
+      query = query.eq('segment', segment);
+    }
+
+    const { data, error } = await query;
+
+    // If Supabase join syntax fails (no FK relationship), use manual join
+    if (error) {
+      return await this.getStoreDetailsManual(segment);
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Transform the nested structure to flat StoreDetails objects
+    return data.map((item: any) => {
+      const metrics = item.core_store_metrics;
+      return {
+        id_store: Number(item.id_store),
+        segment: String(item.segment || ''),
+        ventas_totales_pesos: Number(metrics?.ventas_totales_pesos || 0),
+        ventas_totales_unidades: Number(metrics?.ventas_totales_unidades || 0),
+        venta_promedio_diaria: Number(metrics?.venta_promedio_diaria || 0),
+        inventario_inicial: Number(metrics?.inventario_inicial || 0),
+        inventario_final: Number(metrics?.inventario_final || 0),
+        dias_inventario: Number(metrics?.dias_inventario || 0),
+        sell_through_pct: Number(metrics?.sell_through_pct || 0),
+        dias_con_venta: Number(metrics?.dias_con_venta || 0),
+        dias_en_periodo: Number(metrics?.dias_en_periodo || 0),
+        inserted_at: metrics?.inserted_at ? String(metrics.inserted_at) : '',
+        venta_promedio_semanal: Number(metrics?.venta_promedio_semanal || 0),
+        venta_promedio_diaria_pesos: Number(metrics?.venta_promedio_diaria_pesos || 0),
+        precio_sku_promedio: Number(metrics?.precio_sku_promedio || 0),
+      };
+    });
+  }
+
+  /**
+   * Manual join approach: fetch from both tables and join in memory
+   * Used as fallback if Supabase join syntax doesn't work
+   */
+  private async getStoreDetailsManual(segment?: string): Promise<StoreDetails[]> {
+    // Fetch segment data
+    let segmentQuery = this.supabase
+      .schema('gonac')
+      .from('core_segmentacion_tiendas')
+      .select('id_store, segment');
+
+    if (segment) {
+      segmentQuery = segmentQuery.eq('segment', segment);
+    }
+
+    const { data: segmentData, error: segmentError } = await segmentQuery;
+
+    if (segmentError || !segmentData || segmentData.length === 0) {
+      return [];
+    }
+
+    // Get all store IDs
+    const storeIds = segmentData.map((item: any) => item.id_store);
+
+    // Fetch metrics for these stores
+    const { data: metricsData, error: metricsError } = await this.supabase
+      .schema('gonac')
+      .from('core_store_metrics')
+      .select('*')
+      .in('id_store', storeIds);
+
+    if (metricsError || !metricsData) {
+      throw new Error(`Error fetching store metrics: ${metricsError?.message || 'Unknown error'}`);
+    }
+
+    // Create a map of store metrics by id_store
+    const metricsMap = new Map(
+      metricsData.map((item: any) => [Number(item.id_store), item])
+    );
+
+    // Join the data
+    return segmentData
+      .map((item: any) => {
+        const metrics = metricsMap.get(Number(item.id_store));
+        if (!metrics) {
+          return null; // Skip if no metrics found
+        }
+
+        return {
+          id_store: Number(item.id_store),
+          segment: String(item.segment || ''),
+          ventas_totales_pesos: Number(metrics.ventas_totales_pesos || 0),
+          ventas_totales_unidades: Number(metrics.ventas_totales_unidades || 0),
+          venta_promedio_diaria: Number(metrics.venta_promedio_diaria || 0),
+          inventario_inicial: Number(metrics.inventario_inicial || 0),
+          inventario_final: Number(metrics.inventario_final || 0),
+          dias_inventario: Number(metrics.dias_inventario || 0),
+          sell_through_pct: Number(metrics.sell_through_pct || 0),
+          dias_con_venta: Number(metrics.dias_con_venta || 0),
+          dias_en_periodo: Number(metrics.dias_en_periodo || 0),
+          inserted_at: metrics.inserted_at ? String(metrics.inserted_at) : '',
+          venta_promedio_semanal: Number(metrics.venta_promedio_semanal || 0),
+          venta_promedio_diaria_pesos: Number(metrics.venta_promedio_diaria_pesos || 0),
+          precio_sku_promedio: Number(metrics.precio_sku_promedio || 0),
+        };
+      })
+      .filter((item): item is StoreDetails => item !== null);
   }
 
   /**

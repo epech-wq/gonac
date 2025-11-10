@@ -95,3 +95,41 @@ export interface SegmentCard {
   performance: 'high' | 'medium' | 'low'; // Based on contribution
 }
 
+/**
+ * Store details with stats from core_segmentacion_tiendas and core_store_metrics
+ */
+export interface StoreDetails {
+  id_store: number;
+  segment: string; // Hot, Balanceadas, Slow, Criticas
+  ventas_totales_pesos: number;
+  ventas_totales_unidades: number;
+  venta_promedio_diaria: number;
+  inventario_inicial: number;
+  inventario_final: number;
+  dias_inventario: number;
+  sell_through_pct: number;
+  dias_con_venta: number;
+  dias_en_periodo: number;
+  inserted_at: string;
+  venta_promedio_semanal: number;
+  venta_promedio_diaria_pesos: number;
+  precio_sku_promedio: number;
+}
+
+/**
+ * Store details response grouped by segment
+ */
+export interface StoreDetailsResponse {
+  stores: StoreDetails[];
+  grouped_by_segment: {
+    [segment: string]: StoreDetails[];
+  };
+  summary: {
+    total_stores: number;
+    stores_by_segment: {
+      [segment: string]: number;
+    };
+  };
+  timestamp: string;
+}
+
