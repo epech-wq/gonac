@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { VemioData } from "@/data/vemio-mock-data";
+import { useExhibicionResumen } from "@/hooks/useExhibiciones";
+import ExhibicionConfigCard from "@/components/vemio/ExhibicionConfigCard";
+import ExhibicionMetricsCards from "@/components/vemio/ExhibicionMetricsCards";
+import ExhibicionPedidoCard from "@/components/vemio/ExhibicionPedidoCard";
+import ExhibicionViabilidadCard from "@/components/vemio/ExhibicionViabilidadCard";
 
 interface AccionesViewProps {
   data: VemioData["acciones"];
@@ -20,6 +25,53 @@ export default function AccionesView({ data }: AccionesViewProps) {
   // State for Minimizar Agotados detail views
   const [showDetailBySKU, setShowDetailBySKU] = useState(false);
   const [showDetailByTienda, setShowDetailByTienda] = useState(false);
+
+  // State for Exhibiciones Adicionales configuration
+  const [costoExhibicion, setCostoExhibicion] = useState(500);
+  const [incrementoVenta, setIncrementoVenta] = useState(50);
+
+  // Fetch exhibition data with default parameters
+  const { 
+    data: exhibicionData, 
+    loading: exhibicionLoading,
+    refetch: refetchExhibicion
+  } = useExhibicionResumen({
+    dias_mes: 30,
+    costo_exhibicion: costoExhibicion,
+    incremento_venta: incrementoVenta / 100, // Convert percentage to decimal
+    format: 'raw',
+    autoFetch: true
+  });
+
+  // Extract resumen data safely
+  const resumenData = exhibicionData && 'resumen' in exhibicionData ? exhibicionData.resumen : null;
+
+  // Debounce refetch when configuration changes
+  useEffect(() => {
+    // Don't refetch on initial mount (autoFetch handles that)
+    if (exhibicionData === null) return;
+
+    const timeoutId = setTimeout(() => {
+      refetchExhibicion({
+        dias_mes: 30,
+        costo_exhibicion: costoExhibicion,
+        incremento_venta: incrementoVenta / 100,
+      });
+    }, 800); // 800ms debounce
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [costoExhibicion, incrementoVenta]);
+
+  // Handler for costo change
+  const handleCostoChange = useCallback((value: number) => {
+    setCostoExhibicion(value);
+  }, []);
+
+  // Handler for incremento change
+  const handleIncrementoChange = useCallback((value: number) => {
+    setIncrementoVenta(value);
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -68,7 +120,10 @@ export default function AccionesView({ data }: AccionesViewProps) {
       case 'minimizarAgotados':
         return 'Reabasto Urgente (Tiendas HOT y Balanceadas)';
       case 'exhibicionesAdicionales':
-        return 'Exhibiciones Adicionales (Sin Oportunidades Viables)';
+        const tiendasViables = resumenData?.tiendas_viables || 0;
+        return tiendasViables > 0 
+          ? `Exhibiciones Adicionales (${tiendasViables} Oportunidades Viables)`
+          : 'Exhibiciones Adicionales (Sin Oportunidades Viables)';
       case 'promocionesSlow':
         return 'Promoción para Evacuar Inventario (Tiendas Slow y Dead)';
       case 'visitaPromotoria':
@@ -105,7 +160,9 @@ export default function AccionesView({ data }: AccionesViewProps) {
                 Acción #{actionNumber}: {getActionTitle(actionType)}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {actionData.insight}
+                {actionType === 'exhibicionesAdicionales' && resumenData
+                  ? `Identificadas ${resumenData.tiendas_viables} tiendas HOT donde exhibiciones adicionales generarían retorno positivo sobre inversión`
+                  : actionData.insight}
               </p>
             </div>
           </div>
@@ -394,11 +451,50 @@ export default function AccionesView({ data }: AccionesViewProps) {
             </div>
           </>
         ) : actionType === 'exhibicionesAdicionales' ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400 italic">
-              No hay oportunidades viables detectadas en este momento.
-            </p>
-          </div>
+          <>
+            {/* Configuration Card */}
+            <ExhibicionConfigCard
+              costoExhibicion={costoExhibicion}
+              incrementoVenta={incrementoVenta}
+              onCostoChange={handleCostoChange}
+              onIncrementoChange={handleIncrementoChange}
+            />
+
+            {exhibicionLoading ? (
+              <div className="text-center py-8">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">Cargando datos de exhibiciones...</p>
+              </div>
+            ) : resumenData ? (
+              <>
+                {/* Metrics Cards */}
+                <ExhibicionMetricsCards
+                  resumen={resumenData}
+                  formatCurrency={formatCurrency}
+                />
+
+                {/* Pedido Extraordinario Card */}
+                <ExhibicionPedidoCard
+                  resumen={resumenData}
+                  incrementoVenta={incrementoVenta}
+                  formatCurrency={formatCurrency}
+                  formatNumber={formatNumber}
+                />
+
+                {/* Viability Explanation Card */}
+                <ExhibicionViabilidadCard
+                  incrementoVenta={incrementoVenta}
+                  costoExhibicion={costoExhibicion}
+                />
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500 dark:text-gray-400 italic">
+                  No hay oportunidades viables detectadas en este momento.
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           <div className={`grid grid-cols-1 ${actionType === 'visitaPromotoria' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mb-6`}>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
