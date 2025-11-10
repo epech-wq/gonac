@@ -10,7 +10,7 @@ import {
  * Handles all database operations related to exhibition ROI calculations
  */
 export class ExhibicionesRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient) { }
 
   /**
    * Get exhibition summary
@@ -77,7 +77,7 @@ export class ExhibicionesRepository {
       return [];
     }
 
-    return data.map((item: any) => ({
+    return data.map((item: Record<string, unknown>) => ({
       id_store: Number(item.id_store),
       sku: String(item.sku || ''),
       retorno_inversion_pesos: Number(item.retorno_inversion_pesos) || 0,

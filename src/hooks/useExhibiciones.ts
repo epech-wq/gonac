@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
-  ExhibicionResumen,
   ExhibicionResumenResponse,
   ExhibicionResumenFormatted,
   ExhibicionROIResponse,
@@ -91,12 +90,12 @@ interface UseExhibicionAnalisisReturn {
 export function useExhibicionResumen(
   options: UseExhibicionResumenOptions = {}
 ): UseExhibicionResumenReturn {
-  const { 
-    dias_mes: initialDiasMes = 30, 
+  const {
+    dias_mes: initialDiasMes = 30,
     costo_exhibicion: initialCosto = 500,
     incremento_venta: initialIncremento = 0.5,
-    format = 'raw', 
-    autoFetch = false 
+    format = 'raw',
+    autoFetch = false
   } = options;
 
   const [data, setData] = useState<

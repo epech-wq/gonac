@@ -17,7 +17,7 @@ import {
  * Contains business logic for exhibition ROI calculations and analysis
  */
 export class ExhibicionesService {
-  constructor(private repository: ExhibicionesRepository) {}
+  constructor(private repository: ExhibicionesRepository) { }
 
   /**
    * Get exhibition summary
@@ -191,25 +191,24 @@ export class ExhibicionesService {
    * Get complete exhibition analysis
    */
   async getAnalisisCompleto(
-    params: Partial<ExhibicionParams> = {}
+    fullParams: Partial<ExhibicionParams> = {}
   ): Promise<ExhibicionAnalisis> {
     try {
-      const fullParams: ExhibicionParams = {
-        costo_exhibicion: params.costo_exhibicion ?? 500,
-        incremento_venta: params.incremento_venta ?? 0.5,
-        dias_mes: params.dias_mes ?? 30,
+      const completeParams: ExhibicionParams = {
+        costo_exhibicion: fullParams.costo_exhibicion ?? 500,
+        incremento_venta: fullParams.incremento_venta ?? 0.5,
+        dias_mes: fullParams.dias_mes ?? 30,
       };
 
       // Get summary and ROI in parallel
       const [resumenResponse, roiResponse] = await Promise.all([
-        this.getResumenExhibicion(fullParams),
-        this.calcularROIExhibicion(fullParams),
+        this.getResumenExhibicion(completeParams),
+        this.calcularROIExhibicion(completeParams),
       ]);
 
       // Calculate viability
       const viabilidad = this.calculateViabilidad(
-        resumenResponse.resumen,
-        fullParams
+        resumenResponse.resumen
       );
 
       // Get top 10 stores
@@ -222,7 +221,7 @@ export class ExhibicionesService {
         detalle_roi: roiResponse.items,
         viabilidad,
         top_stores: topStores,
-        params: fullParams,
+        params: completeParams,
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
@@ -236,8 +235,7 @@ export class ExhibicionesService {
    * Calculate viability analysis
    */
   private calculateViabilidad(
-    resumen: ExhibicionResumen,
-    params: ExhibicionParams
+    resumen: ExhibicionResumen
   ): ExhibicionViabilidad {
     const retorno_neto = resumen.retorno_mensual_neto;
     const costo_total = resumen.costo_total_exhibicion;
@@ -317,9 +315,9 @@ export class ExhibicionesService {
     const retorno_promedio =
       total_stores > 0
         ? groupedByStore.reduce(
-            (sum, store) => sum + store.retorno_inversion_pesos,
-            0
-          ) / total_stores
+          (sum, store) => sum + store.retorno_inversion_pesos,
+          0
+        ) / total_stores
         : 0;
 
     return {

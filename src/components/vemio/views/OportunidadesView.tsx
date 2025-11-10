@@ -393,7 +393,7 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
                 Mostrando datos de demostración
               </h3>
               <p className="text-xs text-yellow-700 dark:text-yellow-500 mt-1">
-                No se pudo conectar a la base de datos. Asegúrate de que el esquema 'gonac' esté expuesto en Supabase.
+                No se pudo conectar a la base de datos. Asegúrate de que el esquema &apos;gonac&apos; esté expuesto en Supabase.
               </p>
             </div>
           </div>
