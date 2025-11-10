@@ -1,15 +1,39 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useState } from "react";
-import { VemioData } from "@/data/vemio-mock-data";
+import { useValorizacionSummary } from "@/hooks/useValorizacion";
 
 interface OportunidadesViewProps {
-  data: VemioData["oportunidades"];
+  // Props are now optional since we're using the hook
+  data?: any;
 }
 
 type OpportunityType = 'agotado' | 'caducidad' | 'sinVenta';
 
-export default function OportunidadesView({ data }: OportunidadesViewProps) {
+export default function OportunidadesView({ data: propData }: OportunidadesViewProps) {
   const [expandedCard, setExpandedCard] = useState<OpportunityType | null>(null);
+
+  // Fetch real data from the database
+  const { data: valorizacionData, loading, error } = useValorizacionSummary();
+
+  // Use real data if available, otherwise fall back to prop data
+  // If there's an error, we'll use propData as fallback (graceful degradation)
+  const data = valorizacionData ? {
+    agotado: {
+      impacto: valorizacionData.agotado.impacto,
+      tiendas: valorizacionData.agotado.tiendas,
+      registros: propData?.agotado?.registros || [] // Use mock registros if available
+    },
+    caducidad: {
+      impacto: valorizacionData.caducidad.impacto,
+      tiendas: valorizacionData.caducidad.tiendas,
+      registros: propData?.caducidad?.registros || [] // Use mock registros if available
+    },
+    sinVenta: {
+      impacto: valorizacionData.sinVentas.impacto,
+      tiendas: valorizacionData.sinVentas.tiendas,
+      registros: propData?.sinVenta?.registros || [] // Use mock registros if available
+    }
+  } : propData;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -148,23 +172,32 @@ export default function OportunidadesView({ data }: OportunidadesViewProps) {
           </div>
 
           {/* Ver Detalle Button */}
-          <button
-            onClick={() => toggleExpanded(type)}
-            className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Ver Detalle ({opportunityData.registros.length} registros)
-            <svg
-              className={`h-4 w-4 ml-2 transform transition-transform ${expandedCard === type ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {opportunityData.registros && opportunityData.registros.length > 0 ? (
+            <button
+              onClick={() => toggleExpanded(type)}
+              className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Ver Detalle ({opportunityData.registros.length} registros)
+              <svg
+                className={`h-4 w-4 ml-2 transform transition-transform ${expandedCard === type ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          ) : (
+            <div className="w-full flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg">
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Registros detallados no disponibles
+            </div>
+          )}
         </div>
 
         {/* Expanded Details */}
@@ -287,19 +320,88 @@ export default function OportunidadesView({ data }: OportunidadesViewProps) {
     );
   };
 
+  // Show loading only if we don't have fallback data
+  if (loading && !propData) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Oportunidades Detectadas
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Análisis de riesgos operativos y oportunidades de mejora por categoría de problema.
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando datos...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Oportunidades Detectadas
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Análisis de riesgos operativos y oportunidades de mejora por categoría de problema.
+          </p>
+        </div>
+        <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-12 text-center">
+          <p className="text-gray-600 dark:text-gray-400">No hay datos disponibles</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          Oportunidades Detectadas
-        </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Análisis de riesgos operativos y oportunidades de mejora por categoría de problema.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Oportunidades Detectadas
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Análisis de riesgos operativos y oportunidades de mejora por categoría de problema.
+            </p>
+          </div>
+          {/* Loading Indicator */}
+          {loading && (
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Cargando...</span>
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* Database Connection Warning */}
+      {error && (
+        <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/10 p-4 border border-yellow-200 dark:border-yellow-800">
+          <div className="flex items-start">
+            <svg className="h-5 w-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1-1.964-1-2.732 0L3.732 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
+                Mostrando datos de demostración
+              </h3>
+              <p className="text-xs text-yellow-700 dark:text-yellow-500 mt-1">
+                No se pudo conectar a la base de datos. Asegúrate de que el esquema 'gonac' esté expuesto en Supabase.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Opportunity Cards */}
-      <div className="space-y-6">
+      <div className={`space-y-6 relative ${loading ? 'opacity-70 pointer-events-none' : ''}`}>
         {Object.entries(data).map(([type, opportunityData]) =>
           renderOpportunityCard(type as OpportunityType, opportunityData)
         )}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { VemioData } from "@/data/vemio-mock-data";
+import { useSegmentacionFormatted } from "@/hooks/useSegmentacion";
 
 interface TiendasViewProps {
   data: VemioData;
@@ -7,8 +8,21 @@ interface TiendasViewProps {
 
 type SegmentType = 'hot' | 'balanceadas' | 'slow' | 'criticas';
 
+// Map API segment names to UI segment types
+const mapSegmentToType = (segment: string): SegmentType | null => {
+  const normalized = segment.toLowerCase();
+  if (normalized === 'hot') return 'hot';
+  if (normalized === 'balanceadas' || normalized === 'balanced') return 'balanceadas';
+  if (normalized === 'slow') return 'slow';
+  if (normalized === 'criticas' || normalized === 'dead') return 'criticas';
+  return null;
+};
+
 export default function TiendasView({ data }: TiendasViewProps) {
   const [expandedSegment, setExpandedSegment] = useState<SegmentType | null>(null);
+
+  // Fetch real segmentation data
+  const { data: segmentacionData, loading, error } = useSegmentacionFormatted({ autoFetch: true });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -143,11 +157,87 @@ export default function TiendasView({ data }: TiendasViewProps) {
     setExpandedSegment(expandedSegment === segment ? null : segment);
   };
 
+  // Use real data if available, fallback to mock data
   const segmentData = data.tiendasSegmentacion;
   const totalStores = segmentData.hot.count + segmentData.balanceadas.count + segmentData.slow.count + segmentData.criticas.count;
 
+  // Build segment metrics from API data
+  const buildSegmentMetrics = () => {
+    if (!segmentacionData?.segments) return null;
+
+    const metrics: Record<SegmentType, {
+      count: number;
+      percentage: number;
+      contribution: number;
+      metrics: {
+        ventasValor: number;
+        ventasUnidades: number;
+        ventaSemanalTienda: number;
+        diasInventario: number;
+      };
+      stores: Array<{
+        id: string;
+        nombre: string;
+        ubicacion: string;
+        ventasValor: number;
+        ventasUnidades: number;
+        ventaSemanalTienda: number;
+        diasInventario: number;
+      }>;
+    }> = {
+      hot: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, diasInventario: 0 }, stores: [] },
+      balanceadas: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, diasInventario: 0 }, stores: [] },
+      slow: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, diasInventario: 0 }, stores: [] },
+      criticas: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, diasInventario: 0 }, stores: [] }
+    };
+
+    segmentacionData.segments.forEach(seg => {
+      const segmentType = mapSegmentToType(seg.segment);
+      if (segmentType) {
+        metrics[segmentType] = {
+          count: seg.num_tiendas_segmento,
+          percentage: seg.participacion_segmento,
+          contribution: seg.contribucion_porcentaje,
+          metrics: {
+            ventasValor: seg.ventas_valor,
+            ventasUnidades: seg.ventas_unidades,
+            ventaSemanalTienda: seg.ventas_semana_promedio_tienda_pesos,
+            diasInventario: seg.dias_inventario
+          },
+          // Keep mock stores for now since API doesn't provide individual store details in this endpoint
+          stores: segmentData[segmentType].stores
+        };
+      }
+    });
+
+    return metrics;
+  };
+
+  const apiSegmentMetrics = buildSegmentMetrics();
+
+  // Calculate totals from API data or fallback to mock
+  const totalStoresFromAPI = segmentacionData?.total_tiendas || totalStores;
+  const totalVentasFromAPI = segmentacionData?.total_ventas_valor ||
+    (segmentData.hot.metrics.ventasValor + segmentData.balanceadas.metrics.ventasValor + segmentData.slow.metrics.ventasValor + segmentData.criticas.metrics.ventasValor);
+
   return (
     <div className="space-y-6">
+      {/* Loading State */}
+      {loading && (
+        <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800 text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Cargando datos de segmentación...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-6 shadow-sm border border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-600 dark:text-red-400">Error al cargar datos: {error.message}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Mostrando datos de ejemplo</p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -159,15 +249,24 @@ export default function TiendasView({ data }: TiendasViewProps) {
         <div className="mt-4 flex items-center gap-4 text-sm">
           <div>
             <span className="text-gray-500">Total de tiendas:</span>
-            <span className="ml-2 font-semibold text-gray-900 dark:text-white">{totalStores}</span>
+            <span className="ml-2 font-semibold text-gray-900 dark:text-white">{totalStoresFromAPI}</span>
           </div>
           <div className="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
           <div>
             <span className="text-gray-500">Ventas totales:</span>
             <span className="ml-2 font-semibold text-gray-900 dark:text-white">
-              {formatCurrency(segmentData.hot.metrics.ventasValor + segmentData.balanceadas.metrics.ventasValor + segmentData.slow.metrics.ventasValor + segmentData.criticas.metrics.ventasValor)}
+              {formatCurrency(totalVentasFromAPI)}
             </span>
           </div>
+          {segmentacionData && (
+            <>
+              <div className="h-4 w-px bg-gray-300 dark:bg-gray-600"></div>
+              <div>
+                <span className="text-gray-500">Fuente:</span>
+                <span className="ml-2 text-xs font-medium text-green-600 dark:text-green-400">Datos en vivo</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -175,7 +274,8 @@ export default function TiendasView({ data }: TiendasViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {(Object.keys(segmentData) as SegmentType[]).map((segment) => {
           const config = getSegmentConfig(segment);
-          const segData = segmentData[segment];
+          // Use API data if available, otherwise use mock data
+          const segData = apiSegmentMetrics?.[segment] || segmentData[segment];
           const isExpanded = expandedSegment === segment;
 
           return (
