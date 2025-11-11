@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { VemioData } from "@/data/vemio-mock-data";
-import { useSegmentacionFormatted } from "@/hooks/useSegmentacion";
+import { useSegmentacionFormatted, useSegmentacionDetalleGrouped } from "@/hooks/useSegmentacion";
 
 interface TiendasViewProps {
   data: VemioData;
@@ -25,6 +25,9 @@ export default function TiendasView({ data }: TiendasViewProps) {
 
   // Fetch real segmentation data
   const { data: segmentacionData, loading, error } = useSegmentacionFormatted({ autoFetch: true });
+  
+  // Fetch grouped store details
+  const { data: groupedStoresData, loading: loadingStores, error: errorStores } = useSegmentacionDetalleGrouped({ autoFetch: true });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -293,7 +296,7 @@ export default function TiendasView({ data }: TiendasViewProps) {
 
   // Build segment metrics from API data
   const buildSegmentMetrics = () => {
-    if (!segmentacionData?.segments) return null;
+    if (!segmentacionData?.cards) return null;
 
     const metrics: Record<SegmentType, {
       count: number;
@@ -322,22 +325,32 @@ export default function TiendasView({ data }: TiendasViewProps) {
       criticas: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, ventaSemanalTiendaUnidades: 0, diasInventario: 0 }, stores: [] }
     };
 
-    segmentacionData.segments.forEach(seg => {
-      const segmentType = mapSegmentToType(seg.segment);
+    segmentacionData.cards.forEach(card => {
+      const segmentType = mapSegmentToType(card.segment);
       if (segmentType) {
+        // Get stores from grouped data if available
+        const storesForSegment = groupedStoresData?.data?.[card.segment] || [];
+        
         metrics[segmentType] = {
-          count: seg.num_tiendas_segmento,
-          percentage: seg.participacion_segmento,
-          contribution: seg.contribucion_porcentaje,
+          count: card.num_tiendas_segmento,
+          percentage: parseFloat(card.participacion_segmento),
+          contribution: parseFloat(card.contribucion_porcentaje),
           metrics: {
-            ventasValor: seg.ventas_valor,
-            ventasUnidades: seg.ventas_unidades,
-            ventaSemanalTienda: seg.ventas_semana_promedio_tienda_pesos,
-            ventaSemanalTiendaUnidades: seg.ventas_semana_promedio_tienda_unidades,
-            diasInventario: seg.dias_inventario
+            ventasValor: parseFloat(card.ventas_valor.replace(/[^0-9.-]+/g, '')),
+            ventasUnidades: parseFloat(card.ventas_unidades.replace(/[^0-9.-]+/g, '')),
+            ventaSemanalTienda: parseFloat(card.ventas_semana_promedio_tienda_pesos.replace(/[^0-9.-]+/g, '')),
+            diasInventario: parseFloat(card.dias_inventario)
           },
-          // Keep mock stores for now since API doesn't provide individual store details in this endpoint
-          stores: segmentData[segmentType].stores
+          // Map API stores to UI format
+          stores: storesForSegment.map(store => ({
+            id: store.store_name,
+            nombre: store.store_name,
+            ubicacion: store.store_name.includes('SUPERCITO') ? store.store_name.split('SUPERCITO')[1]?.trim() || '' : '',
+            ventasValor: parseFloat(store.ventas_totales_pesos.toString()),
+            ventasUnidades: store.ventas_totales_unidades,
+            ventaSemanalTienda: store.venta_promedio_semanal,
+            diasInventario: parseFloat(store.dias_inventario.toString())
+          }))
         };
       }
     });
@@ -348,25 +361,32 @@ export default function TiendasView({ data }: TiendasViewProps) {
   const apiSegmentMetrics = buildSegmentMetrics();
 
   // Calculate totals from API data or fallback to mock
-  const totalStoresFromAPI = segmentacionData?.total_tiendas || totalStores;
-  const totalVentasFromAPI = segmentacionData?.total_ventas_valor ||
-    (segmentData.hot.metrics.ventasValor + segmentData.balanceadas.metrics.ventasValor + segmentData.slow.metrics.ventasValor + segmentData.criticas.metrics.ventasValor);
+  const totalStoresFromAPI = segmentacionData?.summary.total_tiendas || totalStores;
+  const totalVentasFromAPI = segmentacionData?.summary.total_ventas_valor 
+    ? parseFloat(segmentacionData.summary.total_ventas_valor.replace(/[^0-9.-]+/g, ''))
+    : (segmentData.hot.metrics.ventasValor + segmentData.balanceadas.metrics.ventasValor + segmentData.slow.metrics.ventasValor + segmentData.criticas.metrics.ventasValor);
 
   return (
     <div className="space-y-6">
       {/* Loading State */}
-      {loading && (
+      {(loading || loadingStores) && (
         <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800 text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Cargando datos de segmentación...</p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {loading ? 'Cargando datos de segmentación...' : 'Cargando detalles de tiendas...'}
+          </p>
         </div>
       )}
 
       {/* Error State */}
-      {error && (
+      {(error || errorStores) && (
         <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-6 shadow-sm border border-red-200 dark:border-red-800">
-          <p className="text-sm text-red-600 dark:text-red-400">Error al cargar datos: {error.message}</p>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Mostrando datos de ejemplo</p>
+          <p className="text-sm text-red-600 dark:text-red-400">
+            Error al cargar datos: {error?.message || errorStores?.message}
+          </p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+            {!error && errorStores ? 'Métricas disponibles, detalles de tiendas no disponibles' : 'Mostrando datos de ejemplo'}
+          </p>
         </div>
       )}
 
@@ -535,6 +555,17 @@ export default function TiendasView({ data }: TiendasViewProps) {
               {/* Expanded Store Table */}
               {isExpanded && (
                 <div className="border-t-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                  {/* Header with data source badge */}
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      Detalle de Tiendas - {config.title}
+                    </h4>
+                    {groupedStoresData && segData.stores.length > 0 && (
+                      <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">
+                        Datos en vivo • {segData.stores.length} tiendas
+                      </span>
+                    )}
+                  </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                       <thead className="bg-gray-50 dark:bg-gray-700">
@@ -557,30 +588,47 @@ export default function TiendasView({ data }: TiendasViewProps) {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                        {segData.stores.map((store) => (
-                          <tr key={store.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {store.nombre}
+                        {segData.stores.length > 0 ? (
+                          segData.stores.map((store) => (
+                            <tr key={store.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {store.nombre}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {store.ubicacion}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {formatCurrency(store.ventasValor)}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {formatNumber(store.ventasUnidades)}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {formatCurrency(store.ventaSemanalTienda)}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {store.diasInventario.toFixed(0)} días
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-8 text-center">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {loadingStores ? (
+                                  <div className="flex items-center justify-center gap-2">
+                                    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent"></div>
+                                    <span>Cargando tiendas...</span>
+                                  </div>
+                                ) : (
+                                  <span>No hay tiendas disponibles en este segmento</span>
+                                )}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {store.ubicacion}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {formatCurrency(store.ventasValor)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {formatNumber(store.ventasUnidades)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {formatCurrency(store.ventaSemanalTienda)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {store.diasInventario}
                             </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>
