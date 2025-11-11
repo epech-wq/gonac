@@ -3,10 +3,10 @@ import { useState, useMemo, useEffect } from "react";
 import { VemioData, vemioMockData } from "@/data/vemio-mock-data";
 import { ExhibicionesAdicionalesCalculator } from "@/utils/exhibicionesAdicionalesCalculator";
 import { useCategoriasConCaducidad, useDescuento, useCategoryStats } from "@/hooks/useDescuento";
-import { 
-  useAccionReabastoSummary, 
-  useAccionReabastoPorTienda, 
-  useAccionReabastoDetalle 
+import {
+  useAccionReabastoSummary,
+  useAccionReabastoPorTienda,
+  useAccionReabastoDetalle
 } from "@/hooks/useAccionReabasto";
 
 interface AccionesViewProps {
@@ -256,33 +256,41 @@ export default function AccionesView({ data }: AccionesViewProps) {
                 </div>
               )}
 
-              {/* Detail View Buttons */}
-              <div className="flex flex-wrap gap-3 mb-6">
-                <button
-                  onClick={() => setShowDetailBySKU(!showDetailBySKU)}
-                  className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailBySKU
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
-                    }`}
-                >
-                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  Ver detalle por SKU
-                </button>
-                <button
-                  onClick={() => setShowDetailByTienda(!showDetailByTienda)}
-                  className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailByTienda
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
-                    }`}
-                >
-                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  Ver detalle por Tienda
-                </button>
-              </div>
+              {/* Detail View Buttons - Only show if data exists */}
+              {((reabastoDetalle && reabastoDetalle.data.length > 0) || (reabastoPorTienda && reabastoPorTienda.data.length > 0)) && (
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {/* Ver detalle por SKU - Only show if detalle data exists */}
+                  {reabastoDetalle && reabastoDetalle.data.length > 0 && (
+                    <button
+                      onClick={() => setShowDetailBySKU(!showDetailBySKU)}
+                      className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailBySKU
+                        ? 'bg-blue-600 border-blue-600 text-white'
+                        : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+                        }`}
+                    >
+                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      Ver detalle por SKU
+                    </button>
+                  )}
+                  {/* Ver detalle por Tienda - Only show if tienda data exists */}
+                  {reabastoPorTienda && reabastoPorTienda.data.length > 0 && (
+                    <button
+                      onClick={() => setShowDetailByTienda(!showDetailByTienda)}
+                      className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailByTienda
+                        ? 'bg-blue-600 border-blue-600 text-white'
+                        : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+                        }`}
+                    >
+                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      Ver detalle por Tienda
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Detail by SKU */}
               {showDetailBySKU && (
@@ -291,7 +299,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
                     Detalle por SKU
                     {reabastoDetalle && ` (${reabastoDetalle.total} registros)`}
                   </h4>
-                  
+
                   {/* Loading State */}
                   {reabastoDetalleLoading && (
                     <div className="text-center py-8">
@@ -955,15 +963,6 @@ export default function AccionesView({ data }: AccionesViewProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
                 Agente VEMIO
-              </button>
-              <button
-                onClick={() => toggleExpanded(actionType)}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Ver Detalles
               </button>
             </div>
           )}
