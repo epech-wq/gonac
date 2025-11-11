@@ -14,7 +14,7 @@ interface UsePromotoriaReturn<T> {
   data: T | null;
   loading: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetch: (storeId?: number) => Promise<void>;
 }
 
 /**
@@ -139,7 +139,7 @@ export function usePromotoriaProductsSinVentaByStore(
 
   const fetchData = useCallback(async (storeId?: number) => {
     const targetStoreId = storeId || id_store;
-    
+
     if (!targetStoreId) {
       setError(new Error('Store ID is required'));
       return;

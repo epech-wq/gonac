@@ -5,7 +5,7 @@ import {
 } from '@/types/segmentacion';
 
 export class SegmentacionRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient) { }
 
   /**
    * Get segmentation metrics from materialized view
@@ -34,7 +34,17 @@ export class SegmentacionRepository {
       );
     }
 
-    return data.map((item: any) => ({
+    return data.map((item: {
+      segment: string;
+      ventas_valor: number;
+      ventas_unidades: number;
+      dias_inventario: number;
+      contribucion_porcentaje: number;
+      num_tiendas_segmento: number;
+      participacion_segmento: number;
+      ventas_semana_promedio_tienda_pesos: number;
+      ventas_semana_promedio_tienda_unidades: number;
+    }) => ({
       segment: String(item.segment),
       ventas_valor: Number(item.ventas_valor),
       ventas_unidades: Number(item.ventas_unidades),
@@ -94,15 +104,15 @@ export class SegmentacionRepository {
 
     // Create lookup maps for faster joins
     const metricsMap = new Map(
-      (metricsData || []).map((m: any) => [m.id_store, m])
+      (metricsData || []).map((m: { id_store: number;[key: string]: unknown }) => [m.id_store, m])
     );
     const storeMap = new Map(
-      (storeData || []).map((s: any) => [s.id_store, s.store_name])
+      (storeData || []).map((s: { id_store: number; store_name: string }) => [s.id_store, s.store_name])
     );
 
     // Join data in code
     return segmentData
-      .map((item: any) => {
+      .map((item: { id_store: number; segment: string }) => {
         const metrics = metricsMap.get(item.id_store);
         const storeName = storeMap.get(item.id_store);
 

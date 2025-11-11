@@ -55,7 +55,7 @@ const tabs = [
 
 export default function VemioTabs({ activeTab, onTabChange }: VemioTabsProps) {
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+    <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden">
       <nav className="-mb-px flex space-x-4 md:space-x-8 min-w-max md:min-w-0" aria-label="Tabs">
         {tabs.map((tab) => (
           <button

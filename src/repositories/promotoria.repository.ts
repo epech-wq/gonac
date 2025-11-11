@@ -35,7 +35,7 @@ export interface PromotoriaProduct {
  * Handles all database operations related to promotoria visits
  */
 export class PromotoriaRepository {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient) { }
 
   /**
    * Get global promotoria summary
@@ -95,7 +95,7 @@ export class PromotoriaRepository {
 
     return {
       id_store: Number(data.id_store) || 0,
-      store_name: (data.core_cat_store as any)?.store_name || 'Unknown Store',
+      store_name: (data.core_cat_store as { store_name?: string })?.store_name || 'Unknown Store',
       ventas_acumuladas: data.ventas_acumuladas || '0',
       riesgo_total: Number(data.riesgo_total) || 0,
       inventario_sin_rotacion_total: data.inventario_sin_rotacion_total || '0',
@@ -135,12 +135,12 @@ export class PromotoriaRepository {
     }
 
     // Map to PromotoriaProduct interface
-    return data.map((item: any) => ({
-      product_name: item.core_cat_product?.product_name || 'Unknown Product',
-      ventas_totales_unidades: Number(item.ventas_totales_unidades) || 0,
-      inventario_sin_rotacion: Number(item.inventario_sin_rotacion) || 0,
-      precio_individual: Number(item.precio_individual) || 0,
-      riesgo: Number(item.riesgo) || 0,
+    return data.map((item) => ({
+      product_name: (item as { core_cat_product?: { product_name?: string } }).core_cat_product?.product_name || 'Unknown Product',
+      ventas_totales_unidades: Number((item as { ventas_totales_unidades?: number }).ventas_totales_unidades) || 0,
+      inventario_sin_rotacion: Number((item as { inventario_sin_rotacion?: number }).inventario_sin_rotacion) || 0,
+      precio_individual: Number((item as { precio_individual?: number }).precio_individual) || 0,
+      riesgo: Number((item as { riesgo?: number }).riesgo) || 0,
     }));
   }
 }

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { VemioData, vemioMockData } from "@/data/vemio-mock-data";
+import { useState, useEffect, useCallback } from "react";
+import { VemioData } from "@/data/vemio-mock-data";
 import { useCategoriasConCaducidad, useDescuento, useCategoryStats } from "@/hooks/useDescuento";
 import {
   useAccionReabastoSummary,
@@ -8,10 +8,10 @@ import {
   useAccionReabastoDetalle
 } from "@/hooks/useAccionReabasto";
 import { useExhibicionResumen } from "@/hooks/useExhibiciones";
-import { 
-  usePromotoriaSummary, 
-  usePromotoriaTienda, 
-  usePromotoriaProductsSinVentaByStore 
+import {
+  usePromotoriaSummary,
+  usePromotoriaTienda,
+  usePromotoriaProductsSinVentaByStore
 } from "@/hooks/usePromotoria";
 import ExhibicionConfigCard from "@/components/vemio/ExhibicionConfigCard";
 import ExhibicionMetricsCards from "@/components/vemio/ExhibicionMetricsCards";
@@ -79,10 +79,10 @@ export default function AccionesView({ data }: AccionesViewProps) {
   const { data: reabastoDetalle, loading: reabastoDetalleLoading } = useAccionReabastoDetalle();
 
   // Fetch Acción #2: Exhibiciones Adicionales data
-  const { 
-    data: exhibicionResumen, 
+  const {
+    data: exhibicionResumen,
     loading: exhibicionLoading,
-    refetch: refetchExhibicion 
+    refetch: refetchExhibicion
   } = useExhibicionResumen({
     dias_mes: 30,
     costo_exhibicion: costoExhibicion,
@@ -92,17 +92,17 @@ export default function AccionesView({ data }: AccionesViewProps) {
   });
 
   // Extract resumen data safely
-  const resumenData = exhibicionResumen && 'resumen' in exhibicionResumen 
-    ? exhibicionResumen.resumen 
+  const resumenData = exhibicionResumen && 'resumen' in exhibicionResumen
+    ? exhibicionResumen.resumen
     : null;
 
   // Fetch Acción #4: Visita Promotoría data
   const { data: promotoriaSummary, loading: promotoriaSummaryLoading } = usePromotoriaSummary();
   const { data: promotoriaTienda, loading: promotoriaTiendaLoading } = usePromotoriaTienda();
-  const { data: promotoriaProducts, loading: promotoriaProductsLoading, refetch: refetchProducts } = usePromotoriaProductsSinVentaByStore({ 
+  const { data: promotoriaProducts, loading: promotoriaProductsLoading, refetch: refetchProducts } = usePromotoriaProductsSinVentaByStore({
     id_store: promotoriaTienda?.data.id_store,
     limit: 3,
-    autoFetch: false 
+    autoFetch: false
   });
 
   // Fetch products when store ID is available

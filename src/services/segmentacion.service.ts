@@ -7,7 +7,7 @@ import {
 } from '@/types/segmentacion';
 
 export class SegmentacionService {
-  constructor(private repository: SegmentacionRepository) {}
+  constructor(private repository: SegmentacionRepository) { }
 
   /**
    * Get raw segmentation metrics
@@ -53,18 +53,19 @@ export class SegmentacionService {
   async getDetalleGrouped(): Promise<SegmentacionDetalleGrouped> {
     try {
       const data = await this.repository.getDetalle();
-      
+
       // Group by segment
       const grouped = data.reduce((acc, item) => {
         const segment = item.segment;
         if (!acc[segment]) {
           acc[segment] = [];
         }
-        
+
         // Remove segment field from the item
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { segment: _, ...storeData } = item;
         acc[segment].push(storeData);
-        
+
         return acc;
       }, {} as Record<string, Omit<typeof data[0], 'segment'>[]>);
 
