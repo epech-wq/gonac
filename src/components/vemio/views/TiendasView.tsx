@@ -10,11 +10,13 @@ type SegmentType = 'hot' | 'balanceadas' | 'slow' | 'criticas';
 
 // Map API segment names to UI segment types
 const mapSegmentToType = (segment: string): SegmentType | null => {
-  const normalized = segment.toLowerCase();
+  const normalized = segment.toLowerCase().trim();
+
   if (normalized === 'hot') return 'hot';
-  if (normalized === 'balanceadas' || normalized === 'balanced') return 'balanceadas';
+  if (normalized === 'balanceadas' || normalized === 'balanceada' || normalized === 'balanced') return 'balanceadas';
   if (normalized === 'slow') return 'slow';
-  if (normalized === 'criticas' || normalized === 'dead') return 'criticas';
+  if (normalized === 'criticas' || normalized === 'critica' || normalized === 'críticas' || normalized === 'crítica' || normalized === 'dead') return 'criticas';
+
   return null;
 };
 
@@ -301,6 +303,7 @@ export default function TiendasView({ data }: TiendasViewProps) {
         ventasValor: number;
         ventasUnidades: number;
         ventaSemanalTienda: number;
+        ventaSemanalTiendaUnidades: number;
         diasInventario: number;
       };
       stores: Array<{
@@ -313,10 +316,10 @@ export default function TiendasView({ data }: TiendasViewProps) {
         diasInventario: number;
       }>;
     }> = {
-      hot: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, diasInventario: 0 }, stores: [] },
-      balanceadas: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, diasInventario: 0 }, stores: [] },
-      slow: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, diasInventario: 0 }, stores: [] },
-      criticas: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, diasInventario: 0 }, stores: [] }
+      hot: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, ventaSemanalTiendaUnidades: 0, diasInventario: 0 }, stores: [] },
+      balanceadas: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, ventaSemanalTiendaUnidades: 0, diasInventario: 0 }, stores: [] },
+      slow: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, ventaSemanalTiendaUnidades: 0, diasInventario: 0 }, stores: [] },
+      criticas: { count: 0, percentage: 0, contribution: 0, metrics: { ventasValor: 0, ventasUnidades: 0, ventaSemanalTienda: 0, ventaSemanalTiendaUnidades: 0, diasInventario: 0 }, stores: [] }
     };
 
     segmentacionData.segments.forEach(seg => {
@@ -330,6 +333,7 @@ export default function TiendasView({ data }: TiendasViewProps) {
             ventasValor: seg.ventas_valor,
             ventasUnidades: seg.ventas_unidades,
             ventaSemanalTienda: seg.ventas_semana_promedio_tienda_pesos,
+            ventaSemanalTiendaUnidades: seg.ventas_semana_promedio_tienda_unidades,
             diasInventario: seg.dias_inventario
           },
           // Keep mock stores for now since API doesn't provide individual store details in this endpoint

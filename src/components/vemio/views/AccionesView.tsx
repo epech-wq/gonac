@@ -448,7 +448,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Elasticidad Totopos
+                      Elasticidad Mix
                     </label>
                     <input
                       type="number"
@@ -498,10 +498,10 @@ export default function AccionesView({ data }: AccionesViewProps) {
                     </div>
                   </div>
                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                    <div className="text-sm text-blue-600 dark:text-blue-400">Reducción Riesgo</div>
+                    <div className="text-sm text-blue-600 dark:text-blue-400">Reducción Riesgo Promedio</div>
                     <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                      {(Object.values(descuentoData.items).reduce((sum, item) => sum + item.reduccion, 0) /
-                        Object.values(descuentoData.items).length).toFixed(1)}%
+                      {((Object.values(descuentoData.items).reduce((sum, item) => sum + item.reduccion, 0) /
+                        Object.values(descuentoData.items).length) * 100).toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -554,9 +554,9 @@ export default function AccionesView({ data }: AccionesViewProps) {
                             </p>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Reducción riesgo</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">Reducción Riesgo</div>
                             <div className={`text-xl font-bold ${color.accent}`}>
-                              {metrics.reduccion.toFixed(1)}%
+                              {(metrics.reduccion * 100).toFixed(1)}%
                             </div>
                           </div>
                         </div>
@@ -603,7 +603,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
                         <p className="text-sm text-gray-600 dark:text-gray-400">7 SKUs en 46 tiendas</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Reducción riesgo</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Reducción Riesgo</div>
                         <div className="text-xl font-bold text-orange-600 dark:text-orange-400">61.1%</div>
                       </div>
                     </div>
@@ -635,7 +635,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
                         <p className="text-sm text-gray-600 dark:text-gray-400">2 SKUs en 46 tiendas</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Reducción riesgo</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Reducción Riesgo</div>
                         <div className="text-xl font-bold text-blue-600 dark:text-blue-400">68.4%</div>
                       </div>
                     </div>
