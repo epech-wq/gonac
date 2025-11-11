@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  ValorizacionResponse, 
-  ValorizacionSummary, 
+import {
+  ValorizacionResponse,
+  ValorizacionSummary,
   ValorizacionItem,
   AgotadoDetalleResponse,
   CaducidadDetalleResponse,
@@ -70,7 +70,7 @@ export function useValorizacion<T = ValorizacionResponse>(
       }
 
       const response = await fetch(`/api/valorizacion?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -81,10 +81,28 @@ export function useValorizacion<T = ValorizacionResponse>(
         throw new Error(result.message || 'Failed to fetch data');
       }
 
-      setData(result.data);
+      // For detail formats, the API spreads the service response
+      // So we get { success: true, data: [...], total: number, timestamp: string }
+      // For other formats, we get { success: true, data: {...} }
+      // In both cases, result.data contains what we need, but for detail formats
+      // we need to pass the whole result (minus success) to maintain the structure
+      if (format.includes('-detalle')) {
+        // For detail formats, pass the entire response structure
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { success, ...detailData } = result;
+        setData(detailData as T);
+      } else {
+        // For other formats, just pass the data
+        setData(result.data);
+      }
     } catch (err) {
       setError(err as Error);
-      console.error('useValorizacion error:', err);
+      console.error('useValorizacion error:', {
+        format,
+        type,
+        error: err,
+        message: (err as Error).message
+      });
     } finally {
       setLoading(false);
     }
@@ -179,10 +197,10 @@ export function useValorizacionCritical() {
  */
 export function useAgotadoDetalle(options: { autoFetch?: boolean } = {}) {
   const { autoFetch = true } = options;
-  
-  return useValorizacion<AgotadoDetalleResponse>({ 
+
+  return useValorizacion<AgotadoDetalleResponse>({
     format: 'agotado-detalle',
-    autoFetch 
+    autoFetch
   });
 }
 
@@ -229,10 +247,10 @@ export function useAgotadoDetalle(options: { autoFetch?: boolean } = {}) {
  */
 export function useCaducidadDetalle(options: { autoFetch?: boolean } = {}) {
   const { autoFetch = true } = options;
-  
-  return useValorizacion<CaducidadDetalleResponse>({ 
+
+  return useValorizacion<CaducidadDetalleResponse>({
     format: 'caducidad-detalle',
-    autoFetch 
+    autoFetch
   });
 }
 
@@ -271,10 +289,10 @@ export function useCaducidadDetalle(options: { autoFetch?: boolean } = {}) {
  */
 export function useSinVentasDetalle(options: { autoFetch?: boolean } = {}) {
   const { autoFetch = true } = options;
-  
-  return useValorizacion<SinVentasDetalleResponse>({ 
+
+  return useValorizacion<SinVentasDetalleResponse>({
     format: 'sin-ventas-detalle',
-    autoFetch 
+    autoFetch
   });
 }
 

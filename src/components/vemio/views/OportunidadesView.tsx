@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useState } from "react";
-import { 
-  useValorizacionSummary, 
-  useAgotadoDetalle, 
-  useCaducidadDetalle, 
-  useSinVentasDetalle 
+import {
+  useValorizacionSummary,
+  useAgotadoDetalle,
+  useCaducidadDetalle,
+  useSinVentasDetalle
 } from "@/hooks/useValorizacion";
 
 interface OportunidadesViewProps {
@@ -19,16 +19,28 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
 
   // Fetch summary data from the database
   const { data: valorizacionData, loading, error } = useValorizacionSummary();
-  
+
   // Fetch detailed data for each opportunity type (only fetch when needed, but load on mount for better UX)
-  const { data: agotadoDetalleData, loading: agotadoLoading } = useAgotadoDetalle();
-  const { data: caducidadDetalleData, loading: caducidadLoading } = useCaducidadDetalle();
-  const { data: sinVentasDetalleData, loading: sinVentasLoading } = useSinVentasDetalle();
+  const { data: agotadoDetalleData, loading: agotadoLoading, error: agotadoError } = useAgotadoDetalle();
+  const { data: caducidadDetalleData, loading: caducidadLoading, error: caducidadError } = useCaducidadDetalle();
+  const { data: sinVentasDetalleData, loading: sinVentasLoading, error: sinVentasError } = useSinVentasDetalle();
+
+  // Debug logging
+  console.log('Hook data:', {
+    agotadoDetalleData,
+    caducidadDetalleData,
+    sinVentasDetalleData,
+    errors: { agotadoError, caducidadError, sinVentasError }
+  });
 
   // Transform detailed data to match the expected format for the table
-  const transformAgotadoData = (data: any) => {
-    if (!data || !Array.isArray(data)) return [];
-    return data.map((item: any, index: number) => ({
+  const transformAgotadoData = (response: any) => {
+    console.log('transformAgotadoData received:', response);
+    if (!response || !response.data || !Array.isArray(response.data)) {
+      console.warn('Invalid agotado data structure:', response);
+      return [];
+    }
+    return response.data.map((item: any, index: number) => ({
       id: `agotado-${index}`,
       tienda: item.store_name,
       sku: item.product_name,
@@ -39,9 +51,13 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
     }));
   };
 
-  const transformCaducidadData = (data: any) => {
-    if (!data || !Array.isArray(data)) return [];
-    return data.map((item: any, index: number) => ({
+  const transformCaducidadData = (response: any) => {
+    console.log('transformCaducidadData received:', response);
+    if (!response || !response.data || !Array.isArray(response.data)) {
+      console.warn('Invalid caducidad data structure:', response);
+      return [];
+    }
+    return response.data.map((item: any, index: number) => ({
       id: `caducidad-${index}`,
       tienda: item.store_name,
       sku: item.product_name,
@@ -53,9 +69,13 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
     }));
   };
 
-  const transformSinVentasData = (data: any) => {
-    if (!data || !Array.isArray(data)) return [];
-    return data.map((item: any, index: number) => ({
+  const transformSinVentasData = (response: any) => {
+    console.log('transformSinVentasData received:', response);
+    if (!response || !response.data || !Array.isArray(response.data)) {
+      console.warn('Invalid sin ventas data structure:', response);
+      return [];
+    }
+    return response.data.map((item: any, index: number) => ({
       id: `sinventa-${index}`,
       tienda: item.store_name,
       sku: item.product_name,
@@ -202,7 +222,7 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
   const renderOpportunityCard = (type: OpportunityType, opportunityData: any) => {
     const colors = getCardColor(type);
     const isDetailLoading = getDetailLoading(type);
-    
+
     return (
       <div key={type} className={`rounded-lg shadow-sm border-2 ${colors.bg} ${colors.border}`}>
         {/* Card Header */}
