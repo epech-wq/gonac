@@ -33,7 +33,11 @@ interface KPICardData {
   icon: string;
 }
 
-export default function AgenticoView() {
+interface AgenticoViewProps {
+  onNavigateToOportunidades?: () => void;
+}
+
+export default function AgenticoView({ onNavigateToOportunidades }: AgenticoViewProps) {
   const [activeFilter, setActiveFilter] = useState<AlertFilter>("all");
 
   // Alert data
@@ -269,6 +273,7 @@ export default function AgenticoView() {
                   </div>
 
                   <button
+                    onClick={onNavigateToOportunidades}
                     className={`w-full py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                       alert.type === "agotado"
                         ? "bg-error-600 hover:bg-error-700 text-white"

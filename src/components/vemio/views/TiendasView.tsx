@@ -391,7 +391,254 @@ export default function TiendasView({ data }: TiendasViewProps) {
         </div>
       )}
 
-      {/* Header */}
+      {/* Vista Consolidada Card */}
+      <div className="rounded-lg bg-white shadow-sm dark:bg-gray-800 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">
+                Vista Consolidada - Todas las Tiendas
+              </h2>
+              <p className="text-sm text-blue-100">
+                Resumen general del universo de tiendas y oportunidades detectadas
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Métricas Principales */}
+        <div className="p-6 bg-gray-50 dark:bg-gray-900/30">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Tiendas</div>
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                {totalStoresFromAPI}
+              </div>
+              <div className="text-xs text-gray-500">100% del universo</div>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ventas Totales</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+                {formatCurrency(totalVentasFromAPI)}
+              </div>
+              <div className="text-xs text-gray-500">Semana actual</div>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Unidades Vendidas</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                {formatNumber(
+                  (apiSegmentMetrics?.hot?.metrics.ventasUnidades || 0) +
+                  (apiSegmentMetrics?.balanceadas?.metrics.ventasUnidades || 0) +
+                  (apiSegmentMetrics?.slow?.metrics.ventasUnidades || 0) +
+                  (apiSegmentMetrics?.criticas?.metrics.ventasUnidades || 0)
+                )}
+              </div>
+              <div className="text-xs text-gray-500">Semana actual</div>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Venta Promedio</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                {formatCurrency(totalVentasFromAPI / totalStoresFromAPI)}
+              </div>
+              <div className="text-xs text-gray-500">Por tienda/semana</div>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Días Inventario</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">
+                {(() => {
+                  const totalDiasInv = 
+                    ((apiSegmentMetrics?.hot?.metrics.diasInventario || 0) * (apiSegmentMetrics?.hot?.count || 0)) +
+                    ((apiSegmentMetrics?.balanceadas?.metrics.diasInventario || 0) * (apiSegmentMetrics?.balanceadas?.count || 0)) +
+                    ((apiSegmentMetrics?.slow?.metrics.diasInventario || 0) * (apiSegmentMetrics?.slow?.count || 0)) +
+                    ((apiSegmentMetrics?.criticas?.metrics.diasInventario || 0) * (apiSegmentMetrics?.criticas?.count || 0));
+                  return (totalDiasInv / totalStoresFromAPI).toFixed(1);
+                })()}
+              </div>
+              <div className="text-xs text-gray-500">Promedio ponderado</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Áreas de Oportunidad */}
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Áreas de Oportunidad Identificadas
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* Prevenir Agotados (Hot) */}
+            <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/10 border-2 border-red-200 dark:border-red-800 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-bold text-red-900 dark:text-red-100">Prevenir Agotados (Hot)</span>
+                    <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded">Crítica</span>
+                  </div>
+                  <div className="text-xs text-red-700 dark:text-red-300 mb-2">
+                    {apiSegmentMetrics?.hot?.count || 0} tiendas afectadas
+                  </div>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                {formatCurrency((apiSegmentMetrics?.hot?.count || 0) * 1184)}
+              </div>
+              <div className="text-xs text-red-700 dark:text-red-300">Impacto potencial</div>
+            </div>
+
+            {/* Acelerar Venta (Slow) */}
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/10 border-2 border-orange-200 dark:border-orange-800 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-bold text-orange-900 dark:text-orange-100">Acelerar Venta (Slow)</span>
+                    <span className="px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded">Alta</span>
+                  </div>
+                  <div className="text-xs text-orange-700 dark:text-orange-300 mb-2">
+                    {apiSegmentMetrics?.slow?.count || 0} tiendas afectadas
+                  </div>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {formatCurrency((apiSegmentMetrics?.slow?.count || 0) * 1878)}
+              </div>
+              <div className="text-xs text-orange-700 dark:text-orange-300">Impacto potencial</div>
+            </div>
+
+            {/* Recuperación (Críticas) */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/10 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-bold text-purple-900 dark:text-purple-100">Recuperación (Críticas)</span>
+                    <span className="px-2 py-0.5 bg-red-600 text-white text-xs font-bold rounded">Crítica</span>
+                  </div>
+                  <div className="text-xs text-purple-700 dark:text-purple-300 mb-2">
+                    {apiSegmentMetrics?.criticas?.count || 0} tiendas afectadas
+                  </div>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {formatCurrency((apiSegmentMetrics?.criticas?.count || 0) * 2644)}
+              </div>
+              <div className="text-xs text-purple-700 dark:text-purple-300">Impacto potencial</div>
+            </div>
+
+            {/* Optimización (Balanceadas) */}
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/10 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-bold text-yellow-900 dark:text-yellow-100">Optimización (Balanceadas)</span>
+                    <span className="px-2 py-0.5 bg-yellow-500 text-white text-xs font-bold rounded">Media</span>
+                  </div>
+                  <div className="text-xs text-yellow-700 dark:text-yellow-300 mb-2">
+                    {apiSegmentMetrics?.balanceadas?.count || 0} tiendas afectadas
+                  </div>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {formatCurrency((apiSegmentMetrics?.balanceadas?.count || 0) * 350)}
+              </div>
+              <div className="text-xs text-yellow-700 dark:text-yellow-300">Impacto potencial</div>
+            </div>
+          </div>
+
+          {/* Impacto Total */}
+          <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-between text-white">
+              <div>
+                <div className="text-sm font-medium mb-1">Impacto Total Potencial</div>
+                <div className="text-4xl font-bold">
+                  {formatCurrency(
+                    ((apiSegmentMetrics?.hot?.count || 0) * 1184) +
+                    ((apiSegmentMetrics?.slow?.count || 0) * 1878) +
+                    ((apiSegmentMetrics?.criticas?.count || 0) * 2644) +
+                    ((apiSegmentMetrics?.balanceadas?.count || 0) * 350)
+                  )}
+                </div>
+                <div className="text-xs text-green-100 mt-1">Suma de todas las oportunidades detectadas</div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-medium mb-1">Tiendas con Oportunidades</div>
+                <div className="text-4xl font-bold">{totalStoresFromAPI}</div>
+                <div className="text-xs text-blue-100 mt-1">
+                  {((totalStoresFromAPI / totalStoresFromAPI) * 100).toFixed(0)}% del total requiere acción
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Acciones Recomendadas */}
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+              Acciones Recomendadas a Nivel General
+            </h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button className="bg-gray-900 dark:bg-gray-700 hover:bg-gray-800 dark:hover:bg-gray-600 text-white rounded-lg p-4 text-center transition-colors">
+                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="font-semibold text-sm mb-1">Prevenir Quiebres</div>
+                <div className="text-xs text-gray-300">{apiSegmentMetrics?.hot?.count || 0} tiendas Hot</div>
+              </button>
+
+              <button className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-4 text-center transition-colors">
+                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <div className="font-semibold text-sm mb-1">Acelerar Ventas</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">{apiSegmentMetrics?.slow?.count || 0} tiendas Slow</div>
+              </button>
+
+              <button className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-4 text-center transition-colors">
+                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <div className="font-semibold text-sm mb-1">Visitas Campo</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">{apiSegmentMetrics?.criticas?.count || 0} tiendas Críticas</div>
+              </button>
+
+              <button className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-4 text-center transition-colors">
+                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <div className="font-semibold text-sm mb-1">Optimizar Stock</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">Todas las tiendas</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Botones de Acción */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Ver Plan de Acción Consolidado
+            </button>
+
+            <button className="bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Exportar Análisis Completo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Header de Segmentación */}
       <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
           Segmentación de Tiendas

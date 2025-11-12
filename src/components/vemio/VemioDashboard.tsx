@@ -19,7 +19,7 @@ export default function VemioDashboard() {
   const renderTabContent = () => {
     switch (activeTab) {
       case "agentico":
-        return <AgenticoView />;
+        return <AgenticoView onNavigateToOportunidades={() => setActiveTab("oportunidades")} />;
       case "resumen":
         return <ResumenView data={vemioMockData.resumen} />;
       case "tiendas":
@@ -31,7 +31,7 @@ export default function VemioDashboard() {
       case "acciones":
         return <AccionesView data={vemioMockData.acciones} />;
       default:
-        return <AgenticoView />;
+        return <AgenticoView onNavigateToOportunidades={() => setActiveTab("oportunidades")} />;
     }
   };
 
