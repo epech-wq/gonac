@@ -69,12 +69,14 @@ export interface DatosWizard {
 
 interface WizardPlanPrescriptivoProps {
   oportunidadId?: string;
+  oportunidadType?: string; // 'agotado' | 'caducidad' | 'sinVenta' | 'bajoSellThrough'
   onClose?: () => void;
   onComplete?: (datos: DatosWizard) => void;
 }
 
 export default function WizardPlanPrescriptivo({
   oportunidadId,
+  oportunidadType,
   onClose,
   onComplete
 }: WizardPlanPrescriptivoProps) {
@@ -133,6 +135,8 @@ export default function WizardPlanPrescriptivo({
             datos={datos}
             onActualizar={handleActualizarDatos}
             onSiguiente={handleSiguiente}
+            oportunidadId={oportunidadId}
+            oportunidadType={oportunidadType}
           />
         );
       case 2:

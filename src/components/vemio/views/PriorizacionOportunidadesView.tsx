@@ -325,7 +325,10 @@ export default function PriorizacionOportunidadesView() {
               </button>
             )}
             <button 
-              onClick={() => router.push('/demo/wizard-plan')}
+              onClick={() => {
+                // Pasar el tipo de oportunidad en la URL para pre-cargar datos
+                router.push(`/demo/wizard-plan?oportunidadId=${opp.id}&oportunidadType=${opp.type}`);
+              }}
               className="flex-1 flex items-center justify-center px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors font-medium text-sm"
             >
               Crear Plan Prescriptivo
