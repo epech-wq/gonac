@@ -6,6 +6,7 @@ import {
   useCaducidadDetalle,
   useSinVentasDetalle
 } from "@/hooks/useValorizacion";
+import WizardPlanPrescriptivo, { DatosOportunidad } from "@/components/plan-wizard/WizardPlanPrescriptivo";
 
 interface OportunidadesViewProps {
   // Props are now optional since we're using the hook
@@ -16,6 +17,8 @@ type OpportunityType = 'agotado' | 'caducidad' | 'sinVenta';
 
 export default function OportunidadesView({ data: propData }: OportunidadesViewProps) {
   const [expandedCard, setExpandedCard] = useState<OpportunityType | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [selectedOportunidad, setSelectedOportunidad] = useState<DatosOportunidad | null>(null);
 
   // Fetch summary data from the database
   const { data: valorizacionData, loading, error } = useValorizacionSummary();
@@ -193,6 +196,42 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
     setExpandedCard(expandedCard === type ? null : type);
   };
 
+  const handleCrearPlan = (type: OpportunityType, opportunityData: any) => {
+    // Crear objeto de oportunidad para pasar al wizard
+    const oportunidad: DatosOportunidad = {
+      id: `oportunidad-${type}-${Date.now()}`,
+      categoria: type,
+      impacto: opportunityData.impacto,
+      tiendas: opportunityData.registros?.map((reg: any) => ({
+        id: `tienda-${reg.tienda}`,
+        nombre: reg.tienda,
+        ubicacion: "Ubicación no especificada",
+        segmento: reg.segmentoTienda || "general"
+      })) || [],
+      skus: opportunityData.registros?.map((reg: any) => ({
+        id: `sku-${reg.sku}`,
+        nombre: reg.sku,
+        categoria: type,
+        inventario: reg.inventarioRemanente || reg.diasInventario || 0,
+        precio: 0
+      })) || []
+    };
+    
+    setSelectedOportunidad(oportunidad);
+    setWizardOpen(true);
+  };
+
+  const handleCloseWizard = () => {
+    setWizardOpen(false);
+    setSelectedOportunidad(null);
+  };
+
+  const handleCompletePlan = (datos: any) => {
+    console.log("Plan completado:", datos);
+    // TODO: Implementar lógica de guardado del plan
+    handleCloseWizard();
+  };
+
   const getSegmentColor = (segment: string) => {
     switch (segment) {
       case 'hot':
@@ -255,41 +294,56 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
             </div>
           </div>
 
-          {/* Ver Detalle Button */}
-          {isDetailLoading ? (
-            <button
-              disabled
-              className="w-full flex items-center justify-center px-4 py-2 bg-blue-400 text-white rounded-lg cursor-not-allowed"
-            >
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Cargando detalles...
-            </button>
-          ) : opportunityData.registros && opportunityData.registros.length > 0 ? (
-            <button
-              onClick={() => toggleExpanded(type)}
-              className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Ver Detalle ({opportunityData.registros.length} registros)
-              <svg
-                className={`h-4 w-4 ml-2 transform transition-transform ${expandedCard === type ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            {/* Ver Detalle Button */}
+            {isDetailLoading ? (
+              <button
+                disabled
+                className="w-full flex items-center justify-center px-4 py-2 bg-blue-400 text-white rounded-lg cursor-not-allowed"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          ) : (
-            <div className="w-full flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Cargando detalles...
+              </button>
+            ) : opportunityData.registros && opportunityData.registros.length > 0 ? (
+              <button
+                onClick={() => toggleExpanded(type)}
+                className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Ver Detalle ({opportunityData.registros.length} registros)
+                <svg
+                  className={`h-4 w-4 ml-2 transform transition-transform ${expandedCard === type ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            ) : (
+              <div className="w-full flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg">
+                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Registros detallados no disponibles
+              </div>
+            )}
+
+            {/* Crear Plan Button */}
+            <button
+              onClick={() => handleCrearPlan(type, opportunityData)}
+              className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400"
+              disabled={!opportunityData.registros || opportunityData.registros.length === 0}
+            >
               <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Registros detallados no disponibles
-            </div>
-          )}
+              Crear Plan Prescriptivo
+            </button>
+          </div>
         </div>
 
         {/* Expanded Details */}
@@ -496,6 +550,15 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
           renderOpportunityCard(type as OpportunityType, opportunityData)
         )}
       </div>
+
+      {/* Wizard Modal */}
+      {wizardOpen && selectedOportunidad && (
+        <WizardPlanPrescriptivo
+          oportunidad={selectedOportunidad}
+          onClose={handleCloseWizard}
+          onComplete={handleCompletePlan}
+        />
+      )}
     </div>
   );
 }
