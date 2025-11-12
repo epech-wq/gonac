@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { DatosWizard, TipoAccion, ParametrosAccion } from "../WizardPlanPrescriptivo";
+import { useState } from "react";
+import { DatosWizard } from "../WizardPlanPrescriptivo";
 
 interface Paso2AccionProps {
   datos: DatosWizard;
@@ -10,450 +10,424 @@ interface Paso2AccionProps {
   onAnterior: () => void;
 }
 
-const acciones = [
-  {
-    id: "redistribuir" as TipoAccion,
-    nombre: "Redistribuir",
-    descripcion: "Mover inventario entre tiendas para optimizar el stock",
-    icono: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-      </svg>
-    )
-  },
-  {
-    id: "reabastecer" as TipoAccion,
-    nombre: "Reabastecer",
-    descripcion: "Aumentar el nivel de inventario para cubrir demanda",
-    icono: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-      </svg>
-    )
-  },
-  {
-    id: "exhibicion" as TipoAccion,
-    nombre: "Exhibición",
-    descripcion: "Crear exhibiciones adicionales en punto de venta",
-    icono: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-    )
-  },
-  {
-    id: "promocion" as TipoAccion,
-    nombre: "Promoción",
-    descripcion: "Aplicar descuentos para acelerar la rotación",
-    icono: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-      </svg>
-    )
-  },
-  {
-    id: "visita_promotoria" as TipoAccion,
-    nombre: "Visita Promotoría",
-    descripcion: "Programar visitas de promotoría para impulsar ventas",
-    icono: (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-    )
-  }
-];
+type TipoAccionDetallado = 'reabastoUrgente' | 'exhibicionesAdicionales' | 'promocionEvacuar' | 'visitaPromotoria';
 
 export default function Paso2Accion({ datos, onActualizar, onSiguiente, onAnterior }: Paso2AccionProps) {
-  const [accionSeleccionada, setAccionSeleccionada] = useState<TipoAccion | null>(
-    datos.accionSeleccionada || null
+  const [accionSeleccionada, setAccionSeleccionada] = useState<TipoAccionDetallado | null>(
+    datos.accionSeleccionada as TipoAccionDetallado | null
   );
-  const [parametros, setParametros] = useState<ParametrosAccion>(datos.parametros || {});
 
-  useEffect(() => {
-    // Inicializar parámetros por defecto según la acción
-    if (accionSeleccionada) {
-      const nuevosParametros = { ...parametros };
-      
-      if (accionSeleccionada === 'reabastecer' && !parametros.diasCobertura) {
-        nuevosParametros.diasCobertura = 30;
-        nuevosParametros.nivelStockObjetivo = 500;
-      } else if (accionSeleccionada === 'promocion' && !parametros.porcentajeDescuento) {
-        nuevosParametros.porcentajeDescuento = 15;
-        nuevosParametros.elasticidadPrecio = -1.5;
-      } else if (accionSeleccionada === 'exhibicion' && !parametros.duracionDias) {
-        nuevosParametros.duracionDias = 14;
-      } else if (accionSeleccionada === 'visita_promotoria' && !parametros.duracionHoras) {
-        nuevosParametros.duracionHoras = 4;
-      }
-      
-      setParametros(nuevosParametros);
-    }
-  }, [accionSeleccionada]);
+  // Parámetros para Reabasto Urgente
+  const [diasCobertura, setDiasCobertura] = useState<number>(
+    datos.parametros.diasCobertura || 30
+  );
+  const [stockObjetivo, setStockObjetivo] = useState<number>(
+    datos.parametros.stockObjetivo || 100
+  );
 
-  const handleSeleccionarAccion = (accion: TipoAccion) => {
+  // Parámetros para Exhibiciones Adicionales
+  const [costoExhibicion, setCostoExhibicion] = useState<number>(
+    datos.parametros.costoExhibicion || 500
+  );
+  const [incrementoVentas, setIncrementoVentas] = useState<number>(
+    datos.parametros.incrementoVentas || 50
+  );
+
+  // Parámetros para Promoción para Evacuar
+  const [maxDescuento, setMaxDescuento] = useState<number>(
+    datos.parametros.maxDescuento || 45
+  );
+  const [elasticidadPapas, setElasticidadPapas] = useState<number>(
+    datos.parametros.elasticidadPapas || 1.5
+  );
+  const [elasticidadMix, setElasticidadMix] = useState<number>(
+    datos.parametros.elasticidadMix || 1.8
+  );
+
+  // Parámetros para Visita Promotoría
+  const [objetivoVisita, setObjetivoVisita] = useState<string>(
+    datos.parametros.objetivoVisita || 'auditoria'
+  );
+  const [duracionVisita, setDuracionVisita] = useState<number>(
+    datos.parametros.duracionVisita || 2
+  );
+
+  const handleSeleccionarAccion = (accion: TipoAccionDetallado) => {
     setAccionSeleccionada(accion);
   };
 
-  const handleActualizarParametro = (campo: keyof ParametrosAccion, valor: any) => {
-    setParametros(prev => ({ ...prev, [campo]: valor }));
-  };
-
   const handleContinuar = () => {
+    // Recopilar todos los parámetros según la acción seleccionada
+    const parametrosFinales = {
+      // Reabasto
+      diasCobertura,
+      stockObjetivo,
+      // Exhibiciones
+      costoExhibicion,
+      incrementoVentas,
+      // Promoción
+      maxDescuento,
+      elasticidadPapas,
+      elasticidadMix,
+      // Visita
+      objetivoVisita,
+      duracionVisita,
+    };
+
     onActualizar({
-      accionSeleccionada,
-      parametros
+      accionSeleccionada: accionSeleccionada as any,
+      parametros: parametrosFinales,
     });
     onSiguiente();
   };
 
-  const puedeAvanzar = accionSeleccionada !== null;
+  const acciones = [
+    {
+      id: 'reabastoUrgente' as TipoAccionDetallado,
+      titulo: 'Reabasto Urgente',
+      descripcion: 'Para tiendas HOT y Balanceadas con inventario bajo',
+      icono: (
+        <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      ),
+      color: 'border-red-200 dark:border-red-800 hover:border-red-400 dark:hover:border-red-600',
+      colorActivo: 'border-red-500 bg-red-50 dark:bg-red-950/20'
+    },
+    {
+      id: 'exhibicionesAdicionales' as TipoAccionDetallado,
+      titulo: 'Exhibiciones Adicionales',
+      descripcion: 'Ganar espacio adicional en tiendas HOT con alto ROI',
+      icono: (
+        <svg className="h-6 w-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+      color: 'border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600',
+      colorActivo: 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
+    },
+    {
+      id: 'promocionEvacuar' as TipoAccionDetallado,
+      titulo: 'Promoción para Evacuar Inventario',
+      descripcion: 'Descuentos estratégicos en tiendas Slow y Dead',
+      icono: (
+        <svg className="h-6 w-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      color: 'border-yellow-200 dark:border-yellow-800 hover:border-yellow-400 dark:hover:border-yellow-600',
+      colorActivo: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20'
+    },
+    {
+      id: 'visitaPromotoria' as TipoAccionDetallado,
+      titulo: 'Visita Promotoría',
+      descripcion: 'Visita presencial para auditoría y optimización',
+      icono: (
+        <svg className="h-6 w-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      color: 'border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600',
+      colorActivo: 'border-purple-500 bg-purple-50 dark:bg-purple-950/20'
+    },
+  ];
 
-  const renderParametros = () => {
-    if (!accionSeleccionada) return null;
-
+  const renderParametrosAccion = () => {
     switch (accionSeleccionada) {
-      case 'reabastecer':
+      case 'reabastoUrgente':
         return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Días de cobertura
-              </label>
-              <input
-                type="number"
-                value={parametros.diasCobertura || 30}
-                onChange={(e) => handleActualizarParametro('diasCobertura', parseInt(e.target.value))}
-                placeholder="Ej: 30"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Días de inventario objetivo
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Nivel de stock objetivo
-              </label>
-              <input
-                type="number"
-                value={parametros.nivelStockObjetivo || 500}
-                onChange={(e) => handleActualizarParametro('nivelStockObjetivo', parseInt(e.target.value))}
-                placeholder="Ej: 500 unidades"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Unidades totales deseadas
-              </p>
-            </div>
-          </div>
-        );
-
-      case 'redistribuir':
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tienda origen
-              </label>
-              <select
-                value={parametros.tiendaOrigen || ''}
-                onChange={(e) => handleActualizarParametro('tiendaOrigen', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Seleccionar tienda...</option>
-                {datos.tiendasSeleccionadas.map(t => (
-                  <option key={t.id} value={t.id}>{t.nombre}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tienda destino
-              </label>
-              <select
-                value={parametros.tiendaDestino || ''}
-                onChange={(e) => handleActualizarParametro('tiendaDestino', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Seleccionar tienda...</option>
-                {datos.tiendasSeleccionadas.map(t => (
-                  <option key={t.id} value={t.id}>{t.nombre}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        );
-
-      case 'exhibicion':
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tipo de exhibición
-              </label>
-              <select
-                value={parametros.tipoExhibicion || ''}
-                onChange={(e) => handleActualizarParametro('tipoExhibicion', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Seleccionar tipo...</option>
-                <option value="punto_extra">Punto Extra</option>
-                <option value="isla">Isla</option>
-                <option value="cabecera">Cabecera de Góndola</option>
-                <option value="pallet">Pallet Display</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Duración (días)
-              </label>
-              <input
-                type="number"
-                value={parametros.duracionDias || 14}
-                onChange={(e) => handleActualizarParametro('duracionDias', parseInt(e.target.value))}
-                placeholder="Ej: 14"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-          </div>
-        );
-
-      case 'promocion':
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Porcentaje de descuento (%)
-              </label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="5"
-                  max="50"
-                  step="5"
-                  value={parametros.porcentajeDescuento || 15}
-                  onChange={(e) => handleActualizarParametro('porcentajeDescuento', parseInt(e.target.value))}
-                  className="flex-1"
-                />
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 min-w-[60px]">
-                  {parametros.porcentajeDescuento || 15}%
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Elasticidad de precio
-                <span className="ml-2 text-gray-500 cursor-help" title="Factor que indica cuánto aumentan las ventas por cada punto de descuento">ⓘ</span>
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={parametros.elasticidadPrecio || -1.5}
-                onChange={(e) => handleActualizarParametro('elasticidadPrecio', parseFloat(e.target.value))}
-                placeholder="Ej: -1.5"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Valores negativos típicos: -0.5 (inelástico) a -3.0 (muy elástico)
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-6">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Configuración de Reabasto Urgente
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Fecha inicio
+                  Días de Cobertura Objetivo
                 </label>
                 <input
-                  type="date"
-                  value={parametros.fechaInicio || ''}
-                  onChange={(e) => handleActualizarParametro('fechaInicio', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  type="number"
+                  value={diasCobertura}
+                  onChange={(e) => setDiasCobertura(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Ej: 30"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Días de inventario post-reabasto
+                </p>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Fecha fin
+                  Stock Objetivo por SKU (unidades)
                 </label>
                 <input
-                  type="date"
-                  value={parametros.fechaFin || ''}
-                  onChange={(e) => handleActualizarParametro('fechaFin', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  type="number"
+                  value={stockObjetivo}
+                  onChange={(e) => setStockObjetivo(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Ej: 100"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Unidades mínimas por tienda
+                </p>
               </div>
+            </div>
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">💡 Nota:</span> Se priorizarán tiendas HOT y Balanceadas con inventario menor a 10 días de cobertura.
+              </p>
             </div>
           </div>
         );
 
-      case 'visita_promotoria':
+      case 'exhibicionesAdicionales':
         return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Objetivo de la visita
-              </label>
-              <select
-                value={parametros.objetivoVisita || ''}
-                onChange={(e) => handleActualizarParametro('objetivoVisita', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Seleccionar objetivo...</option>
-                <option value="activacion">Activación de producto</option>
-                <option value="acomodo">Acomodo y merchandising</option>
-                <option value="capacitacion">Capacitación al personal</option>
-                <option value="auditoria">Auditoría de punto de venta</option>
-              </select>
+          <div className="space-y-6">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Configuración de Exhibiciones Adicionales
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Costo por Exhibición ($)
+                </label>
+                <input
+                  type="number"
+                  value={costoExhibicion}
+                  onChange={(e) => setCostoExhibicion(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Ej: 500"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Costo mensual por espacio adicional
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Incremento en Ventas Esperado (%)
+                </label>
+                <input
+                  type="number"
+                  value={incrementoVentas}
+                  onChange={(e) => setIncrementoVentas(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Ej: 50"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Aumento esperado en ventas con exhibición
+                </p>
+              </div>
             </div>
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">💡 Viabilidad:</span> Solo se implementarán exhibiciones donde el ROI sea positivo: (Venta Incremental - Costo Exhibición) &gt; 0
+              </p>
+            </div>
+          </div>
+        );
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Duración estimada (horas)
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="8"
-                value={parametros.duracionHoras || 4}
-                onChange={(e) => handleActualizarParametro('duracionHoras', parseInt(e.target.value))}
-                placeholder="Ej: 4"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
+      case 'promocionEvacuar':
+        return (
+          <div className="space-y-6">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Configuración de Promoción
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Máximo Descuento (%)
+                </label>
+                <input
+                  type="number"
+                  value={maxDescuento}
+                  onChange={(e) => setMaxDescuento(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Ej: 45"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Descuento máximo permitido
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Elasticidad Papas
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={elasticidadPapas}
+                  onChange={(e) => setElasticidadPapas(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Ej: 1.5"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Sugerido: 1.5
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Elasticidad Mix
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={elasticidadMix}
+                  onChange={(e) => setElasticidadMix(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Ej: 1.8"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Sugerido: 1.8
+                </p>
+              </div>
+            </div>
+            <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">📊 Cálculo:</span> Incremento ventas = Elasticidad × % Descuento. 
+                Ej: Con {maxDescuento}% descuento y elasticidad {elasticidadPapas}, las ventas aumentan {(elasticidadPapas * maxDescuento).toFixed(0)}%.
+              </p>
+            </div>
+          </div>
+        );
+
+      case 'visitaPromotoria':
+        return (
+          <div className="space-y-6">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Configuración de Visita Promotoría
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Objetivo de la Visita
+                </label>
+                <select
+                  value={objetivoVisita}
+                  onChange={(e) => setObjetivoVisita(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                >
+                  <option value="auditoria">Auditoría de inventario</option>
+                  <option value="negociacion">Negociación de espacio</option>
+                  <option value="capacitacion">Capacitación de personal</option>
+                  <option value="implementacion">Implementación de exhibición</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Duración Estimada (horas)
+                </label>
+                <input
+                  type="number"
+                  value={duracionVisita}
+                  onChange={(e) => setDuracionVisita(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:text-white"
+                  placeholder="Ej: 2"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Tiempo estimado por tienda
+                </p>
+              </div>
+            </div>
+            <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">📱 Funcionalidad:</span> Se generará una tarea móvil para el promotor con productos sin venta, inventario en riesgo y objetivo específico.
+              </p>
             </div>
           </div>
         );
 
       default:
-        return null;
+        return (
+          <div className="text-center py-12">
+            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-gray-500 dark:text-gray-400">
+              Selecciona una acción para configurar sus parámetros
+            </p>
+          </div>
+        );
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-8">
+      {/* Selección de Acción */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Paso 2: Seleccionar Acción
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Elige la acción prescriptiva y completa los parámetros requeridos
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          Selecciona el Tipo de Acción
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Elige la estrategia que deseas implementar para esta oportunidad
         </p>
-      </div>
-
-      {/* Resumen de alcance */}
-      <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div>
-              <span className="text-sm text-blue-700 dark:text-blue-400">Alcance:</span>
-              <span className="ml-2 font-semibold text-blue-900 dark:text-blue-300">
-                {datos.tiendasSeleccionadas.length} tiendas
-              </span>
-            </div>
-            <div className="h-4 w-px bg-blue-300 dark:bg-blue-700"></div>
-            <div>
-              <span className="font-semibold text-blue-900 dark:text-blue-300">
-                {datos.skusSeleccionados.length} SKUs
-              </span>
-            </div>
-          </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {acciones.map((accion) => (
+            <button
+              key={accion.id}
+              onClick={() => handleSeleccionarAccion(accion.id)}
+              className={`flex items-start p-5 border-2 rounded-lg transition-all text-left ${
+                accionSeleccionada === accion.id
+                  ? accion.colorActivo
+                  : `border-gray-200 dark:border-gray-700 hover:${accion.color} bg-white dark:bg-gray-800`
+              }`}
+            >
+              <div className="flex-shrink-0 mr-4">
+                {accion.icono}
+              </div>
+              <div className="flex-1">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                  {accion.titulo}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {accion.descripcion}
+                </p>
+              </div>
+              {accionSeleccionada === accion.id && (
+                <svg className="h-6 w-6 text-green-600 flex-shrink-0 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Selección de acción */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Tipo de Acción
-          </h3>
-          <div className="space-y-3">
-            {acciones.map((accion) => {
-              const seleccionada = accionSeleccionada === accion.id;
-              return (
-                <button
-                  key={accion.id}
-                  onClick={() => handleSeleccionarAccion(accion.id)}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                    seleccionada
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-1 ${seleccionada ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
-                      {accion.icono}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className={`font-semibold mb-1 ${
-                        seleccionada 
-                          ? 'text-blue-900 dark:text-blue-300' 
-                          : 'text-gray-900 dark:text-white'
-                      }`}>
-                        {accion.nombre}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {accion.descripcion}
-                      </p>
-                    </div>
-                    {seleccionada && (
-                      <svg className="h-6 w-6 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+      {/* Parámetros de Configuración */}
+      {accionSeleccionada && (
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+          {renderParametrosAccion()}
         </div>
+      )}
 
-        {/* Parámetros de la acción */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Parámetros
-          </h3>
-          {accionSeleccionada ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              {renderParametros()}
-            </div>
-          ) : (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 p-12 text-center">
-              <svg className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-gray-600 dark:text-gray-400">
-                Selecciona una acción a la izquierda para configurar sus parámetros
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex justify-between pt-6">
+      {/* Navegación */}
+      <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={onAnterior}
-          className="px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
-          Atrás
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Anterior
         </button>
+
         <button
           onClick={handleContinuar}
-          disabled={!puedeAvanzar}
-          className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-            puedeAvanzar
+          disabled={!accionSeleccionada}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-colors ${
+            accionSeleccionada
               ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
           }`}
         >
-          Continuar
+          Siguiente
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>
   );
 }
-

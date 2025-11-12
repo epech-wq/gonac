@@ -8,6 +8,7 @@ interface Paso1AlcanceProps {
   oportunidad?: DatosOportunidad;
   onActualizar: (datos: Partial<DatosWizard>) => void;
   onSiguiente: () => void;
+  onVolver?: () => void;
 }
 
 // Mock data - TODO: conectar con API real
@@ -29,7 +30,7 @@ const skusMock: SKU[] = [
 
 type TabType = 'stores' | 'products';
 
-export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSiguiente }: Paso1AlcanceProps) {
+export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSiguiente, onVolver }: Paso1AlcanceProps) {
   const [tabActiva, setTabActiva] = useState<TabType>('stores');
   const [busqueda, setBusqueda] = useState("");
   const [tiendasSeleccionadas, setTiendasSeleccionadas] = useState<Tienda[]>(
@@ -171,7 +172,7 @@ export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSigui
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
-            Stores
+            Tiendas
           </button>
           <button
             onClick={() => {
@@ -184,7 +185,7 @@ export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSigui
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
-            Products
+            Productos
           </button>
         </div>
       </div>
@@ -197,7 +198,7 @@ export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSigui
           </svg>
           <input
             type="text"
-            placeholder={tabActiva === 'stores' ? 'Search for a store by name or ID' : 'Search for a product by name or category'}
+            placeholder={tabActiva === 'stores' ? 'Buscar tienda por nombre o ID' : 'Buscar producto por nombre o categoría'}
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
@@ -207,7 +208,7 @@ export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSigui
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
-          Filter
+          Filtrar
         </button>
       </div>
 
@@ -228,31 +229,31 @@ export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSigui
                 {tabActiva === 'stores' ? (
                   <>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Store Name
+                      Nombre de Tienda
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Location
+                      Ubicación
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Opportunity Score
+                      Puntaje Oportunidad
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Region
+                      Región
                     </th>
                   </>
                 ) : (
                   <>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Product Name
+                      Nombre de Producto
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Category
+                      Categoría
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Inventory
+                      Inventario
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Price
+                      Precio
                     </th>
                   </>
                 )}
@@ -328,7 +329,7 @@ export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSigui
                         {sku.categoria}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        {sku.inventario} units
+                        {sku.inventario} uds
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">
                         ${sku.precio.toFixed(2)}
@@ -345,15 +346,26 @@ export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSigui
       {/* Footer */}
       <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          {tiendasSeleccionadas.length} Stores, {skusSeleccionados.length} Products Selected
+          {tiendasSeleccionadas.length} Tiendas, {skusSeleccionados.length} Productos Seleccionados
         </div>
         
         <div className="flex gap-3">
+          {onVolver && (
+            <button
+              onClick={onVolver}
+              className="flex items-center gap-2 px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cerrar
+            </button>
+          )}
           <button
             onClick={handleSave}
             className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            Save
+            Guardar
           </button>
           <button
             onClick={handleContinuar}
@@ -364,7 +376,7 @@ export default function Paso1Alcance({ datos, oportunidad, onActualizar, onSigui
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
             }`}
           >
-            Next
+            Siguiente
           </button>
         </div>
       </div>

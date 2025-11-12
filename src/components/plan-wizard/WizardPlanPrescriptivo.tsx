@@ -79,12 +79,14 @@ interface WizardPlanPrescriptivoProps {
   oportunidad?: DatosOportunidad;
   onClose?: () => void;
   onComplete?: (datos: DatosWizard) => void;
+  onVolver?: () => void;
 }
 
 export default function WizardPlanPrescriptivo({
   oportunidad,
   onClose,
-  onComplete
+  onComplete,
+  onVolver
 }: WizardPlanPrescriptivoProps) {
   const [pasoActual, setPasoActual] = useState(1);
   const [datos, setDatos] = useState<DatosWizard>({
@@ -142,6 +144,7 @@ export default function WizardPlanPrescriptivo({
             oportunidad={oportunidad}
             onActualizar={handleActualizarDatos}
             onSiguiente={handleSiguiente}
+            onVolver={onVolver}
           />
         );
       case 2:

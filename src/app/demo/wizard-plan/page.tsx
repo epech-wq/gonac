@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import WizardPlanPrescriptivo, { DatosOportunidad } from "@/components/plan-wizard/WizardPlanPrescriptivo";
 
 export default function WizardPlanPage() {
+  const router = useRouter();
   const [oportunidad, setOportunidad] = useState<DatosOportunidad | undefined>();
   const [loading, setLoading] = useState(true);
 
@@ -21,6 +23,12 @@ export default function WizardPlanPage() {
     setLoading(false);
   }, []);
 
+  const handleVolver = () => {
+    // Limpiar sessionStorage y volver a la vista de oportunidades
+    sessionStorage.removeItem('oportunidadWizard');
+    router.back();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -29,6 +37,6 @@ export default function WizardPlanPage() {
     );
   }
 
-  return <WizardPlanPrescriptivo oportunidad={oportunidad} />;
+  return <WizardPlanPrescriptivo oportunidad={oportunidad} onVolver={handleVolver} />;
 }
 
