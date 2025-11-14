@@ -452,65 +452,184 @@ export default function TiendasConsolidadas({ data }: TiendasConsolidadasProps) 
           </div>
         </div>
 
-        {/* Store Metrics - 5 Cards */}
-        <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-3 border border-blue-200 dark:border-blue-800">
-            <div className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">
-              Total Tiendas
+        {/* Main KPIs - 2 Large Cards */}
+        <div className="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
+          {/* Ventas Totales Card */}
+          <div className="rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium opacity-90">Ventas Totales</h3>
+                <div className="mt-2">
+                  <div className="text-3xl font-bold">
+                    {formatCurrency(storeData.ventasTotales)}
+                  </div>
+                  <div className="text-sm opacity-90 mt-1">
+                    {formatNumber(storeData.unidadesVendidas)} unidades vendidas
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
             </div>
-            <div className="text-xl font-bold text-blue-900 dark:text-blue-100">
+            <div className="mt-4 flex items-center">
+              <div className="flex items-center rounded-full bg-white/20 px-2 py-1 text-sm">
+                <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                +{((metricasData?.crecimiento_vs_semana_anterior_pct ?? 0.125) * 100).toFixed(1)}%
+              </div>
+              <span className="ml-2 text-sm opacity-90">vs semana anterior</span>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-white/20">
+              <div className="h-2 rounded-full bg-white" style={{ width: '82%' }}></div>
+            </div>
+            {metricasData && (
+              <div className="mt-2">
+                <span className="text-xs font-medium text-green-100 bg-green-600/30 px-2 py-1 rounded-full">
+                  ✓ Datos en vivo
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Sell-Through Card */}
+          <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium opacity-90">Sell-Through</h3>
+                <div className="mt-2">
+                  <div className="text-3xl font-bold">
+                    {((metricasData?.sell_through_pct ?? 0.2) * 100).toFixed(1)}%
+                  </div>
+                  <div className="text-sm opacity-90 mt-1">
+                    vs 33% objetivo
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-sm opacity-90">
+                <span>Inventario inicial: {formatNumber((metricasData?.ventas_totales_unidades ?? storeData.unidadesVendidas) * 5)} unidades</span>
+              </div>
+              <div className="mt-2 h-2 rounded-full bg-white/20">
+                <div
+                  className="h-2 rounded-full bg-white"
+                  style={{ width: `${Math.min((((metricasData?.sell_through_pct ?? 0.2) * 100) / 33) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+            {metricasData && (
+              <div className="mt-2">
+                <span className="text-xs font-medium text-blue-100 bg-blue-600/30 px-2 py-1 rounded-full">
+                  ✓ Datos en vivo
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Additional Metrics - 5 Small Cards */}
+        <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-5">
+          {/* Cobertura Numérica */}
+          <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-4 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium opacity-90">Cobertura Numérica</h4>
+              <svg className="h-5 w-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <div className="text-2xl font-bold mb-1">
               {formatNumber(storeData.totalTiendas)}
             </div>
-            <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+            <div className="text-xs opacity-90 mb-3">
               100% del universo
             </div>
-          </div>
-
-          <div className="rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-3 border border-green-200 dark:border-green-800">
-            <div className="text-xs font-medium text-green-700 dark:text-green-300 mb-1">
-              Ventas Totales
-            </div>
-            <div className="text-xl font-bold text-green-900 dark:text-green-100">
-              {formatCurrency(storeData.ventasTotales)}
-            </div>
-            <div className="text-xs text-green-600 dark:text-green-400 mt-0.5">
-              Semana actual
+            <div className="h-1.5 rounded-full bg-white/20">
+              <div className="h-1.5 rounded-full bg-white" style={{ width: '100%' }}></div>
             </div>
           </div>
 
-          <div className="rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-3 border border-purple-200 dark:border-purple-800">
-            <div className="text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">
-              Unidades Vendidas
+          {/* Cobertura Ponderada */}
+          <div className="rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-4 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium opacity-90">Cobertura Ponderada</h4>
+              <svg className="h-5 w-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              </svg>
             </div>
-            <div className="text-xl font-bold text-purple-900 dark:text-purple-100">
-              {formatNumber(storeData.unidadesVendidas)}
+            <div className="text-2xl font-bold mb-1">
+              {((metricasData?.cobertura_ponderada_pct ?? 0.823) * 100).toFixed(1)}%
             </div>
-            <div className="text-xs text-purple-600 dark:text-purple-400 mt-0.5">
-              Semana actual
+            <div className="text-xs opacity-90 mb-3">
+              vs 90% objetivo
             </div>
-          </div>
-
-          <div className="rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-3 border border-orange-200 dark:border-orange-800">
-            <div className="text-xs font-medium text-orange-700 dark:text-orange-300 mb-1">
-              Venta Promedio
-            </div>
-            <div className="text-xl font-bold text-orange-900 dark:text-orange-100">
-              {formatCurrency(storeData.ventaPromedio)}
-            </div>
-            <div className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">
-              Por tienda/semana
+            <div className="h-1.5 rounded-full bg-white/20">
+              <div className="h-1.5 rounded-full bg-white" style={{ width: `${Math.min((((metricasData?.cobertura_ponderada_pct ?? 0.823) * 100) / 90) * 100, 100)}%` }}></div>
             </div>
           </div>
 
-          <div className="rounded-lg bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20 p-3 border border-cyan-200 dark:border-cyan-800">
-            <div className="text-xs font-medium text-cyan-700 dark:text-cyan-300 mb-1">
-              Días Inventario
+          {/* Días de Inventario */}
+          <div className="rounded-lg bg-gradient-to-br from-red-500 to-red-600 p-4 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium opacity-90">Días de Inventario</h4>
+              <svg className="h-5 w-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <div className="text-xl font-bold text-cyan-900 dark:text-cyan-100">
+            <div className="text-2xl font-bold mb-1">
               {storeData.diasInventario.toFixed(1)}
             </div>
-            <div className="text-xs text-cyan-600 dark:text-cyan-400 mt-0.5">
-              Promedio ponderado
+            <div className="text-xs opacity-90 mb-3">
+              vs 30 días objetivo
+            </div>
+            <div className="h-1.5 rounded-full bg-white/20">
+              <div className="h-1.5 rounded-full bg-white" style={{ width: `${Math.min((30 / storeData.diasInventario) * 100, 100)}%` }}></div>
+            </div>
+          </div>
+
+          {/* Tasa de Quiebre */}
+          <div className="rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 p-4 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium opacity-90">Tasa de Quiebre</h4>
+              <svg className="h-5 w-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <div className="text-2xl font-bold mb-1">
+              {(metricasData?.porcentaje_agotados_pct ?? 2.3).toFixed(1)}%
+            </div>
+            <div className="text-xs opacity-90 mb-3">
+              vs 5% tolerancia
+            </div>
+            <div className="h-1.5 rounded-full bg-white/20">
+              <div className="h-1.5 rounded-full bg-white" style={{ width: `${Math.min(((100 - (metricasData?.porcentaje_agotados_pct ?? 2.3)) / (100 - 5)) * 100, 100)}%` }}></div>
+            </div>
+          </div>
+
+          {/* Venta Promedio Diaria */}
+          <div className="rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 p-4 text-white shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-medium opacity-90">Venta Promedio Diaria</h4>
+              <svg className="h-5 w-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <div className="text-2xl font-bold mb-1">
+              {formatCurrency(metricasData?.avg_venta_promedio_diaria ?? (storeData.ventaPromedio / 7))}
+            </div>
+            <div className="text-xs opacity-90 mb-3">
+              Por día
+            </div>
+            <div className="h-1.5 rounded-full bg-white/20">
+              <div className="h-1.5 rounded-full bg-green-500" style={{ width: '94.7%' }}></div>
             </div>
           </div>
         </div>
