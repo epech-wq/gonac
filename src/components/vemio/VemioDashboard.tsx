@@ -15,11 +15,11 @@ export default function VemioDashboard() {
   const renderTabContent = () => {
     switch (activeTab) {
       case "resumen":
-        return <ResumenView data={vemioMockData.resumen} />;
+        return <ResumenView />;
       case "acciones":
         return <AccionesView data={vemioMockData.acciones} />;
       default:
-        return <ResumenView data={vemioMockData.resumen} />;
+        return <ResumenView />;
     }
   };
 

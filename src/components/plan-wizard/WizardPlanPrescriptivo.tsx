@@ -11,7 +11,11 @@ export type TipoAccion =
   | "redistribuir" 
   | "exhibicion" 
   | "promocion" 
-  | "visita_promotoria";
+  | "visita_promotoria"
+  | "reabastoUrgente"
+  | "exhibicionesAdicionales"
+  | "promocionEvacuar"
+  | "visitaPromotoria";
 
 export interface Tienda {
   id: string;
@@ -29,27 +33,34 @@ export interface SKU {
 }
 
 export interface ParametrosAccion {
-  // Reabastecer
+  // Reabastecer / Reabasto Urgente
   diasCobertura?: number;
   nivelStockObjetivo?: number;
+  stockObjetivo?: number; // Used in Paso2Accion
   
   // Redistribuir
   tiendaOrigen?: string;
   tiendaDestino?: string;
   
-  // Exhibición
+  // Exhibición / Exhibiciones Adicionales
   tipoExhibicion?: string;
   duracionDias?: number;
+  costoExhibicion?: number;
+  incrementoVentas?: number;
   
-  // Promoción
+  // Promoción / Promoción para Evacuar
   porcentajeDescuento?: number;
   elasticidadPrecio?: number;
+  maxDescuento?: number;
+  elasticidadPapas?: number;
+  elasticidadMix?: number;
   fechaInicio?: string;
   fechaFin?: string;
   
   // Visita Promotoría
   objetivoVisita?: string;
   duracionHoras?: number;
+  duracionVisita?: number; // Used in Paso2Accion
 }
 
 export interface DatosWizard {

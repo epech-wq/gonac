@@ -92,14 +92,18 @@ export default function Paso3Revision({ datos, onActualizar }: Paso3RevisionProp
   };
 
   const getAccionNombre = () => {
-    const nombres = {
+    const nombres: Record<string, string> = {
       reabastecer: "Reabastecer",
       redistribuir: "Redistribuir",
       exhibicion: "Exhibición",
       promocion: "Promoción",
-      visita_promotoria: "Visita Promotoría"
+      visita_promotoria: "Visita Promotoría",
+      reabastoUrgente: "Reabasto Urgente",
+      exhibicionesAdicionales: "Exhibiciones Adicionales",
+      promocionEvacuar: "Promoción para Evacuar",
+      visitaPromotoria: "Visita Promotoría"
     };
-    return nombres[datos.accionSeleccionada || 'reabastecer'];
+    return nombres[datos.accionSeleccionada || 'reabastecer'] || "Acción Desconocida";
   };
 
   if (calculando) {
