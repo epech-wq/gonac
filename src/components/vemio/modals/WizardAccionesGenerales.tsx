@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import ReabastoUrgenteCard from "../cards/ReabastoUrgenteCard";
+import ExhibicionesAdicionalesCard from "../cards/ExhibicionesAdicionalesCard";
+import PromocionEvacuarCard from "../cards/PromocionEvacuarCard";
+import VisitaPromotoriaCard from "../cards/VisitaPromotoriaCard";
 
 export type TipoAccionGeneral = 
   | "reabasto_urgente"
-  | "exhibiciones_adicionales" 
-  | "pedido_extraordinario"
+  | "exhibiciones_adicionales"
   | "promocion_evacuar"
   | "visita_promotoria";
 
@@ -18,10 +21,6 @@ export interface ParametrosAccionGeneral {
   // Exhibiciones Adicionales
   costoExhibicion?: number;
   incrementoVentasEsperado?: number;
-  
-  // Pedido Extraordinario
-  unidadesExtra?: number;
-  urgencia?: 'alta' | 'media';
   
   // Promoción Evacuar
   porcentajeDescuento?: number;
@@ -76,7 +75,7 @@ export default function WizardAccionesGenerales({
     unidadesAfectadas: 0
   });
 
-  const totalPasos = 2; // Paso 1: Configurar Parámetros, Paso 2: Revisar y Confirmar
+  const totalPasos = 1; // Wizard de un solo paso
 
   const handleCerrar = () => {
     if (onClose) onClose();
@@ -115,31 +114,18 @@ export default function WizardAccionesGenerales({
     setDatos(prev => ({ ...prev, ...nuevosDatos }));
   };
 
-  const handleAprobar = () => {
-    console.log("Aprobando plan de acción...", datos);
+  const handleEjecutarAccion = () => {
+    console.log("Ejecutando acción...", datos);
     if (onComplete) {
       onComplete(datos);
     }
-    handleCerrar();
-  };
-
-  const handleCrearTareas = () => {
-    console.log("Creando tareas...", datos);
-    if (onComplete) {
-      onComplete(datos);
-    }
+    // Aquí se puede agregar lógica adicional para ejecutar la acción
+    // Por ejemplo, enviar a un API, actualizar estado global, etc.
     handleCerrar();
   };
 
   const renderPaso = () => {
-    switch (pasoActual) {
-      case 1:
-        return <Paso1Configuracion datos={datos} accionInfo={accionInfo} onActualizar={handleActualizarDatos} onSiguiente={handleSiguiente} />;
-      case 2:
-        return <Paso2Revision datos={datos} accionInfo={accionInfo} onActualizar={handleActualizarDatos} onAnterior={handleAnterior} />;
-      default:
-        return null;
-    }
+    return <Paso1Configuracion datos={datos} accionInfo={accionInfo} onActualizar={handleActualizarDatos} onEjecutar={handleEjecutarAccion} />;
   };
 
   if (!mounted) return null;
@@ -190,20 +176,15 @@ export default function WizardAccionesGenerales({
         {/* Progress Bar */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Paso {pasoActual} de {totalPasos}
+                {accionInfo.id === 'reabasto_urgente' 
+                  ? 'Análisis y Ejecución de Reabasto Urgente' 
+                  : 'Configurar y Ejecutar Acción'}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {pasoActual === 1 && "Configurar Parámetros"}
-                {pasoActual === 2 && "Revisar y Confirmar"}
+              <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-full font-medium">
+                Listo para ejecutar
               </span>
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-brand-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(pasoActual / totalPasos) * 100}%` }}
-              />
             </div>
           </div>
         </div>
@@ -215,36 +196,6 @@ export default function WizardAccionesGenerales({
           </div>
         </div>
 
-        {/* Footer con botones de acción */}
-        {pasoActual === 2 && (
-          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-xl">
-            <div className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={handleAnterior}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  Atrás
-                </button>
-                
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleAprobar}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                  >
-                    Aprobar Plan
-                  </button>
-                  <button
-                    onClick={handleCrearTareas}
-                    className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
-                  >
-                    Crear Tareas
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -257,10 +208,10 @@ interface Paso1ConfiguracionProps {
   datos: DatosAccionGeneral;
   accionInfo: AccionInfo;
   onActualizar: (datos: Partial<DatosAccionGeneral>) => void;
-  onSiguiente: () => void;
+  onEjecutar: () => void;
 }
 
-function Paso1Configuracion({ datos, accionInfo, onActualizar, onSiguiente }: Paso1ConfiguracionProps) {
+function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar }: Paso1ConfiguracionProps) {
   const [parametros, setParametros] = useState<ParametrosAccionGeneral>(datos.parametros);
 
   const handleParametroChange = (key: keyof ParametrosAccionGeneral, value: any) => {
@@ -268,9 +219,9 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onSiguiente }: Pa
     setParametros(nuevosParametros);
   };
 
-  const handleContinuar = () => {
+  const handleEjecutarAccion = () => {
     onActualizar({ parametros });
-    onSiguiente();
+    onEjecutar();
   };
 
   const renderFormulario = () => {
@@ -278,42 +229,23 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onSiguiente }: Pa
       case 'reabasto_urgente':
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Días de Cobertura Objetivo
-                </label>
-                <input
-                  type="number"
-                  value={parametros.diasCobertura || 30}
-                  onChange={(e) => handleParametroChange('diasCobertura', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Ej: 30"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Días de inventario post-reabasto
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nivel Stock Objetivo (unidades)
-                </label>
-                <input
-                  type="number"
-                  value={parametros.nivelStockObjetivo || 500}
-                  onChange={(e) => handleParametroChange('nivelStockObjetivo', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Ej: 500"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Unidades objetivo por SKU
-                </p>
-              </div>
-            </div>
+            <ReabastoUrgenteCard showTitle={false} showButtons={true} />
+            
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">💡 Nota:</span> Se aplicará a {accionInfo.tiendas} tiendas HOT y Balanceadas con inventario crítico.
-              </p>
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                    Datos en Tiempo Real
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Las métricas mostradas se calculan automáticamente basándose en el estado actual del inventario, 
+                    ventas promedio y nivel de stock en las {accionInfo.tiendas} tiendas HOT y Balanceadas con inventario crítico.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -321,83 +253,23 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onSiguiente }: Pa
       case 'exhibiciones_adicionales':
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Costo por Exhibición ($)
-                </label>
-                <input
-                  type="number"
-                  value={parametros.costoExhibicion || 1500}
-                  onChange={(e) => handleParametroChange('costoExhibicion', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Ej: 1500"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Costo mensual por espacio adicional
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Incremento Ventas Esperado (%)
-                </label>
-                <input
-                  type="number"
-                  value={parametros.incrementoVentasEsperado || 50}
-                  onChange={(e) => handleParametroChange('incrementoVentasEsperado', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Ej: 50"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Aumento esperado en ventas
-                </p>
-              </div>
-            </div>
+            <ExhibicionesAdicionalesCard showTitle={false} showConfig={true} />
+            
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">💡 ROI:</span> Solo se implementarán exhibiciones con ROI positivo en {accionInfo.tiendas} tiendas HOT seleccionadas.
-              </p>
-            </div>
-          </div>
-        );
-
-      case 'pedido_extraordinario':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Unidades Extra por SKU
-                </label>
-                <input
-                  type="number"
-                  value={parametros.unidadesExtra || 200}
-                  onChange={(e) => handleParametroChange('unidadesExtra', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Ej: 200"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Unidades adicionales a solicitar
-                </p>
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                    Datos Calculados en Tiempo Real
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Las métricas mostradas se calculan automáticamente basándose en el costo y el incremento esperado en ventas. 
+                    Los datos se actualizan al modificar los parámetros para mostrar las oportunidades viables en tiempo real.
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nivel de Urgencia
-                </label>
-                <select
-                  value={parametros.urgencia || 'alta'}
-                  onChange={(e) => handleParametroChange('urgencia', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="alta">Alta (24-48hrs)</option>
-                  <option value="media">Media (3-5 días)</option>
-                </select>
-              </div>
-            </div>
-            <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">⚡ Urgente:</span> Pedido extraordinario para {accionInfo.tiendas} tiendas HOT con demanda excepcional.
-              </p>
             </div>
           </div>
         );
@@ -405,50 +277,23 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onSiguiente }: Pa
       case 'promocion_evacuar':
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Descuento Máximo (%)
-                </label>
-                <input
-                  type="number"
-                  value={parametros.porcentajeDescuento || 35}
-                  onChange={(e) => handleParametroChange('porcentajeDescuento', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  max={50}
-                  placeholder="Ej: 35"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Elasticidad Precio
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={parametros.elasticidadPrecio || 1.6}
-                  onChange={(e) => handleParametroChange('elasticidadPrecio', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Ej: 1.6"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Duración (días)
-                </label>
-                <input
-                  type="number"
-                  value={parametros.duracionDias || 14}
-                  onChange={(e) => handleParametroChange('duracionDias', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Ej: 14"
-                />
-              </div>
-            </div>
+            <PromocionEvacuarCard showTitle={false} showConfig={true} />
+            
             <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">🎯 Objetivo:</span> Evacuar inventario en riesgo en {accionInfo.tiendas} tiendas Slow y Dead.
-              </p>
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                    Datos Calculados en Tiempo Real
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Las métricas se calculan automáticamente con base en categorías en riesgo de caducidad, 
+                    descuento configurado y elasticidad de precio. Los datos se actualizan al modificar los parámetros.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -456,39 +301,23 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onSiguiente }: Pa
       case 'visita_promotoria':
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Objetivo de la Visita
-                </label>
-                <select
-                  value={parametros.objetivoVisita || 'auditoria'}
-                  onChange={(e) => handleParametroChange('objetivoVisita', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="auditoria">Auditoría de inventario</option>
-                  <option value="activacion">Activación de ventas</option>
-                  <option value="merchandising">Optimización merchandising</option>
-                  <option value="capacitacion">Capacitación</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Duración (horas)
-                </label>
-                <input
-                  type="number"
-                  value={parametros.duracionHoras || 3}
-                  onChange={(e) => handleParametroChange('duracionHoras', Number(e.target.value))}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-gray-800 dark:text-white"
-                  placeholder="Ej: 3"
-                />
-              </div>
-            </div>
+            <VisitaPromotoriaCard showTitle={false} showPhoneMockup={true} />
+            
             <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">📍 Alcance:</span> Visitas programadas para {accionInfo.tiendas} tiendas críticas.
-              </p>
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                    Datos en Tiempo Real
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Los datos mostrados provienen de tiendas críticas con productos sin venta. 
+                    El mockup muestra la app móvil que usarán los promotores en campo para ejecutar la visita.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -502,10 +331,26 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onSiguiente }: Pa
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Configurar Parámetros de Acción
+          {accionInfo.id === 'reabasto_urgente' 
+            ? 'Análisis de Reabasto Urgente'
+            : accionInfo.id === 'exhibiciones_adicionales'
+            ? 'Análisis de Exhibiciones Adicionales'
+            : accionInfo.id === 'promocion_evacuar'
+            ? 'Análisis de Promoción para Evacuar Inventario'
+            : accionInfo.id === 'visita_promotoria'
+            ? 'Análisis de Visita Promotoría'
+            : 'Configurar Parámetros de Acción'}
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
-          Define los parámetros específicos para esta acción prescriptiva
+          {accionInfo.id === 'reabasto_urgente'
+            ? 'Revisión de métricas calculadas automáticamente con datos en tiempo real'
+            : accionInfo.id === 'exhibiciones_adicionales'
+            ? 'Configuración y análisis de oportunidades viables con ROI positivo'
+            : accionInfo.id === 'promocion_evacuar'
+            ? 'Configuración y cálculo de descuentos estratégicos para evacuar inventario en riesgo'
+            : accionInfo.id === 'visita_promotoria'
+            ? 'Revisión de tiendas críticas y planificación de visitas de promotoría en campo'
+            : 'Define los parámetros específicos para esta acción prescriptiva'}
         </p>
       </div>
 
@@ -513,16 +358,23 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onSiguiente }: Pa
         {renderFormulario()}
       </div>
 
-      {/* Navegación */}
-      <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={handleContinuar}
-          className="flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
-        >
-          Siguiente: Revisar Plan
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      {/* Botón de Acción */}
+      <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <svg className="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
+          <span>Datos validados y listos para ejecutar</span>
+        </div>
+        
+        <button
+          onClick={handleEjecutarAccion}
+          className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl font-medium transform hover:scale-105"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Ejecutar Acción
         </button>
       </div>
     </div>
@@ -566,12 +418,6 @@ function Paso2Revision({ datos, accionInfo, onActualizar, onAnterior }: Paso2Rev
         costoEstimado = tiendas * (datos.parametros.costoExhibicion || 1500);
         impactoMonetario = tiendas * 8500;
         unidadesAfectadas = tiendas * 450;
-        break;
-        
-      case 'pedido_extraordinario':
-        costoEstimado = tiendas * 350;
-        impactoMonetario = tiendas * 6200;
-        unidadesAfectadas = tiendas * (datos.parametros.unidadesExtra || 200);
         break;
         
       case 'promocion_evacuar':
