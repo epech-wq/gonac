@@ -69,9 +69,6 @@ export default function TiendasConsolidadas() {
         {/* Metrics Section */}
         <MetricsSection storeMetrics={storeMetrics} metricasData={metricasData} />
 
-        {/* Opportunities Section */}
-        <OpportunitiesSection opportunities={opportunities} />
-
         {/* Impacto Total Banner */}
         <ImpactoTotalBanner
           impactoTotal={impactoTotal}
@@ -79,8 +76,11 @@ export default function TiendasConsolidadas() {
           totalTiendas={storeMetrics.totalTiendas}
         />
 
+        {/* Opportunities Section */}
+        <OpportunitiesSection opportunities={opportunities} />
+
         {/* Actions Section */}
-        <ActionsSection actions={actions} />
+        {/* <ActionsSection actions={actions} /> */}
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ interface OpportunityCardProps {
   detailData: DetailRecord[];
   isLoading: boolean;
   onToggleExpand: () => void;
+  onActionClick?: (actionType: string) => void;
 }
 
 export default function OpportunityCard({
@@ -32,6 +33,7 @@ export default function OpportunityCard({
   detailData,
   isLoading,
   onToggleExpand,
+  onActionClick,
 }: OpportunityCardProps) {
   return (
     <div className="rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -61,6 +63,81 @@ export default function OpportunityCard({
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             Impacto potencial
+          </div>
+        </div>
+
+        {/* Recommended Actions */}
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-start gap-2 mb-3">
+            <svg className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <h5 className="text-xs font-semibold text-blue-900 dark:text-blue-300">
+              Acciones Recomendadas
+            </h5>
+          </div>
+          
+          {/* Grid de 2 columnas cuando hay múltiples acciones */}
+          <div className={type === 'agotado' ? 'grid grid-cols-2 gap-2' : ''}>
+            {type === 'agotado' && (
+              <>
+                {/* Reabasto Urgente - ROJO (Crítico/Urgente) */}
+                <button
+                  onClick={() => onActionClick?.('reabasto_urgente')}
+                  className="text-center px-2 py-2 text-xs font-medium text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-red-700 dark:border-red-600"
+                >
+                  <span className="flex flex-col items-center gap-1">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span className="leading-tight">Reabasto Urgente</span>
+                  </span>
+                </button>
+                
+                {/* Exhibiciones Adicionales - AZUL (Oportunidad/Crecimiento) */}
+                <button
+                  onClick={() => onActionClick?.('exhibiciones_adicionales')}
+                  className="text-center px-2 py-2 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-blue-700 dark:border-blue-600"
+                >
+                  <span className="flex flex-col items-center gap-1">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span className="leading-tight">Exhibiciones Adicionales</span>
+                  </span>
+                </button>
+              </>
+            )}
+            
+            {/* Promoción Evacuar - NARANJA (Advertencia/Tiempo limitado) */}
+            {type === 'caducidad' && (
+              <button
+                onClick={() => onActionClick?.('promocion_evacuar')}
+                className="w-full text-left px-3 py-2.5 text-xs font-medium text-white bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-orange-700 dark:border-orange-600"
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  Promoción Evacuar Inventario
+                </span>
+              </button>
+            )}
+            
+            {/* Visita Promotoría - PÚRPURA (Auditoría/Mejora) */}
+            {type === 'sinVenta' && (
+              <button
+                onClick={() => onActionClick?.('visita_promotoria')}
+                className="w-full text-left px-3 py-2.5 text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-purple-700 dark:border-purple-600"
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Visita Promotoría
+                </span>
+              </button>
+            )}
           </div>
         </div>
 

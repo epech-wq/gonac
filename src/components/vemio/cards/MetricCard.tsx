@@ -17,20 +17,39 @@ interface MetricCardProps {
   size?: 'small' | 'large';
 }
 
-const COLOR_VARIANTS = {
-  green: 'from-green-500 to-green-600',
-  blue: 'from-blue-500 to-blue-600',
-  red: 'from-red-500 to-red-600',
-  orange: 'from-orange-500 to-orange-600',
-  purple: 'from-purple-500 to-purple-600',
+// Colores para iconos - más saturados y distintivos
+const ICON_COLORS = {
+  green: 'text-green-600 dark:text-green-400',
+  blue: 'text-blue-600 dark:text-blue-400',
+  red: 'text-red-600 dark:text-red-400',
+  orange: 'text-orange-600 dark:text-orange-400',
+  purple: 'text-purple-600 dark:text-purple-400',
+};
+
+// Fondos de iconos - sutiles
+const ICON_BG_COLORS = {
+  green: 'bg-green-50 dark:bg-green-500/10',
+  blue: 'bg-blue-50 dark:bg-blue-500/10',
+  red: 'bg-red-50 dark:bg-red-500/10',
+  orange: 'bg-orange-50 dark:bg-orange-500/10',
+  purple: 'bg-purple-50 dark:bg-purple-500/10',
+};
+
+// Colores de barras de progreso
+const PROGRESS_COLORS = {
+  green: 'bg-green-500',
+  blue: 'bg-blue-500',
+  red: 'bg-red-500',
+  orange: 'bg-orange-500',
+  purple: 'bg-purple-500',
 };
 
 const BADGE_COLORS = {
-  green: 'text-green-100 bg-green-600/30',
-  blue: 'text-blue-100 bg-blue-600/30',
-  red: 'text-red-100 bg-red-600/30',
-  orange: 'text-orange-100 bg-orange-600/30',
-  purple: 'text-purple-100 bg-purple-600/30',
+  green: 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-500/20',
+  blue: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-500/20',
+  red: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-500/20',
+  orange: 'text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-500/20',
+  purple: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-500/20',
 };
 
 export default function MetricCard({
@@ -41,42 +60,48 @@ export default function MetricCard({
   color,
   showProgress = true,
   progressValue = 0,
-  progressColor = 'bg-white',
+  progressColor,
   badge,
   size = 'large',
 }: MetricCardProps) {
   const isSmall = size === 'small';
+  const barColor = progressColor || PROGRESS_COLORS[color];
   
   return (
-    <div className={`rounded-lg bg-gradient-to-br ${COLOR_VARIANTS[color]} ${isSmall ? 'p-4' : 'p-6'} text-white shadow-lg`}>
+    <div className={`rounded-lg bg-white dark:bg-gray-800 ${isSmall ? 'p-4' : 'p-6'} border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow`}>
+      {/* Header con título e icono */}
       <div className="flex items-center justify-between mb-3">
-        <h4 className={`${isSmall ? 'text-sm' : 'text-lg'} font-medium opacity-90`}>
+        <h4 className={`${isSmall ? 'text-xs' : 'text-sm'} font-medium text-gray-600 dark:text-gray-400`}>
           {title}
         </h4>
-        <div className={`rounded-full bg-white/20 ${isSmall ? 'p-2' : 'p-3'}`}>
+        <div className={`rounded-lg ${ICON_BG_COLORS[color]} ${isSmall ? 'p-2' : 'p-2.5'} ${ICON_COLORS[color]}`}>
           {icon}
         </div>
       </div>
       
-      <div className={`${isSmall ? 'text-2xl' : 'text-3xl'} font-bold mb-1`}>
+      {/* Valor principal */}
+      <div className={`${isSmall ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 dark:text-white mb-1`}>
         {value}
       </div>
       
+      {/* Subtítulo */}
       {subtitle && (
-        <div className={`${isSmall ? 'text-xs' : 'text-sm'} opacity-90 mb-3`}>
+        <div className={`${isSmall ? 'text-xs' : 'text-sm'} text-gray-500 dark:text-gray-400 mb-3`}>
           {subtitle}
         </div>
       )}
       
+      {/* Barra de progreso con color específico */}
       {showProgress && (
-        <div className={`${isSmall ? 'h-1.5' : 'h-2'} rounded-full bg-white/20`}>
+        <div className={`${isSmall ? 'h-1.5' : 'h-2'} rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden`}>
           <div 
-            className={`${isSmall ? 'h-1.5' : 'h-2'} rounded-full ${progressColor}`} 
+            className={`${isSmall ? 'h-1.5' : 'h-2'} rounded-full ${barColor} transition-all duration-300`} 
             style={{ width: `${Math.min(progressValue, 100)}%` }}
           ></div>
         </div>
       )}
       
+      {/* Badge opcional */}
       {badge && (
         <div className="mt-2">
           <span className={`text-xs font-medium ${BADGE_COLORS[color]} px-2 py-1 rounded-full`}>
