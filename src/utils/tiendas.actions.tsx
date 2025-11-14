@@ -63,11 +63,15 @@ const ACTION_ICONS = {
   ),
 };
 
+interface SegmentData {
+  num_tiendas_segmento?: number;
+}
+
 interface Segments {
-  hot?: any;
-  slow?: any;
-  balanceadas?: any;
-  criticas?: any;
+  hot?: SegmentData;
+  slow?: SegmentData;
+  balanceadas?: SegmentData;
+  criticas?: SegmentData;
 }
 
 export const buildActions = (segments: Segments): Action[] => {

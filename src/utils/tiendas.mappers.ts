@@ -5,7 +5,6 @@
 import type { 
   RiskLevel, 
   SegmentType, 
-  OpportunityType, 
   DetailRecord 
 } from '@/types/tiendas.types';
 import { 
@@ -19,7 +18,7 @@ import {
 export const getRiskLevel = (
   segment: string, 
   diasInventario: number, 
-  contribucion: number
+  _contribucion: number
 ): RiskLevel => {
   const normalized = segment.toLowerCase();
   
@@ -104,43 +103,81 @@ export const getImpactoColor = (segment: string): string => {
 };
 
 // Data transformation functions
-export const transformAgotadoData = (response: any): DetailRecord[] => {
+interface ApiResponse {
+  data?: unknown[];
+}
+
+interface AgotadoItem {
+  store_name: string;
+  product_name: string;
+  dias_inventario: number;
+  segment?: string;
+  impacto: number;
+  detectado: string;
+}
+
+export const transformAgotadoData = (response: ApiResponse): DetailRecord[] => {
   if (!response?.data || !Array.isArray(response.data)) return [];
   
-  return response.data.map((item: any, index: number) => ({
-    id: `agotado-${index}`,
-    tienda: item.store_name,
-    sku: item.product_name,
-    diasInventario: item.dias_inventario,
-    segmentoTienda: item.segment?.toLowerCase(),
-    impactoEstimado: item.impacto,
-    fechaDeteccion: item.detectado,
-  }));
+  return response.data.map((item: unknown, index: number) => {
+    const agotadoItem = item as AgotadoItem;
+    return {
+      id: `agotado-${index}`,
+      tienda: agotadoItem.store_name,
+      sku: agotadoItem.product_name,
+      diasInventario: agotadoItem.dias_inventario,
+      segmentoTienda: agotadoItem.segment?.toLowerCase(),
+      impactoEstimado: agotadoItem.impacto,
+      fechaDeteccion: agotadoItem.detectado,
+    };
+  });
 };
 
-export const transformCaducidadData = (response: any): DetailRecord[] => {
+interface CaducidadItem {
+  store_name: string;
+  product_name: string;
+  inventario_remanente: number;
+  fecha_caducidad: string;
+  segment?: string;
+  impacto: number;
+  detectado: string;
+}
+
+export const transformCaducidadData = (response: ApiResponse): DetailRecord[] => {
   if (!response?.data || !Array.isArray(response.data)) return [];
   
-  return response.data.map((item: any, index: number) => ({
-    id: `caducidad-${index}`,
-    tienda: item.store_name,
-    sku: item.product_name,
-    inventarioRemanente: item.inventario_remanente,
-    fechaCaducidad: item.fecha_caducidad,
-    segmentoTienda: item.segment?.toLowerCase(),
-    impactoEstimado: item.impacto,
-    fechaDeteccion: item.detectado,
-  }));
+  return response.data.map((item: unknown, index: number) => {
+    const caducidadItem = item as CaducidadItem;
+    return {
+      id: `caducidad-${index}`,
+      tienda: caducidadItem.store_name,
+      sku: caducidadItem.product_name,
+      inventarioRemanente: caducidadItem.inventario_remanente,
+      fechaCaducidad: caducidadItem.fecha_caducidad,
+      segmentoTienda: caducidadItem.segment?.toLowerCase(),
+      impactoEstimado: caducidadItem.impacto,
+      fechaDeteccion: caducidadItem.detectado,
+    };
+  });
 };
 
-export const transformSinVentasData = (response: any): DetailRecord[] => {
+interface SinVentaItem {
+  store_name: string;
+  product_name: string;
+  impacto: number;
+}
+
+export const transformSinVentasData = (response: ApiResponse): DetailRecord[] => {
   if (!response?.data || !Array.isArray(response.data)) return [];
   
-  return response.data.map((item: any, index: number) => ({
-    id: `sinventa-${index}`,
-    tienda: item.store_name,
-    sku: item.product_name,
-    impactoEstimado: item.impacto,
-  }));
+  return response.data.map((item: unknown, index: number) => {
+    const sinVentaItem = item as SinVentaItem;
+    return {
+      id: `sinventa-${index}`,
+      tienda: sinVentaItem.store_name,
+      sku: sinVentaItem.product_name,
+      impactoEstimado: sinVentaItem.impacto,
+    };
+  });
 };
 
