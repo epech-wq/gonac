@@ -8,24 +8,19 @@
 
 import MetricsSection from './MetricsSection';
 import OpportunitiesSection from './OpportunitiesSection';
-import ActionsSection from './ActionsSection';
 import ImpactoTotalBanner from './ImpactoTotalBanner';
 import { useTiendasData } from '@/hooks/useTiendasData';
-import { buildActions } from '@/utils/tiendas.actions';
 
 export default function TiendasConsolidadas() {
   const {
     storeMetrics,
     opportunities,
-    segments,
     metricasData,
     impactoTotal,
     tiendasConOportunidades,
     loading,
     error,
   } = useTiendasData();
-
-  const actions = buildActions(segments);
 
   return (
     <div className="space-y-6">
@@ -78,9 +73,6 @@ export default function TiendasConsolidadas() {
 
         {/* Opportunities Section */}
         <OpportunitiesSection opportunities={opportunities} />
-
-        {/* Actions Section */}
-        {/* <ActionsSection actions={actions} /> */}
       </div>
     </div>
   );

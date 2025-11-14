@@ -65,7 +65,7 @@ export default function OpportunitiesSection({ opportunities }: OpportunitiesSec
     setModalAction(null);
   };
 
-  const handleCompleteAction = (datos: any) => {
+  const handleCompleteAction = (datos: unknown) => {
     console.log('Acción completada:', datos);
     // Aquí puedes agregar lógica adicional como guardar en el historial
   };
