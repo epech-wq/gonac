@@ -120,7 +120,7 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
       <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-5">
         <MetricCard
           title="Cobertura Numérica"
-          value={formatNumber(Math.round(coberturaPct * 100))}
+          value={`${formatNumber(Math.round(coberturaPct * 100))}%`}
           subtitle="100% del universo"
           color="blue"
           size="small"
