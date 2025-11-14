@@ -78,35 +78,20 @@ export default function OpportunityCard({
           </div>
           
           {/* Grid de 2 columnas cuando hay múltiples acciones */}
-          <div className={type === 'agotado' ? 'grid grid-cols-2 gap-2' : ''}>
+          <div className={type === 'sinVenta' ? 'grid grid-cols-2 gap-2' : ''}>
+            {/* Reabasto Urgente - ROJO (Crítico/Urgente) para Agotado */}
             {type === 'agotado' && (
-              <>
-                {/* Reabasto Urgente - ROJO (Crítico/Urgente) */}
-                <button
-                  onClick={() => onActionClick?.('reabasto_urgente')}
-                  className="text-center px-2 py-2 text-xs font-medium text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-red-700 dark:border-red-600"
-                >
-                  <span className="flex flex-col items-center gap-1">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                    <span className="leading-tight">Reabasto Urgente</span>
-                  </span>
-                </button>
-                
-                {/* Exhibiciones Adicionales - AZUL (Oportunidad/Crecimiento) */}
-                <button
-                  onClick={() => onActionClick?.('exhibiciones_adicionales')}
-                  className="text-center px-2 py-2 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-blue-700 dark:border-blue-600"
-                >
-                  <span className="flex flex-col items-center gap-1">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    <span className="leading-tight">Exhibiciones Adicionales</span>
-                  </span>
-                </button>
-              </>
+              <button
+                onClick={() => onActionClick?.('reabasto_urgente')}
+                className="w-full text-left px-3 py-2.5 text-xs font-medium text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-red-700 dark:border-red-600"
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  Reabasto Urgente
+                </span>
+              </button>
             )}
             
             {/* Promoción Evacuar - NARANJA (Advertencia/Tiempo limitado) */}
@@ -124,19 +109,35 @@ export default function OpportunityCard({
               </button>
             )}
             
-            {/* Visita Promotoría - PÚRPURA (Auditoría/Mejora) */}
+            {/* Sin Venta tiene 2 acciones en grid 2x1 */}
             {type === 'sinVenta' && (
-              <button
-                onClick={() => onActionClick?.('visita_promotoria')}
-                className="w-full text-left px-3 py-2.5 text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-purple-700 dark:border-purple-600"
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Visita Promotoría
-                </span>
-              </button>
+              <>
+                {/* Visita Promotoría - PÚRPURA (Auditoría/Mejora) */}
+                <button
+                  onClick={() => onActionClick?.('visita_promotoria')}
+                  className="text-center px-2 py-2 text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-purple-700 dark:border-purple-600"
+                >
+                  <span className="flex flex-col items-center gap-1">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span className="leading-tight">Visita Promotoría</span>
+                  </span>
+                </button>
+                
+                {/* Exhibiciones Adicionales - AZUL (Oportunidad/Crecimiento) */}
+                <button
+                  onClick={() => onActionClick?.('exhibiciones_adicionales')}
+                  className="text-center px-2 py-2 text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-blue-700 dark:border-blue-600"
+                >
+                  <span className="flex flex-col items-center gap-1">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span className="leading-tight">Exhibiciones Adicionales</span>
+                  </span>
+                </button>
+              </>
             )}
           </div>
         </div>
