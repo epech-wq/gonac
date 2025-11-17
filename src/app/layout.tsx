@@ -10,6 +10,11 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+export const metadata = {
+  title: "VEMIO Impacta",
+  description: "VEMIO Impacta",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

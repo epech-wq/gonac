@@ -20,9 +20,11 @@ interface MetricasData {
 interface MetricsSectionProps {
   storeMetrics: StoreMetrics;
   metricasData: MetricasData | null;
+  onCardClick?: (cardData: any) => void;
+  enableAnalysis?: boolean;
 }
 
-export default function MetricsSection({ storeMetrics, metricasData }: MetricsSectionProps) {
+export default function MetricsSection({ storeMetrics, metricasData, onCardClick, enableAnalysis = false }: MetricsSectionProps) {
   const sellThroughPct = metricasData?.sell_through_pct ?? 0.2;
   const coberturaPonderadaPct = metricasData?.cobertura_ponderada_pct ?? 0.823;
   const crecimientoPct = metricasData?.crecimiento_vs_semana_anterior_pct ?? 0.125;
@@ -35,7 +37,32 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
       {/* Main KPIs - 2 Large Cards */}
       <div className="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
         {/* Ventas Totales */}
-        <div className="rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg">
+        <div 
+          className={`relative rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg transition-all ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
+          onMouseEnter={(e) => {
+            if (enableAnalysis) {
+              const badge = e.currentTarget.querySelector('.vemio-badge');
+              if (badge) badge.classList.remove('hidden');
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (enableAnalysis) {
+              const badge = e.currentTarget.querySelector('.vemio-badge');
+              if (badge) badge.classList.add('hidden');
+            }
+          }}
+          onClick={() => {
+            if (enableAnalysis && onCardClick) {
+              onCardClick({
+                title: 'Ventas Totales',
+                value: formatCurrency(storeMetrics.ventasTotales),
+                subtitle: `${formatNumber(storeMetrics.unidadesVendidas)} unidades vendidas`,
+                storeMetrics,
+                metricasData,
+              });
+            }
+          }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-medium opacity-90">Ventas Totales</h3>
@@ -73,10 +100,56 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
               </span>
             </div>
           )}
+          {/* Vemio Analysis Badge */}
+          {enableAnalysis && (
+            <div className="vemio-badge absolute top-4 right-4 hidden z-10">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-all">
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                  />
+                </svg>
+                Vemio Analysis
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Sell-Through */}
-        <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg">
+        <div 
+          className={`relative rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg transition-all ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
+          onMouseEnter={(e) => {
+            if (enableAnalysis) {
+              const badge = e.currentTarget.querySelector('.vemio-badge');
+              if (badge) badge.classList.remove('hidden');
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (enableAnalysis) {
+              const badge = e.currentTarget.querySelector('.vemio-badge');
+              if (badge) badge.classList.add('hidden');
+            }
+          }}
+          onClick={() => {
+            if (enableAnalysis && onCardClick) {
+              onCardClick({
+                title: 'Sell-Through',
+                value: formatPercentage(sellThroughPct),
+                subtitle: `vs ${METRIC_TARGETS.SELL_THROUGH}% objetivo`,
+                storeMetrics,
+                metricasData,
+              });
+            }
+          }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-medium opacity-90">Sell-Through</h3>
@@ -113,6 +186,27 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
               </span>
             </div>
           )}
+          {/* Vemio Analysis Badge */}
+          {enableAnalysis && (
+            <div className="vemio-badge absolute top-4 right-4 hidden z-10">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-all">
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                  />
+                </svg>
+                Vemio Analysis
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -130,6 +224,20 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
             </svg>
           }
           progressValue={100}
+          enableAnalysis={enableAnalysis}
+          onAnalysisClick={() => {
+            if (onCardClick) {
+              onCardClick({
+                title: 'Cobertura Numérica',
+                value: `${formatNumber(Math.round(coberturaPct * 100))}%`,
+                subtitle: '100% del universo',
+                storeMetrics,
+                metricasData,
+              });
+            }
+          }}
+          storeMetrics={storeMetrics}
+          metricasData={metricasData}
         />
 
         <MetricCard
@@ -144,6 +252,20 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
             </svg>
           }
           progressValue={((coberturaPonderadaPct * 100) / METRIC_TARGETS.COBERTURA_PONDERADA) * 100}
+          enableAnalysis={enableAnalysis}
+          onAnalysisClick={() => {
+            if (onCardClick) {
+              onCardClick({
+                title: 'Cobertura Ponderada',
+                value: formatPercentage(coberturaPonderadaPct),
+                subtitle: `vs ${METRIC_TARGETS.COBERTURA_PONDERADA}% objetivo`,
+                storeMetrics,
+                metricasData,
+              });
+            }
+          }}
+          storeMetrics={storeMetrics}
+          metricasData={metricasData}
         />
 
         <MetricCard
@@ -158,6 +280,20 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
             </svg>
           }
           progressValue={(METRIC_TARGETS.DIAS_INVENTARIO / storeMetrics.diasInventario) * 100}
+          enableAnalysis={enableAnalysis}
+          onAnalysisClick={() => {
+            if (onCardClick) {
+              onCardClick({
+                title: 'Días de Inventario',
+                value: storeMetrics.diasInventario.toFixed(1),
+                subtitle: `vs ${METRIC_TARGETS.DIAS_INVENTARIO} días objetivo`,
+                storeMetrics,
+                metricasData,
+              });
+            }
+          }}
+          storeMetrics={storeMetrics}
+          metricasData={metricasData}
         />
 
         <MetricCard
@@ -172,6 +308,20 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
             </svg>
           }
           progressValue={((100 - tasaQuiebrePct) / (100 - METRIC_TARGETS.TASA_QUIEBRE)) * 100}
+          enableAnalysis={enableAnalysis}
+          onAnalysisClick={() => {
+            if (onCardClick) {
+              onCardClick({
+                title: 'Tasa de Quiebre',
+                value: `${tasaQuiebrePct.toFixed(1)}%`,
+                subtitle: `vs ${METRIC_TARGETS.TASA_QUIEBRE}% tolerancia`,
+                storeMetrics,
+                metricasData,
+              });
+            }
+          }}
+          storeMetrics={storeMetrics}
+          metricasData={metricasData}
         />
 
         <MetricCard
@@ -186,6 +336,20 @@ export default function MetricsSection({ storeMetrics, metricasData }: MetricsSe
             </svg>
           }
           progressValue={94.7}
+          enableAnalysis={enableAnalysis}
+          onAnalysisClick={() => {
+            if (onCardClick) {
+              onCardClick({
+                title: 'Venta Promedio Diaria',
+                value: formatCurrency(ventaPromedioDiaria),
+                subtitle: 'Por día',
+                storeMetrics,
+                metricasData,
+              });
+            }
+          }}
+          storeMetrics={storeMetrics}
+          metricasData={metricasData}
         />
       </div>
     </>

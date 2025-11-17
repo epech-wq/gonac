@@ -20,9 +20,10 @@ import type { Opportunity, OpportunityType, DetailRecord } from '@/types/tiendas
 
 interface OpportunitiesSectionProps {
   opportunities: Opportunity[];
+  onChatOpen?: (cardData: any) => void;
 }
 
-export default function OpportunitiesSection({ opportunities }: OpportunitiesSectionProps) {
+export default function OpportunitiesSection({ opportunities, onChatOpen }: OpportunitiesSectionProps) {
   const [expandedOportunidad, setExpandedOportunidad] = useState<OpportunityType | null>(null);
   const [modalAction, setModalAction] = useState<{ tipo: TipoAccionGeneral; opportunity: Opportunity } | null>(null);
 
@@ -137,6 +138,7 @@ export default function OpportunitiesSection({ opportunities }: OpportunitiesSec
           accionInfo={getActionInfo()!}
           onClose={handleCloseModal}
           onComplete={handleCompleteAction}
+          onChatOpen={onChatOpen}
         />
       )}
     </>

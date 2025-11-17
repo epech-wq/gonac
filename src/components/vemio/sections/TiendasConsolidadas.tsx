@@ -11,7 +11,13 @@ import OpportunitiesSection from './OpportunitiesSection';
 import ImpactoTotalBanner from './ImpactoTotalBanner';
 import { useTiendasData } from '@/hooks/useTiendasData';
 
-export default function TiendasConsolidadas() {
+interface TiendasConsolidadasProps {
+  chatOpen?: boolean;
+  onCardClick?: (cardData: any) => void;
+}
+
+export default function TiendasConsolidadas({ chatOpen = false, onCardClick }: TiendasConsolidadasProps) {
+
   const {
     storeMetrics,
     opportunities,
@@ -23,7 +29,9 @@ export default function TiendasConsolidadas() {
   } = useTiendasData();
 
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {/* Main Content */}
+      <div className="space-y-6">
       {/* Loading State */}
       {loading && (
         <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800 text-center">
@@ -62,7 +70,12 @@ export default function TiendasConsolidadas() {
         </div>
 
         {/* Metrics Section */}
-        <MetricsSection storeMetrics={storeMetrics} metricasData={metricasData} />
+        <MetricsSection 
+          storeMetrics={storeMetrics} 
+          metricasData={metricasData}
+          enableAnalysis={true}
+          onCardClick={onCardClick}
+        />
 
         {/* Impacto Total Banner */}
         <ImpactoTotalBanner
@@ -72,7 +85,8 @@ export default function TiendasConsolidadas() {
         />
 
         {/* Opportunities Section */}
-        <OpportunitiesSection opportunities={opportunities} />
+        <OpportunitiesSection opportunities={opportunities} onChatOpen={onCardClick} />
+        </div>
       </div>
     </div>
   );

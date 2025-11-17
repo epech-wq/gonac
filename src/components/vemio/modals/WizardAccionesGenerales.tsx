@@ -56,12 +56,14 @@ interface WizardAccionesGeneralesProps {
   accionInfo: AccionInfo;
   onClose: () => void;
   onComplete?: (datos: DatosAccionGeneral) => void;
+  onChatOpen?: (cardData: any) => void;
 }
 
 export default function WizardAccionesGenerales({
   accionInfo,
   onClose,
-  onComplete
+  onComplete,
+  onChatOpen
 }: WizardAccionesGeneralesProps) {
   const [mounted, setMounted] = useState(false);
   const [datos, setDatos] = useState<DatosAccionGeneral>({
@@ -111,7 +113,7 @@ export default function WizardAccionesGenerales({
   };
 
   const renderPaso = () => {
-    return <Paso1Configuracion datos={datos} accionInfo={accionInfo} onActualizar={handleActualizarDatos} onEjecutar={handleEjecutarAccion} />;
+    return <Paso1Configuracion datos={datos} accionInfo={accionInfo} onActualizar={handleActualizarDatos} onEjecutar={handleEjecutarAccion} onChatOpen={onChatOpen} />;
   };
 
   if (!mounted) return null;
@@ -195,9 +197,10 @@ interface Paso1ConfiguracionProps {
   accionInfo: AccionInfo;
   onActualizar: (datos: Partial<DatosAccionGeneral>) => void;
   onEjecutar: () => void;
+  onChatOpen?: (cardData: any) => void;
 }
 
-function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar }: Paso1ConfiguracionProps) {
+function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onChatOpen }: Paso1ConfiguracionProps) {
   const [parametros] = useState<ParametrosAccionGeneral>(datos.parametros);
 
   const handleEjecutarAccion = () => {
@@ -258,7 +261,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar }: Pas
       case 'promocion_evacuar':
         return (
           <div className="space-y-6">
-            <PromocionEvacuarCard showTitle={false} showConfig={true} />
+            <PromocionEvacuarCard showTitle={false} showConfig={true} onChatOpen={onChatOpen} />
             
             <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <div className="flex items-start gap-3">

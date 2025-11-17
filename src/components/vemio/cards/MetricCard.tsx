@@ -2,7 +2,7 @@
  * Reusable Metric Card Component
  */
 
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 interface MetricCardProps {
   title: string;
@@ -15,6 +15,10 @@ interface MetricCardProps {
   progressColor?: string;
   badge?: string;
   size?: 'small' | 'large';
+  enableAnalysis?: boolean;
+  onAnalysisClick?: () => void;
+  storeMetrics?: any;
+  metricasData?: any;
 }
 
 // Colores para iconos - más saturados y distintivos
@@ -63,12 +67,22 @@ export default function MetricCard({
   progressColor,
   badge,
   size = 'large',
+  enableAnalysis = false,
+  onAnalysisClick,
+  storeMetrics,
+  metricasData,
 }: MetricCardProps) {
   const isSmall = size === 'small';
   const barColor = progressColor || PROGRESS_COLORS[color];
+  const [showBadge, setShowBadge] = React.useState(false);
   
   return (
-    <div className={`rounded-lg bg-white dark:bg-gray-800 ${isSmall ? 'p-4' : 'p-6'} border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow`}>
+    <div 
+      className={`relative rounded-lg bg-white dark:bg-gray-800 ${isSmall ? 'p-4' : 'p-6'} border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all cursor-pointer ${enableAnalysis ? 'hover:border-brand-300 dark:hover:border-brand-600' : ''}`}
+      onMouseEnter={() => enableAnalysis && setShowBadge(true)}
+      onMouseLeave={() => enableAnalysis && setShowBadge(false)}
+      onClick={() => enableAnalysis && onAnalysisClick && onAnalysisClick()}
+    >
       {/* Header con título e icono */}
       <div className="flex items-center justify-between mb-3">
         <h4 className={`${isSmall ? 'text-xs' : 'text-sm'} font-medium text-gray-600 dark:text-gray-400`}>
@@ -106,6 +120,28 @@ export default function MetricCard({
         <div className="mt-2">
           <span className={`text-xs font-medium ${BADGE_COLORS[color]} px-2 py-1 rounded-full`}>
             {badge}
+          </span>
+        </div>
+      )}
+
+      {/* Vemio Analysis Badge - appears on hover */}
+      {enableAnalysis && showBadge && (
+        <div className="absolute top-3 right-3 z-10">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-all">
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+            Vemio Analysis
           </span>
         </div>
       )}
