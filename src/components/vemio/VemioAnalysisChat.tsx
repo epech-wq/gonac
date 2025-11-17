@@ -113,6 +113,16 @@ export default function VemioAnalysisChat({
       return generateElasticityRecommendations(data as any);
     }
 
+    // Handle reabasto urgente parameters (individual)
+    if ((data as any).tipo === 'reabasto_parametro') {
+      return generateReabastoParametroAnalysis(data as any);
+    }
+
+    // Handle complete reabasto urgente parameters explanation
+    if ((data as any).tipo === 'reabasto_parametros_completos') {
+      return generateReabastoParametrosCompletosAnalysis(data as any);
+    }
+
     let analysis = `## Análisis de ${data.title}\n\n`;
     
     analysis += `**Valor Actual:** ${data.value}\n`;
@@ -229,6 +239,221 @@ export default function VemioAnalysisChat({
       analysis += `- Monitorear esta métrica regularmente para detectar tendencias\n`;
       analysis += `- Comparar con períodos anteriores para identificar patrones\n`;
     }
+
+    return analysis;
+  };
+
+  const generateReabastoParametroAnalysis = (data: any): string => {
+    const { title, value, parametro, valor, descripcion } = data;
+    
+    let analysis = `## Análisis del Parámetro: ${title}\n\n`;
+    
+    analysis += `**Valor Configurado:** ${value}\n`;
+    analysis += `**Parámetro:** ${parametro}\n`;
+    if (descripcion) {
+      analysis += `**Descripción:** ${descripcion}\n\n`;
+    }
+
+    analysis += `### 📊 Contexto del Parámetro\n\n`;
+
+    switch (parametro) {
+      case 'tiempo_reabasto':
+        analysis += `**Límite de Inventario Máximo: ${valor} días**\n\n`;
+        analysis += `Este parámetro define el umbral máximo de días de inventario que una tienda puede tener antes de ser considerada para reabasto urgente.\n\n`;
+        analysis += `### 🎯 Impacto del Parámetro\n\n`;
+        analysis += `- **Valor Actual:** ${valor} días\n`;
+        analysis += `- **Significado:** Las tiendas HOT y Balanceadas con inventario menor a ${valor} días serán priorizadas para reabasto urgente\n`;
+        analysis += `- **Objetivo:** Asegurar que las tiendas de alto desempeño mantengan suficiente inventario para evitar pérdida de ventas\n\n`;
+        analysis += `### 💡 Recomendaciones\n\n`;
+        if (valor > 30) {
+          analysis += `⚠️ **Valor alto:** Un límite de ${valor} días puede ser conservador. Considera:\n`;
+          analysis += `- Reducir a **25-30 días** para ser más proactivo en el reabasto\n`;
+          analysis += `- Esto permitirá detectar necesidades de reabasto antes de que se vuelvan críticas\n\n`;
+        } else if (valor < 20) {
+          analysis += `⚠️ **Valor bajo:** Un límite de ${valor} días puede ser muy agresivo. Considera:\n`;
+          analysis += `- Aumentar a **25-30 días** para evitar reabastos innecesarios\n`;
+          analysis += `- Esto reducirá la frecuencia de pedidos y optimizará los costos logísticos\n\n`;
+        } else {
+          analysis += `✅ **Valor óptimo:** El límite de ${valor} días está bien balanceado para:\n`;
+          analysis += `- Detectar necesidades de reabasto a tiempo\n`;
+          analysis += `- Priorizar tiendas HOT y Balanceadas que tienen mayor rotación\n`;
+          analysis += `- Evitar sobreinventario en tiendas de alto desempeño\n\n`;
+        }
+        analysis += `### 📈 Consideraciones Adicionales\n\n`;
+        analysis += `- Este parámetro se aplica específicamente a tiendas HOT y Balanceadas\n`;
+        analysis += `- Las tiendas con inventario mayor a ${valor} días no serán incluidas en el cálculo de reabasto urgente\n`;
+        analysis += `- El sistema calcula automáticamente las unidades necesarias basándose en ventas promedio y este límite\n\n`;
+        break;
+
+      case 'lead_time':
+        analysis += `**Lead Time: ${valor} días**\n\n`;
+        analysis += `Este parámetro representa el tiempo de espera entre la decisión de reabasto y la disponibilidad del producto en tienda.\n\n`;
+        analysis += `### 🎯 Impacto del Parámetro\n\n`;
+        analysis += `- **Valor Actual:** ${valor} días\n`;
+        analysis += `- **Significado:** ${valor === 0 ? 'No hay tiempo de espera' : `Tiempo de espera de ${valor} días`} en el proceso de reabasto\n`;
+        analysis += `- **Objetivo:** Optimizar la planificación considerando el tiempo real de entrega\n\n`;
+        analysis += `### 💡 Recomendaciones\n\n`;
+        if (valor === 0) {
+          analysis += `✅ **Lead Time a 0:** Configuración ideal para:\n`;
+          analysis += `- Reabastos inmediatos cuando el inventario está disponible en almacén\n`;
+          analysis += `- Minimizar el tiempo entre detección de necesidad y disponibilidad en tienda\n`;
+          analysis += `- Optimizar la cadena de suministro para entregas rápidas\n\n`;
+          analysis += `⚠️ **Consideraciones:**\n`;
+          analysis += `- Asegúrate de que tu cadena de suministro puede realmente cumplir con entregas inmediatas\n`;
+          analysis += `- Si hay tiempo de procesamiento o transporte, considera ajustar este valor a la realidad operativa\n\n`;
+        } else if (valor > 7) {
+          analysis += `⚠️ **Lead Time alto:** ${valor} días puede ser demasiado tiempo. Considera:\n`;
+          analysis += `- Revisar procesos logísticos para reducir el tiempo de entrega\n`;
+          analysis += `- Si es posible, reducir a **3-5 días** para ser más competitivo\n`;
+          analysis += `- Este tiempo se suma al cálculo de días de inventario necesarios\n\n`;
+        } else {
+          analysis += `✅ **Lead Time razonable:** ${valor} días es un tiempo aceptable para:\n`;
+          analysis += `- Procesamiento de pedidos\n`;
+          analysis += `- Transporte y entrega\n`;
+          analysis += `- Considerar en el cálculo de inventario necesario\n\n`;
+        }
+        analysis += `### 📈 Consideraciones Adicionales\n\n`;
+        analysis += `- El Lead Time se suma al inventario necesario para calcular el punto de reorden\n`;
+        analysis += `- Con Lead Time de ${valor} días, el sistema calcula: Inventario Necesario = Ventas Diarias × (Días Objetivo + ${valor})\n`;
+        analysis += `- Un Lead Time más bajo permite mantener menos inventario de seguridad\n\n`;
+        break;
+
+      case 'horizonte_tiempo':
+        analysis += `**Horizonte de Tiempo: ${valor} días**\n\n`;
+        analysis += `Este parámetro define cuántos días de inventario se busca tener después del reabasto para asegurar cobertura adecuada.\n\n`;
+        analysis += `### 🎯 Impacto del Parámetro\n\n`;
+        analysis += `- **Valor Actual:** ${valor} días\n`;
+        analysis += `- **Significado:** Después del reabasto, se busca tener ${valor} días de inventario disponible\n`;
+        analysis += `- **Objetivo:** Asegurar cobertura suficiente para evitar agotamientos antes del próximo reabasto\n\n`;
+        analysis += `### 💡 Recomendaciones\n\n`;
+        if (valor < 7) {
+          analysis += `⚠️ **Horizonte corto:** ${valor} días puede ser insuficiente. Considera:\n`;
+          analysis += `- Aumentar a **10-15 días** para mayor seguridad\n`;
+          analysis += `- Esto reduce el riesgo de agotamiento antes del próximo ciclo de reabasto\n`;
+          analysis += `- Especialmente importante para tiendas HOT con alta rotación\n\n`;
+        } else if (valor > 20) {
+          analysis += `⚠️ **Horizonte largo:** ${valor} días puede ser excesivo. Considera:\n`;
+          analysis += `- Reducir a **10-15 días** para optimizar capital de trabajo\n`;
+          analysis += `- Un horizonte muy largo puede llevar a sobreinventario\n`;
+          analysis += `- Esto puede aumentar costos de almacenamiento y riesgo de obsolescencia\n\n`;
+        } else {
+          analysis += `✅ **Horizonte óptimo:** ${valor} días es un buen balance para:\n`;
+          analysis += `- Asegurar cobertura adecuada sin sobreinventario\n`;
+          analysis += `- Permitir flexibilidad para ajustes en el siguiente ciclo\n`;
+          analysis += `- Optimizar el capital de trabajo invertido en inventario\n\n`;
+        }
+        analysis += `### 📈 Consideraciones Adicionales\n\n`;
+        analysis += `- El horizonte de ${valor} días se usa para calcular: Unidades a Pedir = (Ventas Diarias × ${valor}) - Inventario Actual\n`;
+        analysis += `- Este valor debe alinearse con la frecuencia de tus ciclos de reabasto\n`;
+        analysis += `- Para tiendas HOT, un horizonte de ${valor} días asegura que no se agoten antes del próximo reabasto programado\n`;
+        analysis += `- El sistema muestra "Días Post-Reabasto" en los detalles para verificar que se alcanza este objetivo\n\n`;
+        break;
+
+      default:
+        analysis += `Este parámetro forma parte del sistema de cálculo de reabasto urgente.\n\n`;
+        analysis += `### 📊 Información General\n\n`;
+        analysis += `- **Valor:** ${value}\n`;
+        analysis += `- **Descripción:** ${descripcion || 'Parámetro de configuración para el cálculo de reabasto urgente'}\n\n`;
+    }
+
+    analysis += `### 🔍 Metodología de Cálculo\n\n`;
+    analysis += `Los parámetros de reabasto urgente se utilizan en conjunto para:\n\n`;
+    analysis += `1. **Identificar tiendas críticas:** Tiendas HOT y Balanceadas con inventario menor al límite máximo\n`;
+    analysis += `2. **Calcular necesidades:** Basándose en ventas promedio, lead time y horizonte de tiempo\n`;
+    analysis += `3. **Priorizar acciones:** Enfocándose en tiendas de alto desempeño para maximizar impacto\n\n`;
+
+    analysis += `### 💼 Impacto en el Negocio\n\n`;
+    analysis += `Estos parámetros afectan directamente:\n`;
+    analysis += `- **Monto total de inversión** en reabasto\n`;
+    analysis += `- **Número de tiendas impactadas** por la acción\n`;
+    analysis += `- **Unidades totales** a reabastecer\n`;
+    analysis += `- **Efectividad** en prevenir pérdida de ventas por agotamiento\n\n`;
+
+    return analysis;
+  };
+
+  const generateReabastoParametrosCompletosAnalysis = (data: any): string => {
+    const { parametros } = data;
+    
+    let analysis = `## Explicación de Parámetros de Reabasto Urgente\n\n`;
+    analysis += `VEMIO ha calculado automáticamente los parámetros óptimos para el reabasto urgente basándose en el análisis de tus datos históricos, patrones de venta y características de tus tiendas.\n\n`;
+
+    analysis += `### 📊 Parámetros Calculados por VEMIO\n\n`;
+
+    // Tiempo de reabasto
+    if (parametros.tiempo_reabasto) {
+      const { nombre, valor, unidad } = parametros.tiempo_reabasto;
+      analysis += `#### ${nombre}: ${valor} ${unidad}\n\n`;
+      analysis += `**¿Por qué ${valor} ${unidad}?**\n\n`;
+      analysis += `VEMIO analizó el comportamiento de tus tiendas HOT y Balanceadas y determinó que:\n\n`;
+      analysis += `- **Análisis de rotación:** Las tiendas de alto desempeño tienen una rotación promedio que requiere reabasto cuando el inventario cae por debajo de ${valor} días\n`;
+      analysis += `- **Balance óptimo:** Este valor permite detectar necesidades de reabasto a tiempo sin generar sobreinventario\n`;
+      analysis += `- **Prevención de agotamientos:** Con ${valor} días como límite, se priorizan tiendas que están en riesgo de agotamiento pero aún tienen margen para reabasto efectivo\n`;
+      analysis += `- **Optimización de capital:** Un límite mayor a ${valor} días aumentaría innecesariamente el capital invertido en inventario\n\n`;
+    }
+
+    // Lead Time
+    if (parametros.lead_time) {
+      const { nombre, valor, unidad } = parametros.lead_time;
+      analysis += `#### ${nombre}: ${valor} ${unidad}\n\n`;
+      analysis += `**¿Por qué ${valor} ${unidad}?**\n\n`;
+      if (valor === 0) {
+        analysis += `VEMIO identificó que tu operación puede funcionar con Lead Time de ${valor} días porque:\n\n`;
+        analysis += `- **Capacidad logística:** Tu cadena de suministro tiene la capacidad de entregas inmediatas o en el mismo día\n`;
+        analysis += `- **Inventario disponible:** El almacén central tiene suficiente stock para cubrir reabastos urgentes sin demoras\n`;
+        analysis += `- **Optimización de inventario:** Con Lead Time de ${valor} días, puedes mantener menos inventario de seguridad, liberando capital de trabajo\n`;
+        analysis += `- **Ventaja competitiva:** Esto te permite responder más rápido a cambios en demanda que competidores con Lead Time más largo\n\n`;
+      } else {
+        analysis += `VEMIO calculó un Lead Time de ${valor} ${unidad} basándose en:\n\n`;
+        analysis += `- **Tiempo real de procesamiento:** Análisis del tiempo promedio desde la generación del pedido hasta la disponibilidad en tienda\n`;
+        analysis += `- **Capacidad operativa:** Evaluación de tus procesos logísticos y de distribución actuales\n`;
+        analysis += `- **Balance costo-eficiencia:** Este valor optimiza el balance entre velocidad de entrega y costos operativos\n\n`;
+      }
+    }
+
+    // Horizonte de tiempo
+    if (parametros.horizonte_tiempo) {
+      const { nombre, valor, unidad } = parametros.horizonte_tiempo;
+      analysis += `#### ${nombre}: ${valor} ${unidad}\n\n`;
+      analysis += `**¿Por qué ${valor} ${unidad}?**\n\n`;
+      analysis += `VEMIO determinó que ${valor} ${unidad} es el horizonte óptimo después del reabasto porque:\n\n`;
+      analysis += `- **Frecuencia de ciclos:** Este valor se alinea con la frecuencia de tus ciclos de reabasto, asegurando cobertura hasta el próximo ciclo\n`;
+      analysis += `- **Patrones de venta:** Análisis de variabilidad en ventas muestra que ${valor} días proporcionan un buffer adecuado para fluctuaciones normales\n`;
+      analysis += `- **Optimización de capital:** Un horizonte mayor aumentaría el capital inmovilizado sin beneficio proporcional\n`;
+      analysis += `- **Prevención de agotamientos:** Con ${valor} días post-reabasto, las tiendas HOT mantienen suficiente inventario para cubrir picos de demanda\n`;
+      analysis += `- **Flexibilidad operativa:** Este horizonte permite ajustes en el siguiente ciclo sin riesgo de agotamiento\n\n`;
+    }
+
+    analysis += `### 🧠 Metodología de Cálculo de VEMIO\n\n`;
+    analysis += `VEMIO utiliza un algoritmo avanzado que considera:\n\n`;
+    analysis += `1. **Análisis histórico:** Patrones de venta de los últimos 3-6 meses en tiendas HOT y Balanceadas\n`;
+    analysis += `2. **Variabilidad de demanda:** Desviaciones estándar y coeficientes de variación para calcular buffers de seguridad\n`;
+    analysis += `3. **Características de tiendas:** Segmentación y comportamiento específico de cada tipo de tienda\n`;
+    analysis += `4. **Optimización multi-objetivo:** Balance entre:\n`;
+    analysis += `   - Minimizar riesgo de agotamiento\n`;
+    analysis += `   - Optimizar capital de trabajo\n`;
+    analysis += `   - Maximizar disponibilidad de producto\n`;
+    analysis += `   - Reducir costos logísticos\n\n`;
+
+    analysis += `### 🎯 Impacto de estos Parámetros\n\n`;
+    analysis += `Con estos parámetros calculados por VEMIO, el sistema de reabasto urgente:\n\n`;
+    analysis += `- **Identifica oportunamente** tiendas que necesitan reabasto antes de que se vuelva crítico\n`;
+    analysis += `- **Optimiza la inversión** en inventario, manteniendo solo lo necesario para operar eficientemente\n`;
+    analysis += `- **Maximiza la disponibilidad** en tiendas de alto desempeño donde cada venta perdida tiene mayor impacto\n`;
+    analysis += `- **Reduce costos operativos** evitando reabastos innecesarios o demasiado frecuentes\n\n`;
+
+    analysis += `### 📈 Ventajas de la Automatización\n\n`;
+    analysis += `Al usar parámetros calculados automáticamente por VEMIO:\n\n`;
+    analysis += `- **Precisión:** Los valores se ajustan continuamente basándose en datos reales\n`;
+    analysis += `- **Objetividad:** Elimina sesgos humanos y decisiones subjetivas\n`;
+    analysis += `- **Eficiencia:** Optimiza múltiples variables simultáneamente\n`;
+    analysis += `- **Adaptabilidad:** Los parámetros pueden ajustarse automáticamente cuando cambian los patrones de negocio\n\n`;
+
+    analysis += `### 💡 Recomendaciones\n\n`;
+    analysis += `- **Confía en los cálculos:** Estos parámetros están optimizados para tu operación específica\n`;
+    analysis += `- **Monitorea resultados:** Revisa periódicamente las métricas de reabasto para validar la efectividad\n`;
+    analysis += `- **Mantén datos actualizados:** VEMIO mejora sus cálculos con más datos históricos\n`;
+    analysis += `- **Considera ajustes estacionales:** Si hay cambios significativos en patrones de venta, VEMIO los detectará y ajustará automáticamente\n\n`;
 
     return analysis;
   };
