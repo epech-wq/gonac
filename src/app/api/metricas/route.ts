@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const format = searchParams.get('format') || 'raw';
+    const segment = searchParams.get('segment') || undefined; // 'Hot', 'Balanceadas', or 'Slow'
 
     const supabase = createServerSupabaseClient();
     const repository = new MetricasRepository(supabase);
@@ -42,28 +43,28 @@ export async function GET(request: NextRequest) {
     switch (format) {
       case 'formatted':
         // Get metrics with formatted strings
-        const formattedMetrics = await service.getMetricasConsolidadasFormatted();
+        const formattedMetrics = await service.getMetricasConsolidadasFormatted(segment);
         data = {
           ...formattedMetrics,
           timestamp: new Date().toISOString(),
-          source: 'mvw_metricas_consolidadas',
+          source: segment ? 'mvw_metricas_consolidadas_segmentadas' : 'mvw_metricas_consolidadas',
         };
         break;
 
       case 'cards':
         // Get metrics as KPI cards
-        const cards = await service.getKPICards();
+        const cards = await service.getKPICards(segment);
         data = {
           cards,
           timestamp: new Date().toISOString(),
-          source: 'mvw_metricas_consolidadas',
+          source: segment ? 'mvw_metricas_consolidadas_segmentadas' : 'mvw_metricas_consolidadas',
         };
         break;
 
       case 'raw':
       default:
         // Get raw metrics
-        data = await service.getMetricasConsolidadas();
+        data = await service.getMetricasConsolidadas(segment);
         break;
     }
 

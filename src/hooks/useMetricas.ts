@@ -12,6 +12,7 @@ interface UseMetricasOptions {
   format?: 'raw' | 'formatted' | 'cards';
   autoFetch?: boolean;
   refreshInterval?: number; // Auto-refresh interval in milliseconds
+  segment?: string; // Segment filter: 'Hot', 'Balanceadas', or 'Slow'
 }
 
 /**
@@ -69,7 +70,7 @@ interface UseMetricasCardsReturn {
 export function useMetricas(
   options: UseMetricasOptions = {}
 ): UseMetricasReturn {
-  const { format = 'raw', autoFetch = false, refreshInterval } = options;
+  const { format = 'raw', autoFetch = false, refreshInterval, segment } = options;
 
   const [data, setData] = useState<MetricasConsolidadasResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -80,7 +81,12 @@ export function useMetricas(
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/metricas?format=${format}`);
+      const params = new URLSearchParams({ format });
+      if (segment) {
+        params.append('segment', segment);
+      }
+
+      const response = await fetch(`/api/metricas?${params.toString()}`);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -100,7 +106,7 @@ export function useMetricas(
     } finally {
       setLoading(false);
     }
-  }, [format]);
+  }, [format, segment]);
 
   const refresh = useCallback(async () => {
     try {
@@ -162,7 +168,7 @@ export function useMetricas(
 export function useMetricasFormatted(
   options: Omit<UseMetricasOptions, 'format'> = {}
 ): UseMetricasFormattedReturn {
-  const { autoFetch = false, refreshInterval } = options;
+  const { autoFetch = false, refreshInterval, segment } = options;
 
   const [data, setData] = useState<MetricasConsolidadasFormatted | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -173,7 +179,12 @@ export function useMetricasFormatted(
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/metricas?format=formatted');
+      const params = new URLSearchParams({ format: 'formatted' });
+      if (segment) {
+        params.append('segment', segment);
+      }
+
+      const response = await fetch(`/api/metricas?${params.toString()}`);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -196,7 +207,7 @@ export function useMetricasFormatted(
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [segment]);
 
   const refresh = useCallback(async () => {
     try {
@@ -265,7 +276,7 @@ export function useMetricasFormatted(
 export function useMetricasCards(
   options: Omit<UseMetricasOptions, 'format'> = {}
 ): UseMetricasCardsReturn {
-  const { autoFetch = false, refreshInterval } = options;
+  const { autoFetch = false, refreshInterval, segment } = options;
 
   const [cards, setCards] = useState<KPICard[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -276,7 +287,12 @@ export function useMetricasCards(
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/metricas?format=cards');
+      const params = new URLSearchParams({ format: 'cards' });
+      if (segment) {
+        params.append('segment', segment);
+      }
+
+      const response = await fetch(`/api/metricas?${params.toString()}`);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -296,7 +312,7 @@ export function useMetricasCards(
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [segment]);
 
   const refresh = useCallback(async () => {
     try {

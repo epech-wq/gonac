@@ -15,11 +15,11 @@ import {
   getOportunidadColor,
 } from '@/utils/tiendas.mappers';
 
-export const useTiendasData = () => {
+export const useTiendasData = (segment?: string) => {
   const { data: segmentacionData, loading: loadingSegmentacion, error: errorSegmentacion } = 
     useSegmentacionFormatted({ autoFetch: true });
   const { data: metricasData, loading: loadingMetricas, error: errorMetricas } = 
-    useMetricasFormatted({ autoFetch: true });
+    useMetricasFormatted({ autoFetch: true, segment });
   const { data: valorizacionData, loading: loadingValorizacion } = 
     useValorizacionSummary();
 

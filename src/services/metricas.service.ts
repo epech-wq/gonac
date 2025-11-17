@@ -14,15 +14,27 @@ export class MetricasService {
 
   /**
    * Get consolidated metrics for home page KPIs
+   * @param segment - Optional segment filter: 'Hot', 'Balanceadas', or 'Slow'
    */
-  async getMetricasConsolidadas(): Promise<MetricasConsolidadasResponse> {
+  async getMetricasConsolidadas(segment?: string): Promise<MetricasConsolidadasResponse> {
     try {
-      const data = await this.repository.getMetricasConsolidadas();
+      let data;
+      let source: string;
+
+      if (segment) {
+        // Fetch from segmented view
+        data = await this.repository.getMetricasConsolidadasBySegment(segment);
+        source = 'mvw_metricas_consolidadas_segmentadas';
+      } else {
+        // Fetch from regular consolidated view
+        data = await this.repository.getMetricasConsolidadas();
+        source = 'mvw_metricas_consolidadas';
+      }
 
       return {
         data,
         timestamp: new Date().toISOString(),
-        source: 'mvw_metricas_consolidadas',
+        source,
       };
     } catch (error) {
       throw new Error(
@@ -33,9 +45,10 @@ export class MetricasService {
 
   /**
    * Get formatted metrics with currency and percentage formatting
+   * @param segment - Optional segment filter: 'Hot', 'Balanceadas', or 'Slow'
    */
-  async getMetricasConsolidadasFormatted(): Promise<MetricasConsolidadasFormatted> {
-    const { data } = await this.getMetricasConsolidadas();
+  async getMetricasConsolidadasFormatted(segment?: string): Promise<MetricasConsolidadasFormatted> {
+    const { data } = await this.getMetricasConsolidadas(segment);
 
     return {
       ...data,
@@ -82,9 +95,10 @@ export class MetricasService {
 
   /**
    * Get metrics as individual KPI cards for dashboard
+   * @param segment - Optional segment filter: 'Hot', 'Balanceadas', or 'Slow'
    */
-  async getKPICards(): Promise<KPICard[]> {
-    const { data } = await this.getMetricasConsolidadas();
+  async getKPICards(segment?: string): Promise<KPICard[]> {
+    const { data } = await this.getMetricasConsolidadas(segment);
 
     return [
       {
