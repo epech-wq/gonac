@@ -19,6 +19,11 @@ interface MetricCardProps {
   onAnalysisClick?: () => void;
   storeMetrics?: any;
   metricasData?: any;
+  // Target indicator props
+  targetVariation?: number;
+  targetVariationFormatted?: string;
+  targetValue?: string;
+  isInverted?: boolean; // For metrics where lower is better (e.g., days inventory, break rate)
 }
 
 // Colores para iconos - más saturados y distintivos
@@ -71,10 +76,34 @@ export default function MetricCard({
   onAnalysisClick,
   storeMetrics,
   metricasData,
+  targetVariation,
+  targetVariationFormatted,
+  targetValue,
+  isInverted = false,
 }: MetricCardProps) {
   const isSmall = size === 'small';
   const barColor = progressColor || PROGRESS_COLORS[color];
   const [showBadge, setShowBadge] = React.useState(false);
+
+  // Helper function to format variation with sign
+  const formatVariation = (val: number): string => {
+    const sign = val >= 0 ? '+' : '';
+    return `${sign}${val.toFixed(1)}%`;
+  };
+
+  // Helper function to get arrow icon based on variation
+  const getArrowIcon = (variation: number) => {
+    const isPositive = isInverted ? variation < 0 : variation > 0;
+    return isPositive ? (
+      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
+    ) : (
+      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    );
+  };
   
   return (
     <div 
@@ -102,6 +131,23 @@ export default function MetricCard({
       {subtitle && (
         <div className={`${isSmall ? 'text-xs' : 'text-sm'} text-gray-500 dark:text-gray-400 mb-3`}>
           {subtitle}
+        </div>
+      )}
+
+      {/* Target Indicator */}
+      {targetVariation !== undefined && targetValue && (
+        <div className="flex items-center justify-between mb-3">
+          <div className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
+            (isInverted ? targetVariation < 0 : targetVariation > 0)
+              ? 'bg-green-50 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+              : 'bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+          }`}>
+            {getArrowIcon(targetVariation)}
+            <span>{targetVariationFormatted || formatVariation(targetVariation)}</span>
+          </div>
+          <span className={`${isSmall ? 'text-xs' : 'text-sm'} text-gray-500 dark:text-gray-400`}>
+            vs Objetivo: {targetValue}
+          </span>
         </div>
       )}
       

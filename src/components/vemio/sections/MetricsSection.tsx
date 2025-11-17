@@ -15,6 +15,35 @@ interface MetricasData {
   avg_venta_promedio_diaria?: number;
   cobertura_pct?: number;
   ventas_totales_unidades?: number;
+  // Target data
+  objetivo_ventas_totales_pesos?: number;
+  objetivo_ventas_totales_pesos_formatted?: string;
+  objetivo_sell_through_pct?: number;
+  objetivo_sell_through_formatted?: string;
+  objetivo_cobertura_pct?: number;
+  objetivo_cobertura_formatted?: string;
+  objetivo_cobertura_ponderada_pct?: number;
+  objetivo_cobertura_ponderada_formatted?: string;
+  objetivo_promedio_dias_inventario?: number;
+  objetivo_promedio_dias_inventario_formatted?: string;
+  objetivo_porcentaje_agotados_pct?: number;
+  objetivo_porcentaje_agotados_formatted?: string;
+  objetivo_avg_venta_promedio_diaria?: number;
+  objetivo_avg_venta_promedio_diaria_formatted?: string;
+  // Variation data
+  variacion_ventas_totales_pct?: number;
+  variacion_ventas_totales_formatted?: string;
+  variacion_cobertura_pct?: number;
+  variacion_cobertura_formatted?: string;
+  variacion_cobertura_ponderada_pct?: number;
+  variacion_cobertura_ponderada_formatted?: string;
+  variacion_promedio_dias_inventario_pct?: number;
+  variacion_promedio_dias_inventario_formatted?: string;
+  variacion_porcentaje_agotados_pct?: number;
+  variacion_porcentaje_agotados_formatted?: string;
+  variacion_avg_venta_promedio_diaria_pct?: number;
+  variacion_avg_venta_promedio_diaria_formatted?: string;
+  diferencia_sell_through_pct?: number;
 }
 
 interface MetricsSectionProps {
@@ -31,6 +60,48 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
   const tasaQuiebrePct = metricasData?.porcentaje_agotados_pct ?? 2.3;
   const ventaPromedioDiaria = metricasData?.avg_venta_promedio_diaria ?? (storeMetrics.ventaPromedio / 7);
   const coberturaPct = metricasData?.cobertura_pct ?? 0.83;
+
+  // Helper function to calculate variation percentage for sell-through
+  const getSellThroughVariation = (): number => {
+    if (!metricasData?.objetivo_sell_through_pct || metricasData.objetivo_sell_through_pct === 0) {
+      return 0;
+    }
+    // Both are in 0-1 format, calculate variation as percentage
+    return ((sellThroughPct - metricasData.objetivo_sell_through_pct) / metricasData.objetivo_sell_through_pct) * 100;
+  };
+
+  // Helper function to format variation with sign
+  const formatVariation = (value: number): string => {
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(1)}%`;
+  };
+
+  // Helper function to get arrow icon based on variation
+  const getArrowIcon = (variation: number, isInverted: boolean = false) => {
+    const isPositive = isInverted ? variation < 0 : variation > 0;
+    return isPositive ? (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
+    ) : (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    );
+  };
+
+  // Helper function to format target value, multiplying by 100 for percentage cards
+  const formatTargetValue = (value: string | undefined, isPercentage: boolean = false): string => {
+    if (!value) return '';
+    if (isPercentage) {
+      // For percentage cards, the target is in 0-1 format, multiply by 100
+      const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
+      if (!isNaN(numValue)) {
+        return `${Math.round(numValue * 100)}%`;
+      }
+    }
+    return value;
+  };
 
   return (
     <>
@@ -81,15 +152,21 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               </svg>
             </div>
           </div>
-          <div className="mt-4 flex items-center">
-            <div className="flex items-center rounded-full bg-white/20 px-2 py-1 text-sm">
-              <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-              +{formatPercentage(crecimientoPct)}
+          {metricasData?.variacion_ventas_totales_pct !== undefined && metricasData?.objetivo_ventas_totales_pesos_formatted && (
+            <div className="mt-4 flex items-center justify-end">
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center rounded-full px-2 py-1 text-sm ${
+                  metricasData.variacion_ventas_totales_pct >= 0 
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-white/10 text-white/80'
+                }`}>
+                  {getArrowIcon(metricasData.variacion_ventas_totales_pct)}
+                  <span className="ml-1">{metricasData.variacion_ventas_totales_formatted || formatVariation(metricasData.variacion_ventas_totales_pct)}</span>
+                </div>
+                <span className="text-sm opacity-90">vs Objetivo: {metricasData.objetivo_ventas_totales_pesos_formatted}</span>
+              </div>
             </div>
-            <span className="ml-2 text-sm opacity-90">vs semana anterior</span>
-          </div>
+          )}
           <div className="mt-2 h-2 rounded-full bg-white/20">
             <div className="h-2 rounded-full bg-white" style={{ width: '82%' }}></div>
           </div>
@@ -125,7 +202,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
 
         {/* Sell-Through */}
         <div 
-          className={`relative rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg transition-all ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
+          className={`relative rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg transition-all flex flex-col ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
           onMouseEnter={(e) => {
             if (enableAnalysis) {
               const badge = e.currentTarget.querySelector('.vemio-badge');
@@ -143,7 +220,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               onCardClick({
                 title: 'Sell-Through',
                 value: formatPercentage(sellThroughPct),
-                subtitle: `vs ${METRIC_TARGETS.SELL_THROUGH}% objetivo`,
                 storeMetrics,
                 metricasData,
               });
@@ -158,7 +234,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
                   {formatPercentage(sellThroughPct)}
                 </div>
                 <div className="text-sm opacity-90 mt-1">
-                  vs {METRIC_TARGETS.SELL_THROUGH}% objetivo
+                  Inventario inicial: {formatNumber((metricasData?.ventas_totales_unidades ?? storeMetrics.unidadesVendidas) * 5)} unidades
                 </div>
               </div>
             </div>
@@ -168,16 +244,33 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               </svg>
             </div>
           </div>
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-sm opacity-90">
-              <span>Inventario inicial: {formatNumber((metricasData?.ventas_totales_unidades ?? storeMetrics.unidadesVendidas) * 5)} unidades</span>
+          {metricasData?.objetivo_sell_through_pct !== undefined && (
+            <div className="mt-4 flex items-center justify-end">
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const sellThroughVariation = getSellThroughVariation();
+                  return (
+                    <>
+                      <div className={`flex items-center rounded-full px-2 py-1 text-sm ${
+                        sellThroughVariation >= 0 
+                          ? 'bg-white/20 text-white' 
+                          : 'bg-white/10 text-white/80'
+                      }`}>
+                        {getArrowIcon(sellThroughVariation)}
+                        <span className="ml-1">{formatVariation(sellThroughVariation)}</span>
+                      </div>
+                      <span className="text-sm opacity-90">vs Objetivo: {formatTargetValue(metricasData.objetivo_sell_through_formatted, true) || `${Math.round(metricasData.objetivo_sell_through_pct * 100)}%`}</span>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
-            <div className="mt-2 h-2 rounded-full bg-white/20">
-              <div
-                className="h-2 rounded-full bg-white"
-                style={{ width: `${Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100)}%` }}
-              ></div>
-            </div>
+          )}
+          <div className="mt-2 h-2 rounded-full bg-white/20">
+            <div
+              className="h-2 rounded-full bg-white"
+              style={{ width: `${Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100)}%` }}
+            ></div>
           </div>
           {metricasData && (
             <div className="mt-2">
@@ -215,7 +308,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
         <MetricCard
           title="Cobertura Numérica"
           value={`${formatNumber(Math.round(coberturaPct * 100))}%`}
-          subtitle="100% del universo"
           color="blue"
           size="small"
           icon={
@@ -230,7 +322,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               onCardClick({
                 title: 'Cobertura Numérica',
                 value: `${formatNumber(Math.round(coberturaPct * 100))}%`,
-                subtitle: '100% del universo',
                 storeMetrics,
                 metricasData,
               });
@@ -238,12 +329,14 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           }}
           storeMetrics={storeMetrics}
           metricasData={metricasData}
+          targetVariation={metricasData?.variacion_cobertura_pct}
+          targetVariationFormatted={metricasData?.variacion_cobertura_formatted}
+          targetValue={formatTargetValue(metricasData?.objetivo_cobertura_formatted, true) || (metricasData?.objetivo_cobertura_pct !== undefined ? `${Math.round(metricasData.objetivo_cobertura_pct * 100)}%` : undefined)}
         />
 
         <MetricCard
           title="Cobertura Ponderada"
           value={formatPercentage(coberturaPonderadaPct)}
-          subtitle={`vs ${METRIC_TARGETS.COBERTURA_PONDERADA}% objetivo`}
           color="green"
           size="small"
           icon={
@@ -258,7 +351,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               onCardClick({
                 title: 'Cobertura Ponderada',
                 value: formatPercentage(coberturaPonderadaPct),
-                subtitle: `vs ${METRIC_TARGETS.COBERTURA_PONDERADA}% objetivo`,
                 storeMetrics,
                 metricasData,
               });
@@ -266,12 +358,14 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           }}
           storeMetrics={storeMetrics}
           metricasData={metricasData}
+          targetVariation={metricasData?.variacion_cobertura_ponderada_pct}
+          targetVariationFormatted={metricasData?.variacion_cobertura_ponderada_formatted}
+          targetValue={formatTargetValue(metricasData?.objetivo_cobertura_ponderada_formatted, true) || (metricasData?.objetivo_cobertura_ponderada_pct !== undefined ? `${Math.round(metricasData.objetivo_cobertura_ponderada_pct * 100)}%` : undefined)}
         />
 
         <MetricCard
           title="Días de Inventario"
           value={storeMetrics.diasInventario.toFixed(1)}
-          subtitle={`vs ${METRIC_TARGETS.DIAS_INVENTARIO} días objetivo`}
           color="red"
           size="small"
           icon={
@@ -286,7 +380,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               onCardClick({
                 title: 'Días de Inventario',
                 value: storeMetrics.diasInventario.toFixed(1),
-                subtitle: `vs ${METRIC_TARGETS.DIAS_INVENTARIO} días objetivo`,
                 storeMetrics,
                 metricasData,
               });
@@ -294,12 +387,15 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           }}
           storeMetrics={storeMetrics}
           metricasData={metricasData}
+          targetVariation={metricasData?.variacion_promedio_dias_inventario_pct}
+          targetVariationFormatted={metricasData?.variacion_promedio_dias_inventario_formatted}
+          targetValue={metricasData?.objetivo_promedio_dias_inventario_formatted}
+          isInverted={true}
         />
 
         <MetricCard
           title="Tasa de Quiebre"
           value={`${tasaQuiebrePct.toFixed(1)}%`}
-          subtitle={`vs ${METRIC_TARGETS.TASA_QUIEBRE}% tolerancia`}
           color="orange"
           size="small"
           icon={
@@ -314,7 +410,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               onCardClick({
                 title: 'Tasa de Quiebre',
                 value: `${tasaQuiebrePct.toFixed(1)}%`,
-                subtitle: `vs ${METRIC_TARGETS.TASA_QUIEBRE}% tolerancia`,
                 storeMetrics,
                 metricasData,
               });
@@ -322,12 +417,15 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           }}
           storeMetrics={storeMetrics}
           metricasData={metricasData}
+          targetVariation={metricasData?.variacion_porcentaje_agotados_pct}
+          targetVariationFormatted={metricasData?.variacion_porcentaje_agotados_formatted}
+          targetValue={formatTargetValue(metricasData?.objetivo_porcentaje_agotados_formatted, true) || (metricasData?.objetivo_porcentaje_agotados_pct !== undefined ? `${Math.round(metricasData.objetivo_porcentaje_agotados_pct * 100)}%` : undefined)}
+          isInverted={true}
         />
 
         <MetricCard
           title="Venta Promedio Diaria"
           value={formatCurrency(ventaPromedioDiaria)}
-          subtitle="Por día"
           color="purple"
           size="small"
           icon={
@@ -342,7 +440,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               onCardClick({
                 title: 'Venta Promedio Diaria',
                 value: formatCurrency(ventaPromedioDiaria),
-                subtitle: 'Por día',
                 storeMetrics,
                 metricasData,
               });
@@ -350,6 +447,9 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           }}
           storeMetrics={storeMetrics}
           metricasData={metricasData}
+          targetVariation={metricasData?.variacion_avg_venta_promedio_diaria_pct}
+          targetVariationFormatted={metricasData?.variacion_avg_venta_promedio_diaria_formatted}
+          targetValue={metricasData?.objetivo_avg_venta_promedio_diaria_formatted}
         />
       </div>
     </>
