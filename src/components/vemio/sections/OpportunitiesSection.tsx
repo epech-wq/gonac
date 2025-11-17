@@ -107,11 +107,11 @@ export default function OpportunitiesSection({ opportunities, onChatOpen }: Oppo
   // Sort opportunities by impacto (highest to lowest)
   const sortedOpportunities = [...opportunities].sort((a, b) => b.impacto - a.impacto);
 
-  // Determine label based on position: Crítico (highest), Alto (medium), Medio (lowest)
-  const getImpactoLabel = (index: number): 'Crítico' | 'Alto' | 'Medio' => {
-    if (index === 0) return 'Crítico';
-    if (index === 1) return 'Alto';
-    return 'Medio';
+  // Determine label based on opportunity type
+  const getImpactoLabel = (type: OpportunityType): 'Crítico' | 'Alto' | 'Medio' => {
+    if (type === 'caducidad' || type === 'sinVenta') return 'Crítico';
+    if (type === 'agotado') return 'Medio';
+    return 'Medio'; // Default fallback
   };
 
   return (
@@ -122,7 +122,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen }: Oppo
         </h3>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {sortedOpportunities.map((opportunity, index) => (
+          {sortedOpportunities.map((opportunity) => (
             <OpportunityCard
               key={opportunity.type}
               type={opportunity.type}
@@ -132,7 +132,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen }: Oppo
               impacto={opportunity.impacto}
               risk={opportunity.risk}
               impactoColor={opportunity.impactoColor}
-              impactoLabel={getImpactoLabel(index)}
+              impactoLabel={getImpactoLabel(opportunity.type)}
               isExpanded={expandedOportunidad === opportunity.type}
               detailData={getDetailData(opportunity.type)}
               isLoading={getDetailLoading(opportunity.type)}
