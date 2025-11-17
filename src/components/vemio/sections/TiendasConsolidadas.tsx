@@ -6,12 +6,17 @@
 
 "use client";
 
+import { useState } from 'react';
 import MetricsSection from './MetricsSection';
 import OpportunitiesSection from './OpportunitiesSection';
 import ImpactoTotalBanner from './ImpactoTotalBanner';
+import VemioAnalysisChat from '../VemioAnalysisChat';
 import { useTiendasData } from '@/hooks/useTiendasData';
 
 export default function TiendasConsolidadas() {
+  const [chatOpen, setChatOpen] = useState(false);
+  const [selectedCardData, setSelectedCardData] = useState<any>(null);
+
   const {
     storeMetrics,
     opportunities,
@@ -21,6 +26,11 @@ export default function TiendasConsolidadas() {
     loading,
     error,
   } = useTiendasData();
+
+  const handleCardClick = (cardData: any) => {
+    setSelectedCardData(cardData);
+    setChatOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -62,7 +72,12 @@ export default function TiendasConsolidadas() {
         </div>
 
         {/* Metrics Section */}
-        <MetricsSection storeMetrics={storeMetrics} metricasData={metricasData} />
+        <MetricsSection 
+          storeMetrics={storeMetrics} 
+          metricasData={metricasData}
+          enableAnalysis={true}
+          onCardClick={handleCardClick}
+        />
 
         {/* Impacto Total Banner */}
         <ImpactoTotalBanner
@@ -74,6 +89,16 @@ export default function TiendasConsolidadas() {
         {/* Opportunities Section */}
         <OpportunitiesSection opportunities={opportunities} />
       </div>
+
+      {/* Vemio Analysis Chat */}
+      <VemioAnalysisChat
+        isOpen={chatOpen}
+        onClose={() => {
+          setChatOpen(false);
+          setSelectedCardData(null);
+        }}
+        cardData={selectedCardData}
+      />
     </div>
   );
 }
