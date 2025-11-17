@@ -14,6 +14,7 @@ interface OpportunityCardProps {
   impacto: number;
   risk: RiskLevel;
   impactoColor: string;
+  impactoLabel: 'Crítico' | 'Alto' | 'Medio';
   isExpanded: boolean;
   detailData: DetailRecord[];
   isLoading: boolean;
@@ -29,6 +30,7 @@ export default function OpportunityCard({
   impacto,
   risk,
   impactoColor,
+  impactoLabel,
   isExpanded,
   detailData,
   isLoading,
@@ -38,10 +40,10 @@ export default function OpportunityCard({
   return (
     <div className="rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="relative p-4">
-        {/* Risk Badge */}
+        {/* Impacto Label Badge */}
         <div className="absolute top-3 right-3">
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded ${getBadgeColor(risk)}`}>
-            {risk}
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded ${getBadgeColor(impactoLabel as RiskLevel)}`}>
+            {impactoLabel}
           </span>
         </div>
 
@@ -58,8 +60,10 @@ export default function OpportunityCard({
         </div>
 
         <div className="mt-3 mb-4">
-          <div className={`text-2xl font-bold mb-0.5 ${impactoColor}`}>
-            {formatCurrency(impacto)}
+          <div className="mb-1">
+            <div className={`text-2xl font-bold ${impactoColor}`}>
+              {formatCurrency(impacto)}
+            </div>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">
             Impacto potencial
