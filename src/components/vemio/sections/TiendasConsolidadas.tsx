@@ -85,7 +85,7 @@ export default function TiendasConsolidadas({ chatOpen = false, onCardClick }: T
         />
 
         {/* Opportunities Section */}
-        <OpportunitiesSection opportunities={opportunities} />
+        <OpportunitiesSection opportunities={opportunities} onChatOpen={onCardClick} />
         </div>
       </div>
     </div>

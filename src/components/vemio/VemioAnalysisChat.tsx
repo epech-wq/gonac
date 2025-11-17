@@ -108,6 +108,11 @@ export default function VemioAnalysisChat({
   }, [inputValue]);
 
   const generateInitialAnalysis = (data: MetricCardData): string => {
+    // Handle elasticity promotion parameters
+    if ((data as any).tipo === 'elasticidad_promocion') {
+      return generateElasticityRecommendations(data as any);
+    }
+
     let analysis = `## Análisis de ${data.title}\n\n`;
     
     analysis += `**Valor Actual:** ${data.value}\n`;
@@ -228,6 +233,97 @@ export default function VemioAnalysisChat({
     return analysis;
   };
 
+  const generateElasticityRecommendations = (data: any): string => {
+    const { elasticidadPapas, elasticidadTotopos, maxDescuento } = data;
+    
+    let analysis = `## Recomendaciones de Parámetros de Elasticidad\n\n`;
+    
+    analysis += `### 📊 Parámetros Actuales\n\n`;
+    analysis += `- **Elasticidad Papas:** ${elasticidadPapas}\n`;
+    analysis += `- **Elasticidad Mix (Totopos):** ${elasticidadTotopos}\n`;
+    analysis += `- **Descuento Máximo:** ${maxDescuento}%\n\n`;
+
+    analysis += `### 🎯 Análisis y Recomendaciones\n\n`;
+
+    // Analyze Papas elasticity
+    if (elasticidadPapas < 1.2) {
+      analysis += `**Elasticidad Papas (${elasticidadPapas}):**\n`;
+      analysis += `- ⚠️ **Valor bajo:** La elasticidad está por debajo del rango recomendado (1.2-1.8)\n`;
+      analysis += `- Esto indica que las ventas de papas no responden suficientemente a los descuentos\n`;
+      analysis += `- **Recomendación:** Aumentar a **1.5-1.6** para mejorar la respuesta a promociones\n`;
+      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado sería: ${(1.5 * maxDescuento).toFixed(0)}% (vs ${(elasticidadPapas * maxDescuento).toFixed(0)}% actual)\n\n`;
+    } else if (elasticidadPapas > 2.0) {
+      analysis += `**Elasticidad Papas (${elasticidadPapas}):**\n`;
+      analysis += `- ⚠️ **Valor alto:** La elasticidad está por encima del rango típico (1.2-1.8)\n`;
+      analysis += `- Esto puede indicar que los descuentos son demasiado agresivos o hay otros factores influyendo\n`;
+      analysis += `- **Recomendación:** Reducir a **1.5-1.7** para un modelo más conservador y sostenible\n\n`;
+    } else {
+      analysis += `**Elasticidad Papas (${elasticidadPapas}):**\n`;
+      analysis += `- ✅ **Valor óptimo:** La elasticidad está dentro del rango recomendado\n`;
+      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado en ventas es: **${(elasticidadPapas * maxDescuento).toFixed(0)}%**\n`;
+      analysis += `- Este valor refleja bien la respuesta del mercado a promociones en la categoría de papas\n\n`;
+    }
+
+    // Analyze Totopos/Mix elasticity
+    if (elasticidadTotopos < 1.5) {
+      analysis += `**Elasticidad Mix/Totopos (${elasticidadTotopos}):**\n`;
+      analysis += `- ⚠️ **Valor bajo:** La elasticidad está por debajo del rango recomendado (1.5-2.0)\n`;
+      analysis += `- Los productos del mix pueden necesitar descuentos más agresivos o mejor posicionamiento\n`;
+      analysis += `- **Recomendación:** Aumentar a **1.8-2.0** para maximizar la respuesta promocional\n`;
+      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado sería: ${(1.8 * maxDescuento).toFixed(0)}% (vs ${(elasticidadTotopos * maxDescuento).toFixed(0)}% actual)\n\n`;
+    } else if (elasticidadTotopos > 2.5) {
+      analysis += `**Elasticidad Mix/Totopos (${elasticidadTotopos}):**\n`;
+      analysis += `- ⚠️ **Valor muy alto:** La elasticidad está por encima del rango típico (1.5-2.0)\n`;
+      analysis += `- Esto puede indicar que los descuentos son excesivos o hay factores estacionales\n`;
+      analysis += `- **Recomendación:** Reducir a **1.8-2.0** para un modelo más realista y sostenible\n\n`;
+    } else {
+      analysis += `**Elasticidad Mix/Totopos (${elasticidadTotopos}):**\n`;
+      analysis += `- ✅ **Valor óptimo:** La elasticidad está dentro del rango recomendado\n`;
+      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado en ventas es: **${(elasticidadTotopos * maxDescuento).toFixed(0)}%**\n`;
+      analysis += `- Este valor refleja bien la respuesta del mercado a promociones en productos del mix\n\n`;
+    }
+
+    // Overall recommendations
+    analysis += `### 💡 Recomendaciones Generales\n\n`;
+    
+    const papasOptimal = elasticidadPapas >= 1.2 && elasticidadPapas <= 1.8;
+    const totoposOptimal = elasticidadTotopos >= 1.5 && elasticidadTotopos <= 2.0;
+    
+    if (papasOptimal && totoposOptimal) {
+      analysis += `✅ **Parámetros bien configurados:** Ambos valores de elasticidad están en rangos óptimos\n\n`;
+      analysis += `**Proyección de Impacto:**\n`;
+      analysis += `- Con estos parámetros y un descuento del ${maxDescuento}%, puedes esperar:\n`;
+      analysis += `  - Incremento en ventas de Papas: **${(elasticidadPapas * maxDescuento).toFixed(0)}%**\n`;
+      analysis += `  - Incremento en ventas de Mix: **${(elasticidadTotopos * maxDescuento).toFixed(0)}%**\n\n`;
+    } else {
+      analysis += `**Parámetros Sugeridos para Optimización:**\n\n`;
+      if (!papasOptimal) {
+        analysis += `- **Elasticidad Papas:** Ajustar a **1.5** (rango óptimo: 1.2-1.8)\n`;
+      }
+      if (!totoposOptimal) {
+        analysis += `- **Elasticidad Mix:** Ajustar a **1.8** (rango óptimo: 1.5-2.0)\n`;
+      }
+      analysis += `\nEstos valores están basados en:\n`;
+      analysis += `- Análisis histórico de respuesta promocional\n`;
+      analysis += `- Benchmarks de la industria para snacks\n`;
+      analysis += `- Balance entre efectividad y sostenibilidad del margen\n\n`;
+    }
+
+    analysis += `### 📈 Consideraciones Adicionales\n\n`;
+    analysis += `- **Descuento Máximo (${maxDescuento}%):** Asegúrate de que este valor no comprometa los márgenes\n`;
+    analysis += `- **Balance:** La diferencia entre elasticidades (${Math.abs(elasticidadPapas - elasticidadTotopos).toFixed(1)}) es ${Math.abs(elasticidadPapas - elasticidadTotopos) < 0.5 ? 'razonable' : 'significativa'}\n`;
+    analysis += `- **Monitoreo:** Revisa los resultados reales vs. proyectados para ajustar estos parámetros\n\n`;
+
+    analysis += `### 🔍 Metodología\n\n`;
+    analysis += `Los valores recomendados se basan en:\n`;
+    analysis += `- Análisis de datos históricos de promociones\n`;
+    analysis += `- Elasticidad precio-demanda típica en la categoría de snacks\n`;
+    analysis += `- Balance entre maximizar ventas y proteger márgenes\n`;
+    analysis += `- Experiencia en promociones para evacuar inventario en riesgo de caducidad\n\n`;
+
+    return analysis;
+  };
+
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -256,40 +352,20 @@ export default function VemioAnalysisChat({
   };
 
   const generateAIResponse = (userQuery: string, data: MetricCardData | null): string => {
-    const query = userQuery.toLowerCase();
-    
-    if (query.includes("tienda") || query.includes("store")) {
-      return `Basándome en los datos de ${data?.title || "la métrica"}, puedo informarte que:\n\n` +
-        `- **Total de Tiendas:** ${data?.storeMetrics?.totalTiendas || "N/A"} tiendas están siendo monitoreadas\n` +
-        `- Las tiendas están segmentadas en: Hot (alto volumen), Balanceadas, Slow (bajo volumen), y Críticas\n` +
-        `- Cada segmento tiene diferentes características de rotación y requiere estrategias específicas\n\n` +
-        `¿Te gustaría conocer más detalles sobre algún segmento específico?`;
-    }
-    
-    if (query.includes("sku") || query.includes("producto") || query.includes("product")) {
-      return `Respecto a los SKUs y productos relacionados con ${data?.title || "esta métrica"}:\n\n` +
-        `- Los datos consideran todos los SKUs activos en el inventario\n` +
-        `- Los productos se monitorean por su rotación, días de inventario, y riesgo de caducidad\n` +
-        `- Los SKUs con mayor impacto son aquellos en tiendas Hot y Balanceadas debido a su alta rotación\n\n` +
-        `¿Hay algún producto o categoría específica que te interese analizar?`;
-    }
-    
-    if (query.includes("dato") || query.includes("fuente") || query.includes("source")) {
-      return `La información de ${data?.title || "esta métrica"} proviene de:\n\n` +
-        `- **Sistema de Segmentación:** Clasificación de tiendas por performance\n` +
-        `- **Métricas Consolidadas:** Agregación de datos de todas las tiendas\n` +
-        `- **Valorización:** Análisis de inventario y oportunidades\n` +
-        `- **Actualización:** Los datos se actualizan en tiempo real desde las fuentes operativas\n\n` +
-        `Todos los datos son consolidados y validados antes de ser presentados.`;
-    }
-    
-    return `Entiendo tu pregunta sobre ${data?.title || "esta métrica"}. ` +
-      `Basándome en los datos disponibles, puedo ayudarte a profundizar en cualquier aspecto específico. ` +
-      `¿Podrías ser más específico sobre qué información necesitas? Por ejemplo:\n\n` +
-      `- Detalles sobre tiendas específicas\n` +
-      `- Información de SKUs o productos\n` +
-      `- Fuentes de datos y metodología\n` +
-      `- Recomendaciones y acciones sugeridas`;
+    // Temporary response for demo purposes
+    return `Gracias por tu pregunta. Actualmente, la funcionalidad de análisis conversacional está en desarrollo activo.\n\n` +
+      `**Estado del Proyecto:**\n` +
+      `Estamos trabajando en mejorar las capacidades de respuesta del asistente para que pueda entender y responder preguntas más complejas sobre las métricas y datos del dashboard.\n\n` +
+      `**Lo que puedes hacer ahora:**\n` +
+      `- Haz clic en las tarjetas de métricas para obtener análisis automáticos detallados\n` +
+      `- Revisa la información contextual que se genera automáticamente al seleccionar cada métrica\n` +
+      `- Utiliza el botón "Ask Vemio" en los modales de acciones para obtener recomendaciones de parámetros (como elasticidad de promociones)\n\n` +
+      `**Próximas mejoras:**\n` +
+      `- Respuestas inteligentes a preguntas personalizadas\n` +
+      `- Análisis comparativos entre métricas\n` +
+      `- Recomendaciones proactivas basadas en los datos\n` +
+      `- Integración con sistemas de IA avanzados\n\n` +
+      `Agradecemos tu paciencia mientras continuamos desarrollando esta funcionalidad.`;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -302,7 +378,7 @@ export default function VemioAnalysisChat({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-[360px] flex flex-col bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[9999]">
+    <div className="fixed right-0 top-0 h-screen w-[360px] flex flex-col bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[100000]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800 flex-shrink-0">
         <div className="flex items-center gap-3">
