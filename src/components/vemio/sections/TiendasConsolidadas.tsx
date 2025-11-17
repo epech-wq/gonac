@@ -6,16 +6,17 @@
 
 "use client";
 
-import { useState } from 'react';
 import MetricsSection from './MetricsSection';
 import OpportunitiesSection from './OpportunitiesSection';
 import ImpactoTotalBanner from './ImpactoTotalBanner';
-import VemioAnalysisChat from '../VemioAnalysisChat';
 import { useTiendasData } from '@/hooks/useTiendasData';
 
-export default function TiendasConsolidadas() {
-  const [chatOpen, setChatOpen] = useState(false);
-  const [selectedCardData, setSelectedCardData] = useState<any>(null);
+interface TiendasConsolidadasProps {
+  chatOpen?: boolean;
+  onCardClick?: (cardData: any) => void;
+}
+
+export default function TiendasConsolidadas({ chatOpen = false, onCardClick }: TiendasConsolidadasProps) {
 
   const {
     storeMetrics,
@@ -27,13 +28,10 @@ export default function TiendasConsolidadas() {
     error,
   } = useTiendasData();
 
-  const handleCardClick = (cardData: any) => {
-    setSelectedCardData(cardData);
-    setChatOpen(true);
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      {/* Main Content */}
+      <div className="space-y-6">
       {/* Loading State */}
       {loading && (
         <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800 text-center">
@@ -76,7 +74,7 @@ export default function TiendasConsolidadas() {
           storeMetrics={storeMetrics} 
           metricasData={metricasData}
           enableAnalysis={true}
-          onCardClick={handleCardClick}
+          onCardClick={onCardClick}
         />
 
         {/* Impacto Total Banner */}
@@ -88,17 +86,8 @@ export default function TiendasConsolidadas() {
 
         {/* Opportunities Section */}
         <OpportunitiesSection opportunities={opportunities} />
+        </div>
       </div>
-
-      {/* Vemio Analysis Chat */}
-      <VemioAnalysisChat
-        isOpen={chatOpen}
-        onClose={() => {
-          setChatOpen(false);
-          setSelectedCardData(null);
-        }}
-        cardData={selectedCardData}
-      />
     </div>
   );
 }

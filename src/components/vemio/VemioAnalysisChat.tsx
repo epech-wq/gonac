@@ -37,31 +37,60 @@ interface VemioAnalysisChatProps {
   isOpen: boolean;
   onClose: () => void;
   cardData: MetricCardData | null;
+  onCardDataChange?: (data: MetricCardData | null) => void;
 }
 
 export default function VemioAnalysisChat({
   isOpen,
   onClose,
   cardData,
+  onCardDataChange,
 }: VemioAnalysisChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const previousCardDataRef = useRef<MetricCardData | null>(null);
 
-  // Generate initial analysis when chat opens
+  // Auto-send message when card is clicked
   useEffect(() => {
-    if (isOpen && cardData && messages.length === 0) {
-      const initialMessage = generateInitialAnalysis(cardData);
-      setMessages([
-        {
-          id: "1",
-          role: "assistant",
-          content: initialMessage,
+    if (isOpen && cardData) {
+      // Check if this is a new card (different from previous)
+      const isNewCard = previousCardDataRef.current?.title !== cardData.title;
+      
+      if (isNewCard) {
+        // Generate user message asking about the card
+        const userMessage: ChatMessage = {
+          id: Date.now().toString(),
+          role: "user",
+          content: `Cuéntame sobre ${cardData.title}. ¿Qué información puedes darme sobre esta métrica?`,
           timestamp: new Date(),
-        },
-      ]);
+        };
+
+        // Add user message
+        setMessages((prev) => [...prev, userMessage]);
+        setIsLoading(true);
+
+        // Generate AI response
+        setTimeout(() => {
+          const aiResponse: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: generateInitialAnalysis(cardData),
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, aiResponse]);
+          setIsLoading(false);
+        }, 800);
+
+        // Update previous card reference
+        previousCardDataRef.current = cardData;
+      }
+    } else if (!isOpen) {
+      // Reset when chat closes
+      previousCardDataRef.current = null;
+      setMessages([]);
     }
   }, [isOpen, cardData]);
 
@@ -273,19 +302,10 @@ export default function VemioAnalysisChat({
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-[9998] bg-black/50 dark:bg-black/80 transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Chat Modal */}
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <div className="relative flex h-[85vh] w-full max-w-4xl flex-col rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
-            <div className="flex items-center gap-3">
+    <div className="fixed right-0 top-0 h-screen w-[360px] flex flex-col bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl z-[9999]">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800 flex-shrink-0">
+        <div className="flex items-center gap-3">
               <div className="rounded-lg bg-brand-100 dark:bg-brand-500/20 p-2">
                 <svg
                   className="h-6 w-6 text-brand-600 dark:text-brand-400"
@@ -309,8 +329,8 @@ export default function VemioAnalysisChat({
                   {cardData?.title || "Análisis de Métricas"}
                 </p>
               </div>
-            </div>
-            <button
+        </div>
+        <button
               onClick={onClose}
               className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
             >
@@ -330,165 +350,20 @@ export default function VemioAnalysisChat({
             </button>
           </div>
 
-          {/* Messages Container */}
-          <div className="custom-scrollbar flex-1 overflow-y-auto px-6 py-6">
-            <div className="mx-auto max-w-3xl space-y-6">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {message.role === "assistant" && (
-                    <div className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-500/20">
-                      <svg
-                        className="h-5 w-5 text-brand-600 dark:text-brand-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                  <div
-                    className={`max-w-[85%] ${
-                      message.role === "user"
-                        ? "bg-brand-100 dark:bg-brand-500/20 rounded-xl rounded-tr-xs px-4 py-3"
-                        : "bg-gray-100 dark:bg-white/5 rounded-xl rounded-tl-xs px-4 py-3"
-                    }`}
-                  >
-                    <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-6 text-gray-800 dark:text-white/90 whitespace-pre-wrap">
-                      {(() => {
-                        const lines = message.content.split('\n');
-                        const elements: JSX.Element[] = [];
-                        let currentList: string[] = [];
-                        let listKey = 0;
-
-                        const flushList = () => {
-                          if (currentList.length > 0) {
-                            elements.push(
-                              <ul key={`list-${listKey++}`} className="list-disc ml-6 mb-2 space-y-1">
-                                {currentList.map((item, itemIdx) => (
-                                  <li key={itemIdx}>{item}</li>
-                                ))}
-                              </ul>
-                            );
-                            currentList = [];
-                          }
-                        };
-
-                        lines.forEach((line, idx) => {
-                          // Handle headers
-                          if (line.startsWith('## ')) {
-                            flushList();
-                            elements.push(
-                              <h2 key={idx} className="text-lg font-semibold mt-4 mb-2 text-gray-900 dark:text-white">
-                                {line.replace('## ', '')}
-                              </h2>
-                            );
-                          } else if (line.startsWith('### ')) {
-                            flushList();
-                            elements.push(
-                              <h3 key={idx} className="text-base font-semibold mt-4 mb-2 text-gray-900 dark:text-white">
-                                {line.replace('### ', '')}
-                              </h3>
-                            );
-                          } else if (line.startsWith('- ')) {
-                            // Handle list items
-                            currentList.push(line.replace('- ', ''));
-                          } else if (line.trim()) {
-                            flushList();
-                            // Handle bold text
-                            if (line.includes('**')) {
-                              const parts = line.split(/(\*\*.*?\*\*)/g);
-                              elements.push(
-                                <p key={idx} className="mb-2">
-                                  {parts.map((part, partIdx) => {
-                                    if (part.startsWith('**') && part.endsWith('**')) {
-                                      return <strong key={partIdx} className="font-semibold">{part.slice(2, -2)}</strong>;
-                                    }
-                                    return <span key={partIdx}>{part}</span>;
-                                  })}
-                                </p>
-                              );
-                            } else {
-                              // Regular text
-                              elements.push(<p key={idx} className="mb-2">{line}</p>);
-                            }
-                          } else {
-                            flushList();
-                            elements.push(<br key={idx} />);
-                          }
-                        });
-                        flushList();
-                        return elements;
-                      })()}
-                    </div>
-                    {message.role === "assistant" && (
-                      <div className="mt-3">
-                        <CopyButton textToCopy={message.content} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-500/20">
-                    <svg
-                      className="h-5 w-5 text-brand-600 dark:text-brand-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                      />
-                    </svg>
-                  </div>
-                  <div className="bg-gray-100 dark:bg-white/5 rounded-xl rounded-tl-xs px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.3s]"></div>
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.15s]"></div>
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400"></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          {/* Input Area */}
-          <div className="border-t border-gray-200 p-4 dark:border-gray-800">
-            <div className="mx-auto max-w-3xl">
-              <div className="flex items-end gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-800">
-                <textarea
-                  ref={textareaRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Pregunta sobre esta métrica..."
-                  className="max-h-32 min-h-[60px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:ring-0 dark:text-white"
-                  rows={1}
-                />
-                <button
-                  onClick={handleSend}
-                  disabled={!inputValue.trim() || isLoading}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
-                >
+      {/* Messages Container */}
+      <div className="custom-scrollbar flex-1 overflow-y-auto px-4 py-4">
+        <div className="space-y-6">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              {message.role === "assistant" && (
+                <div className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-500/20">
                   <svg
-                    className="h-5 w-5"
+                    className="h-5 w-5 text-brand-600 dark:text-brand-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -497,16 +372,157 @@ export default function VemioAnalysisChat({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                     />
                   </svg>
-                </button>
+                </div>
+              )}
+              <div
+                className={`max-w-[85%] ${
+                  message.role === "user"
+                    ? "bg-brand-100 dark:bg-brand-500/20 rounded-xl rounded-tr-xs px-4 py-3"
+                    : "bg-gray-100 dark:bg-white/5 rounded-xl rounded-tl-xs px-4 py-3"
+                }`}
+              >
+                <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-6 text-gray-800 dark:text-white/90 whitespace-pre-wrap">
+                  {(() => {
+                    const lines = message.content.split('\n');
+                    const elements: JSX.Element[] = [];
+                    let currentList: string[] = [];
+                    let listKey = 0;
+
+                    const flushList = () => {
+                      if (currentList.length > 0) {
+                        elements.push(
+                          <ul key={`list-${listKey++}`} className="list-disc ml-6 mb-2 space-y-1">
+                            {currentList.map((item, itemIdx) => (
+                              <li key={itemIdx}>{item}</li>
+                            ))}
+                          </ul>
+                        );
+                        currentList = [];
+                      }
+                    };
+
+                    lines.forEach((line, idx) => {
+                      // Handle headers
+                      if (line.startsWith('## ')) {
+                        flushList();
+                        elements.push(
+                          <h2 key={idx} className="text-lg font-semibold mt-4 mb-2 text-gray-900 dark:text-white">
+                            {line.replace('## ', '')}
+                          </h2>
+                        );
+                      } else if (line.startsWith('### ')) {
+                        flushList();
+                        elements.push(
+                          <h3 key={idx} className="text-base font-semibold mt-4 mb-2 text-gray-900 dark:text-white">
+                            {line.replace('### ', '')}
+                          </h3>
+                        );
+                      } else if (line.startsWith('- ')) {
+                        // Handle list items
+                        currentList.push(line.replace('- ', ''));
+                      } else if (line.trim()) {
+                        flushList();
+                        // Handle bold text
+                        if (line.includes('**')) {
+                          const parts = line.split(/(\*\*.*?\*\*)/g);
+                          elements.push(
+                            <p key={idx} className="mb-2">
+                              {parts.map((part, partIdx) => {
+                                if (part.startsWith('**') && part.endsWith('**')) {
+                                  return <strong key={partIdx} className="font-semibold">{part.slice(2, -2)}</strong>;
+                                }
+                                return <span key={partIdx}>{part}</span>;
+                              })}
+                            </p>
+                          );
+                        } else {
+                          // Regular text
+                          elements.push(<p key={idx} className="mb-2">{line}</p>);
+                        }
+                      } else {
+                        flushList();
+                        elements.push(<br key={idx} />);
+                      }
+                    });
+                    flushList();
+                    return elements;
+                  })()}
+                </div>
+                {message.role === "assistant" && (
+                  <div className="mt-3">
+                    <CopyButton textToCopy={message.content} />
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-500/20">
+                <svg
+                  className="h-5 w-5 text-brand-600 dark:text-brand-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                  />
+                </svg>
+              </div>
+              <div className="bg-gray-100 dark:bg-white/5 rounded-xl rounded-tl-xs px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.3s]"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.15s]"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400"></div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
       </div>
-    </>
+
+      {/* Input Area */}
+      <div className="border-t border-gray-200 p-3 dark:border-gray-800 flex-shrink-0">
+        <div className="flex items-end gap-3 rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-800">
+          <textarea
+            ref={textareaRef}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Pregunta sobre esta métrica..."
+            className="max-h-32 min-h-[60px] flex-1 resize-none border-none bg-transparent p-0 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:ring-0 dark:text-white"
+            rows={1}
+          />
+          <button
+            onClick={handleSend}
+            disabled={!inputValue.trim() || isLoading}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-brand-500 dark:hover:bg-brand-600"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
