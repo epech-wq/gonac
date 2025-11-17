@@ -223,10 +223,11 @@ export class MetricasService {
 
   /**
    * Helper: Format percentage with sign (for differences)
+   * Always shows "+" when value is more than objective, "-" when less
    */
   private formatPercentageSigned(value: number): string {
-    const sign = value >= 0 ? '+' : '';
-    return `${sign}${value.toFixed(2)}%`;
+    const sign = value >= 0 ? '+' : '-';
+    return `${sign}${Math.abs(value).toFixed(2)}%`;
   }
 
   /**

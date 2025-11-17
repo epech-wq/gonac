@@ -70,10 +70,36 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
     return ((sellThroughPct - metricasData.objetivo_sell_through_pct) / metricasData.objetivo_sell_through_pct) * 100;
   };
 
+  // Helper function to verify and recalculate variation percentage
+  // Ensures the displayed variation matches the actual KPI value vs objective
+  const verifyVariation = (
+    actualValue: number,
+    objectiveValue: number,
+    storedVariation?: number
+  ): number => {
+    if (objectiveValue === 0) return 0;
+    // Calculate variation: ((actual - objective) / objective) * 100
+    const calculatedVariation = ((actualValue - objectiveValue) / objectiveValue) * 100;
+    
+    // If stored variation exists and differs significantly (> 0.1%), use calculated value
+    if (storedVariation !== undefined && Math.abs(storedVariation - calculatedVariation) > 0.1) {
+      console.warn('Variation mismatch detected. Using calculated value:', {
+        stored: storedVariation,
+        calculated: calculatedVariation,
+        actual: actualValue,
+        objective: objectiveValue
+      });
+      return calculatedVariation;
+    }
+    
+    return storedVariation !== undefined ? storedVariation : calculatedVariation;
+  };
+
   // Helper function to format variation with sign
+  // Always shows "+" when value is more than objective, "-" when less
   const formatVariation = (value: number): string => {
-    const sign = value >= 0 ? '+' : '';
-    return `${sign}${value.toFixed(1)}%`;
+    const sign = value >= 0 ? '+' : '-';
+    return `${sign}${Math.abs(value).toFixed(1)}%`;
   };
 
   // Helper function to get arrow icon based on variation
@@ -152,17 +178,27 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               </svg>
             </div>
           </div>
-          {metricasData?.variacion_ventas_totales_pct !== undefined && metricasData?.objetivo_ventas_totales_pesos_formatted && (
+          {metricasData?.variacion_ventas_totales_pct !== undefined && metricasData?.objetivo_ventas_totales_pesos_formatted && metricasData?.objetivo_ventas_totales_pesos !== undefined && (
             <div className="mt-4 flex items-center justify-end">
               <div className="flex items-center gap-2">
-                <div className={`flex items-center rounded-full px-2 py-1 text-sm ${
-                  metricasData.variacion_ventas_totales_pct >= 0 
-                    ? 'bg-white/20 text-white' 
-                    : 'bg-white/10 text-white/80'
-                }`}>
-                  {getArrowIcon(metricasData.variacion_ventas_totales_pct)}
-                  <span className="ml-1">{metricasData.variacion_ventas_totales_formatted || formatVariation(metricasData.variacion_ventas_totales_pct)}</span>
-                </div>
+                {(() => {
+                  // Verify variation matches actual vs objective
+                  const verifiedVariation = verifyVariation(
+                    storeMetrics.ventasTotales,
+                    metricasData.objetivo_ventas_totales_pesos,
+                    metricasData.variacion_ventas_totales_pct
+                  );
+                  return (
+                    <div className={`flex items-center rounded-full px-2 py-1 text-sm ${
+                      verifiedVariation >= 0 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-white/10 text-white/80'
+                    }`}>
+                      {getArrowIcon(verifiedVariation)}
+                      <span className="ml-1">{formatVariation(verifiedVariation)}</span>
+                    </div>
+                  );
+                })()}
                 <span className="text-sm opacity-90">vs Objetivo: {metricasData.objetivo_ventas_totales_pesos_formatted}</span>
               </div>
             </div>
@@ -248,16 +284,22 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
             <div className="mt-4 flex items-center justify-end">
               <div className="flex items-center gap-2">
                 {(() => {
-                  const sellThroughVariation = getSellThroughVariation();
+                  // Verify variation matches actual vs objective
+                  const calculatedVariation = getSellThroughVariation();
+                  const verifiedVariation = verifyVariation(
+                    sellThroughPct,
+                    metricasData.objetivo_sell_through_pct,
+                    calculatedVariation
+                  );
                   return (
                     <>
                       <div className={`flex items-center rounded-full px-2 py-1 text-sm ${
-                        sellThroughVariation >= 0 
+                        verifiedVariation >= 0 
                           ? 'bg-white/20 text-white' 
                           : 'bg-white/10 text-white/80'
                       }`}>
-                        {getArrowIcon(sellThroughVariation)}
-                        <span className="ml-1">{formatVariation(sellThroughVariation)}</span>
+                        {getArrowIcon(verifiedVariation)}
+                        <span className="ml-1">{formatVariation(verifiedVariation)}</span>
                       </div>
                       <span className="text-sm opacity-90">vs Objetivo: {formatTargetValue(metricasData.objetivo_sell_through_formatted, true) || `${Math.round(metricasData.objetivo_sell_through_pct * 100)}%`}</span>
                     </>
@@ -310,6 +352,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           value={`${formatNumber(Math.round(coberturaPct * 100))}%`}
           color="blue"
           size="small"
+          showProgress={false}
           icon={
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -339,6 +382,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           value={formatPercentage(coberturaPonderadaPct)}
           color="green"
           size="small"
+          showProgress={false}
           icon={
             <svg className="h-5 w-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
@@ -368,6 +412,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           value={storeMetrics.diasInventario.toFixed(1)}
           color="red"
           size="small"
+          showProgress={false}
           icon={
             <svg className="h-5 w-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -398,6 +443,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           value={`${tasaQuiebrePct.toFixed(1)}%`}
           color="orange"
           size="small"
+          showProgress={false}
           icon={
             <svg className="h-5 w-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -428,6 +474,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           value={formatCurrency(ventaPromedioDiaria)}
           color="purple"
           size="small"
+          showProgress={false}
           icon={
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
