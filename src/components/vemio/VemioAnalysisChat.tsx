@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, ReactElement } from "react";
 import { CopyButton } from "@/components/ai/TextGeneratorContent";
 
 interface ChatMessage {
@@ -688,7 +688,7 @@ export default function VemioAnalysisChat({
                 <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-6 text-gray-800 dark:text-white/90 whitespace-pre-wrap">
                   {(() => {
                     const lines = message.content.split('\n');
-                    const elements: JSX.Element[] = [];
+                    const elements: ReactElement[] = [];
                     let currentList: string[] = [];
                     let listKey = 0;
 
