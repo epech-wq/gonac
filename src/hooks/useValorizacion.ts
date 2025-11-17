@@ -8,7 +8,7 @@ import {
   SinVentasDetalleResponse
 } from '@/types/valorizacion';
 
-type FormatType = 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle';
+type FormatType = 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle' | 'tiendas-con-oportunidades';
 
 interface UseValorizacionOptions {
   format?: FormatType;
@@ -292,6 +292,29 @@ export function useSinVentasDetalle(options: { autoFetch?: boolean } = {}) {
 
   return useValorizacion<SinVentasDetalleResponse>({
     format: 'sin-ventas-detalle',
+    autoFetch
+  });
+}
+
+/**
+ * Hook for getting total number of stores with opportunities
+ * Fetches from: gonac.metricas_riesgo where valorizacion = 'Total'
+ * 
+ * @example
+ * ```tsx
+ * const { data, loading, error, refetch } = useTiendasConOportunidades();
+ * 
+ * if (loading) return <div>Loading...</div>;
+ * if (error) return <div>Error: {error.message}</div>;
+ * 
+ * return <div>Tiendas con Oportunidades: {data}</div>;
+ * ```
+ */
+export function useTiendasConOportunidades(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = true } = options;
+
+  return useValorizacion<number>({
+    format: 'tiendas-con-oportunidades',
     autoFetch
   });
 }

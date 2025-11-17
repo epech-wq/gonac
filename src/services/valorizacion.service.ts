@@ -176,5 +176,19 @@ export class ValorizacionService {
       );
     }
   }
+
+  /**
+   * Get total number of stores with opportunities from metricas_riesgo table
+   * Fetches from: gonac.metricas_riesgo where valorizacion = 'Total'
+   */
+  async getTiendasConOportunidades(): Promise<number> {
+    try {
+      return await this.repository.getTiendasConOportunidades();
+    } catch (error) {
+      throw new Error(
+        `Service error getting tiendas con oportunidades: ${(error as Error).message}`
+      );
+    }
+  }
 }
 

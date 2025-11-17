@@ -288,5 +288,30 @@ export class ValorizacionRepository {
       };
     });
   }
+
+  /**
+   * Get total number of stores with opportunities from metricas_riesgo table
+   * Fetches from: gonac.metricas_riesgo where valorizacion = 'Total'
+   * 
+   * @returns Number of stores with opportunities
+   */
+  async getTiendasConOportunidades(): Promise<number> {
+    const { data, error } = await this.supabase
+      .schema('gonac')
+      .from('metricas_riesgo')
+      .select('tiendas')
+      .eq('valorizacion', 'Total')
+      .single();
+
+    if (error) {
+      throw new Error(`Error fetching tiendas con oportunidades: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('No data returned from metricas_riesgo for Total valorizacion');
+    }
+
+    return Number(data.tiendas) || 0;
+  }
 }
 

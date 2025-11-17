@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { useSegmentacionFormatted } from '@/hooks/useSegmentacion';
 import { useMetricasFormatted } from '@/hooks/useMetricas';
-import { useValorizacionSummary } from '@/hooks/useValorizacion';
+import { useValorizacionSummary, useTiendasConOportunidades } from '@/hooks/useValorizacion';
 import type { StoreMetrics, Opportunity } from '@/types/tiendas.types';
 import { DEFAULT_METRICS } from '@/constants/tiendas.constants';
 import {
@@ -22,6 +22,8 @@ export const useTiendasData = (segment?: string) => {
     useMetricasFormatted({ autoFetch: true, segment });
   const { data: valorizacionData, loading: loadingValorizacion } = 
     useValorizacionSummary();
+  const { data: tiendasConOportunidadesData, loading: loadingTiendasConOportunidades } = 
+    useTiendasConOportunidades();
 
   const storeMetrics: StoreMetrics = useMemo(() => ({
     totalTiendas: segmentacionData?.summary.total_tiendas || DEFAULT_METRICS.totalTiendas,
@@ -120,10 +122,12 @@ export const useTiendasData = (segment?: string) => {
   );
 
   const tiendasConOportunidades = useMemo(() => 
-    valorizacionData 
-      ? valorizacionData.agotado.tiendas + valorizacionData.caducidad.tiendas + valorizacionData.sinVentas.tiendas
-      : 71,
-    [valorizacionData]
+    tiendasConOportunidadesData !== null && tiendasConOportunidadesData !== undefined
+      ? tiendasConOportunidadesData
+      : (valorizacionData 
+          ? valorizacionData.agotado.tiendas + valorizacionData.caducidad.tiendas + valorizacionData.sinVentas.tiendas
+          : 71),
+    [tiendasConOportunidadesData, valorizacionData]
   );
 
   return {
@@ -136,7 +140,7 @@ export const useTiendasData = (segment?: string) => {
     tiendasConOportunidades,
     
     // Loading states
-    loading: loadingSegmentacion || loadingMetricas || loadingValorizacion,
+    loading: loadingSegmentacion || loadingMetricas || loadingValorizacion || loadingTiendasConOportunidades,
     error: errorSegmentacion || errorMetricas,
   };
 };
