@@ -285,7 +285,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
       case 'visita_promotoria':
         return (
           <div className="space-y-6">
-            <VisitaPromotoriaCard showTitle={false} showPhoneMockup={true} />
+            <VisitaPromotoriaCard showTitle={false} showPhoneMockup={true} onChatOpen={onChatOpen} />
             
             <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
