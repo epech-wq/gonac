@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   usePromotoriaSummary,
   usePromotoriaTienda,
   usePromotoriaProductsSinVentaByStore
 } from "@/hooks/usePromotoria";
+import { useSinVentasPorTienda, useSinVentasPorSKU } from '@/hooks/useValorizacion';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 
 interface VisitaPromotoriaCardProps {
@@ -22,6 +23,12 @@ export default function VisitaPromotoriaCard({ showTitle = true, showPhoneMockup
     limit: 3,
     autoFetch: false
   });
+  const [showDetailBySKU, setShowDetailBySKU] = useState(false);
+  const [showDetailByTienda, setShowDetailByTienda] = useState(false);
+
+  // Fetch grouped data for sinVenta
+  const { data: sinVentasPorTienda, loading: sinVentasPorTiendaLoading, refetch: refetchSinVentasPorTienda } = useSinVentasPorTienda({ autoFetch: false });
+  const { data: sinVentasPorSKU, loading: sinVentasPorSKULoading, refetch: refetchSinVentasPorSKU } = useSinVentasPorSKU({ autoFetch: false });
 
   // Fetch products when store ID is available
   useEffect(() => {
@@ -255,6 +262,148 @@ export default function VisitaPromotoriaCard({ showTitle = true, showPhoneMockup
             {/* Home button */}
             <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gray-700 rounded-full"></div>
           </div>
+        </div>
+      )}
+
+      {/* Detail View Buttons */}
+      <div className="flex flex-wrap gap-3 mt-6">
+        {/* Ver detalle por SKU */}
+        <button
+          onClick={() => {
+            if (!showDetailBySKU && !sinVentasPorSKU) {
+              refetchSinVentasPorSKU();
+            }
+            setShowDetailBySKU(!showDetailBySKU);
+          }}
+          className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${
+            showDetailBySKU
+              ? 'bg-blue-600 border-blue-600 text-white'
+              : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+          }`}
+        >
+          <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Ver detalle por SKU
+        </button>
+        {/* Ver detalle por Tienda */}
+        <button
+          onClick={() => {
+            if (!showDetailByTienda && !sinVentasPorTienda) {
+              refetchSinVentasPorTienda();
+            }
+            setShowDetailByTienda(!showDetailByTienda);
+          }}
+          className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${
+            showDetailByTienda
+              ? 'bg-blue-600 border-blue-600 text-white'
+              : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+          }`}
+        >
+          <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          Ver detalle por Tienda
+        </button>
+      </div>
+
+      {/* Detail by SKU */}
+      {showDetailBySKU && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mt-6 border border-gray-200 dark:border-gray-700">
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+            Detalle por SKU
+            {sinVentasPorSKU && ` (${sinVentasPorSKU.total} productos)`}
+          </h4>
+
+          {/* Loading State */}
+          {sinVentasPorSKULoading && (
+            <div className="text-center py-8">
+              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Cargando detalles por SKU...</p>
+            </div>
+          )}
+
+          {/* Data Table */}
+          {!sinVentasPorSKULoading && sinVentasPorSKU?.data && sinVentasPorSKU.data.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                <thead>
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Producto</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Impacto Total</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Registros</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tiendas Afectadas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                  {sinVentasPorSKU.data.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-3 py-2 text-sm text-gray-900 dark:text-white font-medium">{item.product_name}</td>
+                      <td className="px-3 py-2 text-sm text-green-600 font-medium">{formatCurrency(item.impacto_total)}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">{formatNumber(item.registros)}</td>
+                      <td className="px-3 py-2 text-sm text-blue-600">{formatNumber(item.tiendas_afectadas)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* No Data State */}
+          {!sinVentasPorSKULoading && (!sinVentasPorSKU || sinVentasPorSKU.data.length === 0) && (
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Detail by Tienda */}
+      {showDetailByTienda && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mt-6 border border-gray-200 dark:border-gray-700">
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+            Detalle por Tienda
+            {sinVentasPorTienda && ` (${sinVentasPorTienda.total} tiendas)`}
+          </h4>
+
+          {/* Loading State */}
+          {sinVentasPorTiendaLoading && (
+            <div className="text-center py-8">
+              <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Cargando detalles por tienda...</p>
+            </div>
+          )}
+
+          {/* Data Table */}
+          {!sinVentasPorTiendaLoading && sinVentasPorTienda?.data && sinVentasPorTienda.data.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                <thead>
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tienda</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Impacto Total</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Registros</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                  {sinVentasPorTienda.data.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-3 py-2 text-sm text-gray-900 dark:text-white font-medium">{item.store_name}</td>
+                      <td className="px-3 py-2 text-sm text-green-600 font-medium">{formatCurrency(item.impacto_total)}</td>
+                      <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">{formatNumber(item.registros)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* No Data State */}
+          {!sinVentasPorTiendaLoading && (!sinVentasPorTienda || sinVentasPorTienda.data.length === 0) && (
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
+            </div>
+          )}
         </div>
       )}
     </div>

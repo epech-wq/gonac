@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useCategoriasConCaducidad, useDescuento, useCategoryStats } from "@/hooks/useDescuento";
+import { useCaducidadPorTienda, useCaducidadPorSKU } from '@/hooks/useValorizacion';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 
 interface PromocionEvacuarCardProps {
@@ -14,6 +15,8 @@ export default function PromocionEvacuarCard({ showTitle = true, showConfig = tr
   const [maxDescuento, setMaxDescuento] = useState(45);
   const [elasticidadPapas, setElasticidadPapas] = useState(1.5);
   const [elasticidadTotopos, setElasticidadTotopos] = useState(1.8);
+  const [showDetailBySKU, setShowDetailBySKU] = useState(false);
+  const [showDetailByTienda, setShowDetailByTienda] = useState(false);
 
   // Fetch categories with expiration risk
   const { data: categoriasData, loading: categoriasLoading, error: categoriasError } = useCategoriasConCaducidad({
@@ -26,6 +29,10 @@ export default function PromocionEvacuarCard({ showTitle = true, showConfig = tr
 
   // Initialize category stats hook
   const { data: categoryStatsData, loading: statsLoading, fetchStats } = useCategoryStats();
+
+  // Fetch grouped data for caducidad
+  const { data: caducidadPorTienda, loading: caducidadPorTiendaLoading, refetch: refetchCaducidadPorTienda } = useCaducidadPorTienda({ autoFetch: false });
+  const { data: caducidadPorSKU, loading: caducidadPorSKULoading, refetch: refetchCaducidadPorSKU } = useCaducidadPorSKU({ autoFetch: false });
 
   // Calculate discount when categories are loaded or parameters change
   useEffect(() => {
@@ -87,7 +94,7 @@ export default function PromocionEvacuarCard({ showTitle = true, showConfig = tr
                     d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                   />
                 </svg>
-                Ask Vemio
+                ¿Por qué estos parámetros?
               </button>
             )}
           </div>
@@ -249,6 +256,148 @@ export default function PromocionEvacuarCard({ showTitle = true, showConfig = tr
               ✓ Datos en vivo desde la base de datos
             </p>
           </div>
+
+          {/* Detail View Buttons */}
+          <div className="flex flex-wrap gap-3 mt-6">
+            {/* Ver detalle por SKU */}
+            <button
+              onClick={() => {
+                if (!showDetailBySKU && !caducidadPorSKU) {
+                  refetchCaducidadPorSKU();
+                }
+                setShowDetailBySKU(!showDetailBySKU);
+              }}
+              className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${
+                showDetailBySKU
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+              }`}
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Ver detalle por SKU
+            </button>
+            {/* Ver detalle por Tienda */}
+            <button
+              onClick={() => {
+                if (!showDetailByTienda && !caducidadPorTienda) {
+                  refetchCaducidadPorTienda();
+                }
+                setShowDetailByTienda(!showDetailByTienda);
+              }}
+              className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${
+                showDetailByTienda
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+              }`}
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Ver detalle por Tienda
+            </button>
+          </div>
+
+          {/* Detail by SKU */}
+          {showDetailBySKU && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mt-6 border border-gray-200 dark:border-gray-700">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                Detalle por SKU
+                {caducidadPorSKU && ` (${caducidadPorSKU.total} productos)`}
+              </h4>
+
+              {/* Loading State */}
+              {caducidadPorSKULoading && (
+                <div className="text-center py-8">
+                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Cargando detalles por SKU...</p>
+                </div>
+              )}
+
+              {/* Data Table */}
+              {!caducidadPorSKULoading && caducidadPorSKU?.data && caducidadPorSKU.data.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead>
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Producto</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Impacto Total</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Registros</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tiendas Afectadas</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      {caducidadPorSKU.data.map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <td className="px-3 py-2 text-sm text-gray-900 dark:text-white font-medium">{item.product_name}</td>
+                          <td className="px-3 py-2 text-sm text-green-600 font-medium">{formatCurrency(item.impacto_total)}</td>
+                          <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">{formatNumber(item.registros)}</td>
+                          <td className="px-3 py-2 text-sm text-blue-600">{formatNumber(item.tiendas_afectadas)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* No Data State */}
+              {!caducidadPorSKULoading && (!caducidadPorSKU || caducidadPorSKU.data.length === 0) && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Detail by Tienda */}
+          {showDetailByTienda && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mt-6 border border-gray-200 dark:border-gray-700">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                Detalle por Tienda
+                {caducidadPorTienda && ` (${caducidadPorTienda.total} tiendas)`}
+              </h4>
+
+              {/* Loading State */}
+              {caducidadPorTiendaLoading && (
+                <div className="text-center py-8">
+                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Cargando detalles por tienda...</p>
+                </div>
+              )}
+
+              {/* Data Table */}
+              {!caducidadPorTiendaLoading && caducidadPorTienda?.data && caducidadPorTienda.data.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead>
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tienda</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Impacto Total</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Registros</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      {caducidadPorTienda.data.map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <td className="px-3 py-2 text-sm text-gray-900 dark:text-white font-medium">{item.store_name}</td>
+                          <td className="px-3 py-2 text-sm text-green-600 font-medium">{formatCurrency(item.impacto_total)}</td>
+                          <td className="px-3 py-2 text-sm text-gray-900 dark:text-white">{formatNumber(item.registros)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* No Data State */}
+              {!caducidadPorTiendaLoading && (!caducidadPorTienda || caducidadPorTienda.data.length === 0) && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

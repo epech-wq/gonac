@@ -190,5 +190,113 @@ export class ValorizacionService {
       );
     }
   }
+
+  /**
+   * Get Agotado data grouped by store
+   */
+  async getAgotadoPorTienda() {
+    try {
+      const data = await this.repository.getAgotadoPorTienda();
+      return {
+        data,
+        total: data.length,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Service error getting agotado por tienda: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Get Agotado data grouped by SKU
+   */
+  async getAgotadoPorSKU() {
+    try {
+      const data = await this.repository.getAgotadoPorSKU();
+      return {
+        data,
+        total: data.length,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Service error getting agotado por SKU: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Get Caducidad data grouped by store
+   */
+  async getCaducidadPorTienda() {
+    try {
+      const data = await this.repository.getCaducidadPorTienda();
+      return {
+        data,
+        total: data.length,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Service error getting caducidad por tienda: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Get Caducidad data grouped by SKU
+   */
+  async getCaducidadPorSKU() {
+    try {
+      const data = await this.repository.getCaducidadPorSKU();
+      return {
+        data,
+        total: data.length,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Service error getting caducidad por SKU: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Get Sin Ventas data grouped by store
+   */
+  async getSinVentasPorTienda() {
+    try {
+      const data = await this.repository.getSinVentasPorTienda();
+      return {
+        data,
+        total: data.length,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Service error getting sin ventas por tienda: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Get Sin Ventas data grouped by SKU
+   */
+  async getSinVentasPorSKU() {
+    try {
+      const data = await this.repository.getSinVentasPorSKU();
+      return {
+        data,
+        total: data.length,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Service error getting sin ventas por SKU: ${(error as Error).message}`
+      );
+    }
+  }
 }
 

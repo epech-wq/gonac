@@ -57,6 +57,56 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Handle grouped by store formats
+    if (format === 'agotado-por-tienda') {
+      const data = await service.getAgotadoPorTienda();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    if (format === 'caducidad-por-tienda') {
+      const data = await service.getCaducidadPorTienda();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    if (format === 'sin-ventas-por-tienda') {
+      const data = await service.getSinVentasPorTienda();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    // Handle grouped by SKU formats
+    if (format === 'agotado-por-sku') {
+      const data = await service.getAgotadoPorSKU();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    if (format === 'caducidad-por-sku') {
+      const data = await service.getCaducidadPorSKU();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    if (format === 'sin-ventas-por-sku') {
+      const data = await service.getSinVentasPorSKU();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
     // Handle tiendas con oportunidades request
     if (format === 'tiendas-con-oportunidades') {
       const data = await service.getTiendasConOportunidades();
