@@ -1,13 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo, useEffect } from "react";
-import { VemioData, vemioMockData } from "@/data/vemio-mock-data";
-import { ExhibicionesAdicionalesCalculator } from "@/utils/exhibicionesAdicionalesCalculator";
+import { useState, useEffect, useCallback } from "react";
+import { VemioData } from "@/data/vemio-mock-data";
 import { useCategoriasConCaducidad, useDescuento, useCategoryStats } from "@/hooks/useDescuento";
-import { 
-  useAccionReabastoSummary, 
-  useAccionReabastoPorTienda, 
-  useAccionReabastoDetalle 
+import {
+  useAccionReabastoSummary,
+  useAccionReabastoPorTienda,
+  useAccionReabastoDetalle
 } from "@/hooks/useAccionReabasto";
+import { useExhibicionResumen } from "@/hooks/useExhibiciones";
+import {
+  usePromotoriaSummary,
+  usePromotoriaTienda,
+  usePromotoriaProductsSinVentaByStore
+} from "@/hooks/usePromotoria";
+import ExhibicionConfigCard from "@/components/vemio/ExhibicionConfigCard";
+import ExhibicionMetricsCards from "@/components/vemio/ExhibicionMetricsCards";
+import ExhibicionPedidoCard from "@/components/vemio/ExhibicionPedidoCard";
+import ExhibicionViabilidadCard from "@/components/vemio/ExhibicionViabilidadCard";
 
 interface AccionesViewProps {
   data: VemioData["acciones"];
@@ -58,6 +67,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
   // State for Exhibiciones Adicionales configuration
   const [costoExhibicion, setCostoExhibicion] = useState(500);
   const [incrementoVentas, setIncrementoVentas] = useState(50);
+  const [exhibicionMounted, setExhibicionMounted] = useState(false);
 
   // State for Minimizar Agotados detail views
   const [showDetailBySKU, setShowDetailBySKU] = useState(false);
@@ -68,15 +78,73 @@ export default function AccionesView({ data }: AccionesViewProps) {
   const { data: reabastoPorTienda, loading: reabastoPorTiendaLoading } = useAccionReabastoPorTienda();
   const { data: reabastoDetalle, loading: reabastoDetalleLoading } = useAccionReabastoDetalle();
 
-  // Calculate exhibiciones adicionales dynamically
-  const exhibicionesCalculadas = useMemo(() => {
-    const calculator = new ExhibicionesAdicionalesCalculator(
-      vemioMockData,
-      costoExhibicion,
-      incrementoVentas
-    );
-    return calculator.calcularOportunidades();
-  }, [costoExhibicion, incrementoVentas]);
+  // Fetch Acción #2: Exhibiciones Adicionales data
+  const {
+    data: exhibicionResumen,
+    loading: exhibicionLoading,
+    refetch: refetchExhibicion
+  } = useExhibicionResumen({
+    dias_mes: 30,
+    costo_exhibicion: costoExhibicion,
+    incremento_venta: incrementoVentas / 100, // Convert percentage to decimal
+    format: 'raw',
+    autoFetch: true
+  });
+
+  // Extract resumen data safely
+  const resumenData = exhibicionResumen && 'resumen' in exhibicionResumen
+    ? exhibicionResumen.resumen
+    : null;
+
+  // Fetch Acción #4: Visita Promotoría data
+  const { data: promotoriaSummary, loading: promotoriaSummaryLoading } = usePromotoriaSummary();
+  const { data: promotoriaTienda, loading: promotoriaTiendaLoading } = usePromotoriaTienda();
+  const { data: promotoriaProducts, loading: promotoriaProductsLoading, refetch: refetchProducts } = usePromotoriaProductsSinVentaByStore({
+    id_store: promotoriaTienda?.data.id_store,
+    limit: 3,
+    autoFetch: false
+  });
+
+  // Fetch products when store ID is available
+  useEffect(() => {
+    if (promotoriaTienda?.data.id_store) {
+      refetchProducts(promotoriaTienda.data.id_store);
+    }
+  }, [promotoriaTienda?.data.id_store, refetchProducts]);
+
+  // Mark as mounted after initial render
+  useEffect(() => {
+    setExhibicionMounted(true);
+  }, []);
+
+  // Debounce exhibicion params changes
+  useEffect(() => {
+    // Skip on initial mount (autoFetch handles that)
+    if (!exhibicionMounted) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      refetchExhibicion({
+        costo_exhibicion: costoExhibicion,
+        incremento_venta: incrementoVentas / 100,
+        dias_mes: 30
+      });
+    }, 800);
+
+    return () => clearTimeout(timer);
+    // Intentionally excluding refetchExhibicion from deps to avoid infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [costoExhibicion, incrementoVentas, exhibicionMounted]);
+
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleCostoChange = useCallback((value: number) => {
+    setCostoExhibicion(value);
+  }, []);
+
+  const handleIncrementoChange = useCallback((value: number) => {
+    setIncrementoVentas(value);
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -125,9 +193,10 @@ export default function AccionesView({ data }: AccionesViewProps) {
       case 'minimizarAgotados':
         return 'Reabasto Urgente (Tiendas HOT y Balanceadas)';
       case 'exhibicionesAdicionales':
-        return exhibicionesCalculadas.metricas.hayOportunidadesViables
-          ? `Exhibiciones Adicionales (${exhibicionesCalculadas.metricas.totalExhibiciones} Oportunidades Viables)`
-          : 'Exhibiciones Adicionales (Sin Oportunidades Viables)';
+        if (resumenData && resumenData.tiendas_viables > 0) {
+          return `Exhibiciones Adicionales (${resumenData.tiendas_viables} Oportunidades Viables)`;
+        }
+        return 'Exhibiciones Adicionales (Sin Oportunidades Viables)';
       case 'promocionesSlow':
         return 'Promoción para Evacuar Inventario (Tiendas Slow y Dead)';
       case 'visitaPromotoria':
@@ -156,8 +225,8 @@ export default function AccionesView({ data }: AccionesViewProps) {
     // Get dynamic insight for exhibiciones adicionales
     const getInsight = () => {
       if (actionType === 'exhibicionesAdicionales') {
-        if (exhibicionesCalculadas.metricas.hayOportunidadesViables) {
-          return `Identificadas ${exhibicionesCalculadas.metricas.totalExhibiciones} tiendas HOT donde exhibiciones adicionales generarían retorno positivo sobre inversión`;
+        if (resumenData && resumenData.tiendas_viables > 0) {
+          return `Identificadas ${resumenData.tiendas_viables} tiendas HOT donde exhibiciones adicionales generarían retorno positivo sobre inversión`;
         }
         return 'No se detectaron oportunidades viables con los parámetros actuales. Ajusta el costo o incremento esperado.';
       }
@@ -256,33 +325,41 @@ export default function AccionesView({ data }: AccionesViewProps) {
                 </div>
               )}
 
-              {/* Detail View Buttons */}
-              <div className="flex flex-wrap gap-3 mb-6">
-                <button
-                  onClick={() => setShowDetailBySKU(!showDetailBySKU)}
-                  className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailBySKU
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
-                    }`}
-                >
-                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  Ver detalle por SKU
-                </button>
-                <button
-                  onClick={() => setShowDetailByTienda(!showDetailByTienda)}
-                  className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailByTienda
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
-                    }`}
-                >
-                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  Ver detalle por Tienda
-                </button>
-              </div>
+              {/* Detail View Buttons - Only show if data exists */}
+              {((reabastoDetalle && reabastoDetalle.data.length > 0) || (reabastoPorTienda && reabastoPorTienda.data.length > 0)) && (
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {/* Ver detalle por SKU - Only show if detalle data exists */}
+                  {reabastoDetalle && reabastoDetalle.data.length > 0 && (
+                    <button
+                      onClick={() => setShowDetailBySKU(!showDetailBySKU)}
+                      className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailBySKU
+                        ? 'bg-blue-600 border-blue-600 text-white'
+                        : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+                        }`}
+                    >
+                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      Ver detalle por SKU
+                    </button>
+                  )}
+                  {/* Ver detalle por Tienda - Only show if tienda data exists */}
+                  {reabastoPorTienda && reabastoPorTienda.data.length > 0 && (
+                    <button
+                      onClick={() => setShowDetailByTienda(!showDetailByTienda)}
+                      className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailByTienda
+                        ? 'bg-blue-600 border-blue-600 text-white'
+                        : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
+                        }`}
+                    >
+                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      Ver detalle por Tienda
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Detail by SKU */}
               {showDetailBySKU && (
@@ -291,7 +368,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
                     Detalle por SKU
                     {reabastoDetalle && ` (${reabastoDetalle.total} registros)`}
                   </h4>
-                  
+
                   {/* Loading State */}
                   {reabastoDetalleLoading && (
                     <div className="text-center py-8">
@@ -440,7 +517,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Elasticidad Totopos
+                      Elasticidad Mix
                     </label>
                     <input
                       type="number"
@@ -490,10 +567,10 @@ export default function AccionesView({ data }: AccionesViewProps) {
                     </div>
                   </div>
                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                    <div className="text-sm text-blue-600 dark:text-blue-400">Reducción Riesgo</div>
+                    <div className="text-sm text-blue-600 dark:text-blue-400">Reducción Riesgo Promedio</div>
                     <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                      {(Object.values(descuentoData.items).reduce((sum, item) => sum + item.reduccion, 0) /
-                        Object.values(descuentoData.items).length).toFixed(1)}%
+                      {((Object.values(descuentoData.items).reduce((sum, item) => sum + item.reduccion, 0) /
+                        Object.values(descuentoData.items).length) * 100).toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -546,9 +623,9 @@ export default function AccionesView({ data }: AccionesViewProps) {
                             </p>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Reducción riesgo</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">Reducción Riesgo</div>
                             <div className={`text-xl font-bold ${color.accent}`}>
-                              {metrics.reduccion.toFixed(1)}%
+                              {(metrics.reduccion * 100).toFixed(1)}%
                             </div>
                           </div>
                         </div>
@@ -595,7 +672,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
                         <p className="text-sm text-gray-600 dark:text-gray-400">7 SKUs en 46 tiendas</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Reducción riesgo</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Reducción Riesgo</div>
                         <div className="text-xl font-bold text-orange-600 dark:text-orange-400">61.1%</div>
                       </div>
                     </div>
@@ -627,7 +704,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
                         <p className="text-sm text-gray-600 dark:text-gray-400">2 SKUs en 46 tiendas</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Reducción riesgo</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Reducción Riesgo</div>
                         <div className="text-xl font-bold text-blue-600 dark:text-blue-400">68.4%</div>
                       </div>
                     </div>
@@ -668,121 +745,46 @@ export default function AccionesView({ data }: AccionesViewProps) {
             </>
           ) : actionType === 'exhibicionesAdicionales' ? (
             <>
-              {/* Configuration Card for Exhibiciones Adicionales */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Configuración de Exhibiciones</h4>
-                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full">
-                    📅 Cálculo a 30 días
-                  </span>
+              {/* Configuration Card */}
+              <ExhibicionConfigCard
+                costoExhibicion={costoExhibicion}
+                incrementoVenta={incrementoVentas}
+                onCostoChange={handleCostoChange}
+                onIncrementoChange={handleIncrementoChange}
+              />
+
+              {/* Loading State */}
+              {exhibicionLoading && (
+                <div className="text-center py-8">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Calculando exhibiciones...</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Costo Mensual por Exhibición (MXN)
-                    </label>
-                    <input
-                      type="number"
-                      value={costoExhibicion}
-                      onChange={(e) => setCostoExhibicion(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Costo que cobra el autoservicio por rentar el espacio de exhibición durante 30 días
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Incremento Esperado en Ventas (%)
-                    </label>
-                    <input
-                      type="number"
-                      step="1"
-                      value={incrementoVentas}
-                      onChange={(e) => setIncrementoVentas(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Incremento proyectado en ventas diarias por la exhibición adicional
-                    </p>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Results Summary */}
-              {exhibicionesCalculadas.metricas.hayOportunidadesViables ? (
+              {!exhibicionLoading && resumenData && resumenData.tiendas_viables > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                      <div className="text-sm text-blue-600 dark:text-blue-400">Exhibiciones Viables</div>
-                      <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                        {exhibicionesCalculadas.metricas.totalExhibiciones}
-                      </div>
-                    </div>
-                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-                      <div className="text-sm text-green-600 dark:text-green-400">Retorno a 30 días</div>
-                      <div className="text-xl font-bold text-green-700 dark:text-green-300">
-                        {formatCurrency(exhibicionesCalculadas.metricas.valorPotencialTotal)}
-                      </div>
-                    </div>
-                    <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
-                      <div className="text-sm text-red-600 dark:text-red-400">Costo Total (30 días)</div>
-                      <div className="text-xl font-bold text-red-700 dark:text-red-300">
-                        {formatCurrency(exhibicionesCalculadas.metricas.costoTotalEjecucion)}
-                      </div>
-                    </div>
-                    <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-                      <div className="text-sm text-purple-600 dark:text-purple-400">ROI Promedio</div>
-                      <div className="text-xl font-bold text-purple-700 dark:text-purple-300">
-                        {exhibicionesCalculadas.metricas.roiPromedio.toFixed(2)}x
-                      </div>
-                    </div>
-                  </div>
+                  {/* Metrics Cards */}
+                  <ExhibicionMetricsCards
+                    resumen={resumenData}
+                    formatCurrency={formatCurrency}
+                  />
 
-                  {/* Pedido Extraordinario Summary */}
-                  <div className="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-lg p-5 border-2 border-orange-200 dark:border-orange-800 mb-6">
-                    <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
-                      📦 Pedido Extraordinario Requerido (30 días)
-                    </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      Para soportar el incremento del {incrementoVentas}% en ventas durante 30 días, se requiere el siguiente pedido adicional:
-                    </p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">Unidades Totales</div>
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {formatNumber(exhibicionesCalculadas.metricas.pedidoExtraordinarioTotal / 150)} {/* Aproximación */}
-                        </div>
-                      </div>
-                      <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">Valor del Pedido</div>
-                        <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                          {formatCurrency(exhibicionesCalculadas.metricas.pedidoExtraordinarioTotal)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  {/* Pedido Extraordinario Card */}
+                  <ExhibicionPedidoCard
+                    resumen={resumenData}
+                    incrementoVenta={incrementoVentas}
+                    formatCurrency={formatCurrency}
+                    formatNumber={formatNumber}
+                  />
 
-                  {/* Calculation Explanation */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-6">
-                    <h5 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      💡 Cómo se calcula la viabilidad (período de 30 días)
-                    </h5>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                      <span className="font-semibold">Ejemplo:</span> Si una tienda vende $50 pesos/día con sus TOP 5 SKUs:
-                    </p>
-                    <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1 ml-4">
-                      <li>• Venta incremental = $50 × {incrementoVentas}% = ${(50 * incrementoVentas / 100).toFixed(2)}/día</li>
-                      <li>• Retorno a 30 días = ${(50 * incrementoVentas / 100).toFixed(2)} × 30 días = ${(50 * incrementoVentas / 100 * 30).toFixed(2)}</li>
-                      <li>• Costo a 30 días = ${costoExhibicion}</li>
-                      <li>• <span className="font-semibold text-green-600">Viable si:</span> Retorno a 30 días &gt; Costo a 30 días</li>
-                    </ul>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 italic">
-                      Nota: Todos los cálculos están proyectados para un período de 30 días naturales.
-                    </p>
-                  </div>
+                  {/* Viability Explanation Card */}
+                  <ExhibicionViabilidadCard
+                    incrementoVenta={incrementoVentas}
+                    costoExhibicion={costoExhibicion}
+                  />
                 </>
-              ) : (
+              ) : !exhibicionLoading && (!resumenData || resumenData.tiendas_viables === 0) ? (
                 <div className="text-center py-8">
                   <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -794,10 +796,59 @@ export default function AccionesView({ data }: AccionesViewProps) {
                     Intenta ajustar el costo de exhibición o el incremento esperado en ventas
                   </p>
                 </div>
+              ) : null}
+            </>
+          ) : actionType === 'visitaPromotoria' ? (
+            <>
+              {/* Loading State */}
+              {(promotoriaSummaryLoading || promotoriaTiendaLoading) && (
+                <div className="text-center py-8">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"></div>
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Cargando datos de promotoría...</p>
+                </div>
+              )}
+
+              {/* Summary Cards - Using Real Data */}
+              {!promotoriaSummaryLoading && promotoriaSummary && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                    <div className="text-sm text-purple-600 dark:text-purple-400">Tiendas a Visitar</div>
+                    <div className="text-xl font-bold text-purple-700 dark:text-purple-300">
+                      {promotoriaSummary.data.tiendas_a_visitar}
+                    </div>
+                  </div>
+                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                    <div className="text-sm text-red-600 dark:text-red-400">Riesgo a Recuperar</div>
+                    <div className="text-xl font-bold text-red-700 dark:text-red-300">
+                      {formatCurrency(promotoriaSummary.data.riesgo_total)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback to mock data if API fails */}
+              {!promotoriaSummaryLoading && !promotoriaSummary && !promotoriaTiendaLoading && !promotoriaTienda && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Costo de Ejecución</div>
+                    <div className="text-xl font-bold text-gray-900 dark:text-white">
+                      {actionData.costoEjecucion === 0 ? "Sin costo directo" : formatCurrency(actionData.costoEjecucion)}
+                    </div>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                    <div className="text-sm text-green-600 dark:text-green-400">Valor Potencial</div>
+                    <div className="text-xl font-bold text-green-700 dark:text-green-300">
+                      {formatCurrency(actionData.valorPotencial.pesos)}
+                    </div>
+                    <div className="text-sm text-green-600 dark:text-green-400">
+                      {formatNumber(actionData.valorPotencial.cantidad)} unidades
+                    </div>
+                  </div>
+                </div>
               )}
             </>
           ) : (
-            <div className={`grid grid-cols-1 ${actionType === 'visitaPromotoria' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mb-6`}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <div className="text-sm text-gray-500 dark:text-gray-400">Costo de Ejecución</div>
                 <div className="text-xl font-bold text-gray-900 dark:text-white">
@@ -813,14 +864,12 @@ export default function AccionesView({ data }: AccionesViewProps) {
                   {formatNumber(actionData.valorPotencial.cantidad)} unidades
                 </div>
               </div>
-              {actionType !== 'visitaPromotoria' && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                  <div className="text-sm text-blue-600 dark:text-blue-400">ROI</div>
-                  <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                    {getROI(actionData.valorPotencial.pesos, actionData.costoEjecucion)}
-                  </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <div className="text-sm text-blue-600 dark:text-blue-400">ROI</div>
+                <div className="text-xl font-bold text-blue-700 dark:text-blue-300">
+                  {getROI(actionData.valorPotencial.pesos, actionData.costoEjecucion)}
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -847,85 +896,109 @@ export default function AccionesView({ data }: AccionesViewProps) {
                   </div>
 
                   {/* App header */}
-                  <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4 text-white">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-bold">VEMIO Field App</h3>
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
+                  <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-4 py-3 text-white">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-base font-bold">VEMIO Promotoria</h3>
+                      <span className="text-xs bg-white/20 px-2 py-1 rounded">Nuevo</span>
                     </div>
-                    <p className="text-xs opacity-90">Visita de Promotoría</p>
+                    <p className="text-[10px] opacity-90">Tarea asignada - Urgente</p>
                   </div>
 
                   {/* App content */}
-                  <div className="p-4 space-y-4 overflow-y-auto h-[calc(100%-140px)]">
-                    {/* Store info */}
-                    <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <h4 className="font-semibold text-gray-900 text-sm">Supercito Oriente</h4>
+                  <div className="p-3 space-y-3 overflow-y-auto h-[calc(100%-100px)]">
+                    {/* Tienda info - Using Method 2 Data */}
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="text-[10px] text-gray-500 mb-1">Tienda</div>
+                      <div className="text-xl font-bold text-gray-900">
+                        {promotoriaTienda?.data.store_name || '798'}
                       </div>
-                      <p className="text-xs text-gray-600">Zona Oriente</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Crítica</span>
-                        <span className="text-xs text-gray-500">Venta: $3,200</span>
+                      <div className="text-[10px] text-gray-600 mt-1">
+                        Ventas Acumuladas
+                      </div>
+                      <div className="text-xs text-gray-900">
+                        {promotoriaTienda?.data.ventas_acumuladas || 0} unidades
                       </div>
                     </div>
 
-                    {/* Task checklist */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-3">
-                      <h4 className="font-semibold text-gray-900 text-sm mb-3">Tareas de Visita</h4>
+                    {/* Products Without Sales - Using Method 3 Data */}
+                    <div className="bg-white rounded-lg border-2 border-red-400 p-3">
+                      <div className="flex items-center gap-1 mb-2">
+                        <svg className="h-3 w-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <h4 className="font-semibold text-gray-900 text-xs">Productos Sin Venta</h4>
+                      </div>
                       <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-xs">
-                          <input type="checkbox" className="rounded text-purple-600" />
-                          <span>Verificar exhibición en anaquel</span>
-                        </label>
-                        <label className="flex items-center gap-2 text-xs">
-                          <input type="checkbox" className="rounded text-purple-600" />
-                          <span>Revisar precios y señalética</span>
-                        </label>
-                        <label className="flex items-center gap-2 text-xs">
-                          <input type="checkbox" className="rounded text-purple-600" />
-                          <span>Validar inventario disponible</span>
-                        </label>
-                        <label className="flex items-center gap-2 text-xs">
-                          <input type="checkbox" className="rounded text-purple-600" />
-                          <span>Implementar degustación</span>
-                        </label>
+                        {promotoriaProductsLoading ? (
+                          <div className="text-center py-2">
+                            <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-purple-600 border-r-transparent"></div>
+                          </div>
+                        ) : promotoriaProducts && promotoriaProducts.data.length > 0 ? (
+                          promotoriaProducts.data.map((product, index) => (
+                            <div key={index} className="text-[10px] text-gray-700 flex justify-between items-center py-1">
+                              <span>{product.product_name} ({product.inventario_sin_rotacion})</span>
+                              <span className="text-gray-500">{product.inventario_sin_rotacion} uds</span>
+                            </div>
+                          ))
+                        ) : (
+                          <>
+                            <div className="text-[10px] text-gray-700 flex justify-between items-center py-1">
+                              <span>Botana Chidas Francesas 65 Gr (3870701)</span>
+                              <span className="text-gray-500">30 uds</span>
+                            </div>
+                            <div className="text-[10px] text-gray-700 flex justify-between items-center py-1">
+                              <span>Mix Chidas Hot 50 Gr (3825949)</span>
+                              <span className="text-gray-500">30 uds</span>
+                            </div>
+                            <div className="text-[10px] text-gray-700 flex justify-between items-center py-1">
+                              <span>Papas Chidas Con Sal 85 Gr (2810364)</span>
+                              <span className="text-gray-500">30 uds</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    {/* Photo capture section */}
-                    <div className="bg-blue-50 rounded-lg border border-blue-200 p-3">
-                      <h4 className="font-semibold text-gray-900 text-sm mb-3">Evidencia Fotográfica</h4>
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-medium text-sm flex items-center justify-center gap-2 shadow-lg">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    {/* Riesgo - Using Method 2 Data */}
+                    <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                      <div className="flex items-center gap-1 mb-1">
+                        <svg className="h-3 w-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
                         </svg>
-                        Tomar Foto
-                      </button>
+                        <span className="text-xs font-semibold text-gray-900">Riesgo</span>
+                      </div>
+                      <div className="text-lg font-bold text-gray-900">
+                        {promotoriaTienda ? formatCurrency(promotoriaTienda.data.riesgo_total) : '$1.7K'}
+                      </div>
                     </div>
 
-                    {/* Submit button */}
-                    <button className="w-full bg-green-600 text-white py-3 rounded-lg font-medium text-sm shadow-lg">
-                      Completar Visita
+                    {/* Instructions */}
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-start gap-2">
+                        <svg className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="text-[10px] text-gray-600 leading-relaxed">
+                          Hay <span className="font-semibold text-gray-900">{promotoriaTienda ? formatNumber(Number(promotoriaTienda.data.inventario_sin_rotacion_total)) : '240'} unidades</span> en bodega sin rotar. Habla con el gerente para ganar espacio adicional en piso. Realiza exhibición extra. Toma fotos y marca como completado.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Photo button */}
+                    <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-2.5 rounded-lg font-medium text-xs flex items-center justify-center gap-2 shadow-lg">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      📷 Tomar Foto de Evidencia
                     </button>
+
+                    {/* Checkbox */}
+                    <label className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg p-2.5 cursor-pointer">
+                      <input type="checkbox" className="rounded text-green-600 w-4 h-4" />
+                      <span className="text-xs text-gray-700">✓ Marcar como Realizado</span>
+                    </label>
                   </div>
                 </div>
 
@@ -936,7 +1009,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
           )}
 
           {/* Action Buttons */}
-          {(actionType !== 'exhibicionesAdicionales' || exhibicionesCalculadas.metricas.hayOportunidadesViables) && (
+          {(actionType !== 'exhibicionesAdicionales' || (resumenData && resumenData.tiendas_viables > 0)) && (
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => handleExecuteAction(actionType)}
@@ -955,15 +1028,6 @@ export default function AccionesView({ data }: AccionesViewProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
                 Agente VEMIO
-              </button>
-              <button
-                onClick={() => toggleExpanded(actionType)}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Ver Detalles
               </button>
             </div>
           )}

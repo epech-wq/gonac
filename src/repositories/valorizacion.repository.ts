@@ -288,5 +288,213 @@ export class ValorizacionRepository {
       };
     });
   }
+
+  /**
+   * Get total number of stores with opportunities from metricas_riesgo table
+   * Fetches from: gonac.metricas_riesgo where valorizacion = 'Total'
+   * 
+   * @returns Number of stores with opportunities
+   */
+  async getTiendasConOportunidades(): Promise<number> {
+    const { data, error } = await this.supabase
+      .schema('gonac')
+      .from('metricas_riesgo')
+      .select('tiendas')
+      .eq('valorizacion', 'Total')
+      .single();
+
+    if (error) {
+      throw new Error(`Error fetching tiendas con oportunidades: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('No data returned from metricas_riesgo for Total valorizacion');
+    }
+
+    return Number(data.tiendas) || 0;
+  }
+
+  /**
+   * Get Agotado data grouped by store
+   * Returns aggregated impact and count per store
+   */
+  async getAgotadoPorTienda(): Promise<Array<{ store_name: string; impacto_total: number; registros: number }>> {
+    const detalle = await this.getAgotadoDetalle();
+    
+    if (!detalle || detalle.length === 0) {
+      return [];
+    }
+
+    // Group by store_name
+    const storeMap = new Map<string, { impacto: number; count: number }>();
+    
+    detalle.forEach((item) => {
+      const existing = storeMap.get(item.store_name) || { impacto: 0, count: 0 };
+      storeMap.set(item.store_name, {
+        impacto: existing.impacto + item.impacto,
+        count: existing.count + 1
+      });
+    });
+
+    return Array.from(storeMap.entries()).map(([store_name, values]) => ({
+      store_name,
+      impacto_total: values.impacto,
+      registros: values.count
+    }));
+  }
+
+  /**
+   * Get Agotado data grouped by SKU (product)
+   * Returns aggregated impact and count per product
+   */
+  async getAgotadoPorSKU(): Promise<Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>> {
+    const detalle = await this.getAgotadoDetalle();
+    
+    if (!detalle || detalle.length === 0) {
+      return [];
+    }
+
+    // Group by product_name
+    const productMap = new Map<string, { impacto: number; count: number; stores: Set<string> }>();
+    
+    detalle.forEach((item) => {
+      const existing = productMap.get(item.product_name) || { impacto: 0, count: 0, stores: new Set<string>() };
+      existing.stores.add(item.store_name);
+      productMap.set(item.product_name, {
+        impacto: existing.impacto + item.impacto,
+        count: existing.count + 1,
+        stores: existing.stores
+      });
+    });
+
+    return Array.from(productMap.entries()).map(([product_name, values]) => ({
+      product_name,
+      impacto_total: values.impacto,
+      registros: values.count,
+      tiendas_afectadas: values.stores.size
+    }));
+  }
+
+  /**
+   * Get Caducidad data grouped by store
+   * Returns aggregated impact and count per store
+   */
+  async getCaducidadPorTienda(): Promise<Array<{ store_name: string; impacto_total: number; registros: number }>> {
+    const detalle = await this.getCaducidadDetalle();
+    
+    if (!detalle || detalle.length === 0) {
+      return [];
+    }
+
+    // Group by store_name
+    const storeMap = new Map<string, { impacto: number; count: number }>();
+    
+    detalle.forEach((item) => {
+      const existing = storeMap.get(item.store_name) || { impacto: 0, count: 0 };
+      storeMap.set(item.store_name, {
+        impacto: existing.impacto + item.impacto,
+        count: existing.count + 1
+      });
+    });
+
+    return Array.from(storeMap.entries()).map(([store_name, values]) => ({
+      store_name,
+      impacto_total: values.impacto,
+      registros: values.count
+    }));
+  }
+
+  /**
+   * Get Caducidad data grouped by SKU (product)
+   * Returns aggregated impact and count per product
+   */
+  async getCaducidadPorSKU(): Promise<Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>> {
+    const detalle = await this.getCaducidadDetalle();
+    
+    if (!detalle || detalle.length === 0) {
+      return [];
+    }
+
+    // Group by product_name
+    const productMap = new Map<string, { impacto: number; count: number; stores: Set<string> }>();
+    
+    detalle.forEach((item) => {
+      const existing = productMap.get(item.product_name) || { impacto: 0, count: 0, stores: new Set<string>() };
+      existing.stores.add(item.store_name);
+      productMap.set(item.product_name, {
+        impacto: existing.impacto + item.impacto,
+        count: existing.count + 1,
+        stores: existing.stores
+      });
+    });
+
+    return Array.from(productMap.entries()).map(([product_name, values]) => ({
+      product_name,
+      impacto_total: values.impacto,
+      registros: values.count,
+      tiendas_afectadas: values.stores.size
+    }));
+  }
+
+  /**
+   * Get Sin Ventas data grouped by store
+   * Returns aggregated impact and count per store
+   */
+  async getSinVentasPorTienda(): Promise<Array<{ store_name: string; impacto_total: number; registros: number }>> {
+    const detalle = await this.getSinVentasDetalle();
+    
+    if (!detalle || detalle.length === 0) {
+      return [];
+    }
+
+    // Group by store_name
+    const storeMap = new Map<string, { impacto: number; count: number }>();
+    
+    detalle.forEach((item) => {
+      const existing = storeMap.get(item.store_name) || { impacto: 0, count: 0 };
+      storeMap.set(item.store_name, {
+        impacto: existing.impacto + item.impacto,
+        count: existing.count + 1
+      });
+    });
+
+    return Array.from(storeMap.entries()).map(([store_name, values]) => ({
+      store_name,
+      impacto_total: values.impacto,
+      registros: values.count
+    }));
+  }
+
+  /**
+   * Get Sin Ventas data grouped by SKU (product)
+   * Returns aggregated impact and count per product
+   */
+  async getSinVentasPorSKU(): Promise<Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>> {
+    const detalle = await this.getSinVentasDetalle();
+    
+    if (!detalle || detalle.length === 0) {
+      return [];
+    }
+
+    // Group by product_name
+    const productMap = new Map<string, { impacto: number; count: number; stores: Set<string> }>();
+    
+    detalle.forEach((item) => {
+      const existing = productMap.get(item.product_name) || { impacto: 0, count: 0, stores: new Set<string>() };
+      existing.stores.add(item.store_name);
+      productMap.set(item.product_name, {
+        impacto: existing.impacto + item.impacto,
+        count: existing.count + 1,
+        stores: existing.stores
+      });
+    });
+
+    return Array.from(productMap.entries()).map(([product_name, values]) => ({
+      product_name,
+      impacto_total: values.impacto,
+      registros: values.count,
+      tiendas_afectadas: values.stores.size
+    }));
+  }
 }
 

@@ -1,17 +1,19 @@
-import type { Metadata } from "next";
-import VemioDashboard from "@/components/vemio/VemioDashboard";
+"use client";
 
-export const metadata: Metadata = {
-  title: "GONAC | Dashboard Comercial",
-  description: "Dashboard de inteligencia comercial VEMIO para gestión de cuentas críticas",
-};
+import { useState } from "react";
+import VemioDashboard from "@/components/vemio/VemioDashboard";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function RootPage() {
+  const [chatOpen, setChatOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <div className="p-4 mx-auto max-w-7xl md:p-6">
-        <VemioDashboard />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <div className={`p-4 mx-auto md:p-6 transition-all duration-300 ${chatOpen ? 'max-w-[96rem]' : 'max-w-7xl'}`}>
+          <VemioDashboard onChatStateChange={setChatOpen} />
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

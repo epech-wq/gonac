@@ -14,15 +14,27 @@ export class MetricasService {
 
   /**
    * Get consolidated metrics for home page KPIs
+   * @param segment - Optional segment filter: 'Hot', 'Balanceadas', or 'Slow'
    */
-  async getMetricasConsolidadas(): Promise<MetricasConsolidadasResponse> {
+  async getMetricasConsolidadas(segment?: string): Promise<MetricasConsolidadasResponse> {
     try {
-      const data = await this.repository.getMetricasConsolidadas();
+      let data;
+      let source: string;
+
+      if (segment) {
+        // Fetch from segmented view
+        data = await this.repository.getMetricasConsolidadasBySegment(segment);
+        source = 'mvw_metricas_consolidadas_segmentadas';
+      } else {
+        // Fetch from regular consolidated view
+        data = await this.repository.getMetricasConsolidadas();
+        source = 'mvw_metricas_consolidadas';
+      }
 
       return {
         data,
         timestamp: new Date().toISOString(),
-        source: 'mvw_metricas_consolidadas',
+        source,
       };
     } catch (error) {
       throw new Error(
@@ -33,29 +45,60 @@ export class MetricasService {
 
   /**
    * Get formatted metrics with currency and percentage formatting
+   * @param segment - Optional segment filter: 'Hot', 'Balanceadas', or 'Slow'
    */
-  async getMetricasConsolidadasFormatted(): Promise<MetricasConsolidadasFormatted> {
-    const { data } = await this.getMetricasConsolidadas();
+  async getMetricasConsolidadasFormatted(segment?: string): Promise<MetricasConsolidadasFormatted> {
+    const { data } = await this.getMetricasConsolidadas(segment);
 
     return {
       ...data,
+      // Base Metrics Formatted
       ventas_totales_pesos_formatted: this.formatCurrency(data.ventas_totales_pesos),
       crecimiento_formatted: this.formatPercentage(data.crecimiento_vs_semana_anterior_pct),
       ventas_totales_unidades_formatted: this.formatNumber(data.ventas_totales_unidades),
+      inventario_inicial_total_formatted: this.formatNumber(data.inventario_inicial_total),
+      venta_total_inventario_formatted: this.formatCurrency(data.venta_total_inventario),
       sell_through_formatted: this.formatPercentage(data.sell_through_pct),
       cobertura_formatted: this.formatPercentage(data.cobertura_pct),
       cobertura_ponderada_formatted: this.formatPercentage(data.cobertura_ponderada_pct),
       promedio_dias_inventario_formatted: this.formatDays(data.promedio_dias_inventario),
       porcentaje_agotados_formatted: this.formatPercentage(data.porcentaje_agotados_pct),
       avg_venta_promedio_diaria_formatted: this.formatCurrency(data.avg_venta_promedio_diaria),
+      
+      // Objectives Formatted
+      objetivo_ventas_totales_pesos_formatted: this.formatCurrency(data.objetivo_ventas_totales_pesos),
+      objetivo_sell_through_formatted: this.formatPercentage(data.objetivo_sell_through_pct),
+      objetivo_promedio_dias_inventario_formatted: this.formatDays(data.objetivo_promedio_dias_inventario),
+      objetivo_avg_venta_promedio_diaria_formatted: this.formatCurrency(data.objetivo_avg_venta_promedio_diaria),
+      objetivo_cobertura_formatted: this.formatPercentage(data.objetivo_cobertura_pct),
+      objetivo_cobertura_ponderada_formatted: this.formatPercentage(data.objetivo_cobertura_ponderada_pct),
+      objetivo_porcentaje_agotados_formatted: this.formatPercentage(data.objetivo_porcentaje_agotados_pct),
+      
+      // Differences Formatted
+      diferencia_ventas_totales_pesos_formatted: this.formatCurrencySigned(data.diferencia_ventas_totales_pesos),
+      diferencia_sell_through_formatted: this.formatPercentageSigned(data.diferencia_sell_through_pct),
+      diferencia_promedio_dias_inventario_formatted: this.formatDaysSigned(data.diferencia_promedio_dias_inventario),
+      diferencia_avg_venta_promedio_diaria_formatted: this.formatCurrencySigned(data.diferencia_avg_venta_promedio_diaria),
+      diferencia_cobertura_formatted: this.formatPercentageSigned(data.diferencia_cobertura_pct),
+      diferencia_cobertura_ponderada_formatted: this.formatPercentageSigned(data.diferencia_cobertura_ponderada_pct),
+      diferencia_porcentaje_agotados_formatted: this.formatPercentageSigned(data.diferencia_porcentaje_agotados_pct),
+      
+      // Variations Formatted
+      variacion_ventas_totales_formatted: this.formatPercentageSigned(data.variacion_ventas_totales_pct),
+      variacion_promedio_dias_inventario_formatted: this.formatPercentageSigned(data.variacion_promedio_dias_inventario_pct),
+      variacion_avg_venta_promedio_diaria_formatted: this.formatPercentageSigned(data.variacion_avg_venta_promedio_diaria_pct),
+      variacion_cobertura_formatted: this.formatPercentageSigned(data.variacion_cobertura_pct),
+      variacion_cobertura_ponderada_formatted: this.formatPercentageSigned(data.variacion_cobertura_ponderada_pct),
+      variacion_porcentaje_agotados_formatted: this.formatPercentageSigned(data.variacion_porcentaje_agotados_pct),
     };
   }
 
   /**
    * Get metrics as individual KPI cards for dashboard
+   * @param segment - Optional segment filter: 'Hot', 'Balanceadas', or 'Slow'
    */
-  async getKPICards(): Promise<KPICard[]> {
-    const { data } = await this.getMetricasConsolidadas();
+  async getKPICards(segment?: string): Promise<KPICard[]> {
+    const { data } = await this.getMetricasConsolidadas(segment);
 
     return [
       {
@@ -164,10 +207,27 @@ export class MetricasService {
   }
 
   /**
+   * Helper: Format currency with sign (for differences)
+   */
+  private formatCurrencySigned(value: number): string {
+    const sign = value >= 0 ? '+' : '';
+    return sign + this.formatCurrency(value);
+  }
+
+  /**
    * Helper: Format percentage
    */
   private formatPercentage(value: number): string {
     return `${value.toFixed(2)}%`;
+  }
+
+  /**
+   * Helper: Format percentage with sign (for differences)
+   * Always shows "+" when value is more than objective, "-" when less
+   */
+  private formatPercentageSigned(value: number): string {
+    const sign = value >= 0 ? '+' : '-';
+    return `${sign}${Math.abs(value).toFixed(2)}%`;
   }
 
   /**
@@ -183,6 +243,15 @@ export class MetricasService {
   private formatDays(value: number): string {
     const days = Math.round(value);
     return `${days} ${days === 1 ? 'día' : 'días'}`;
+  }
+
+  /**
+   * Helper: Format days with sign (for differences)
+   */
+  private formatDaysSigned(value: number): string {
+    const days = Math.round(value);
+    const sign = days >= 0 ? '+' : '';
+    return `${sign}${days} ${Math.abs(days) === 1 ? 'día' : 'días'}`;
   }
 
   /**

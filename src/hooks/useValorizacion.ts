@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  ValorizacionResponse, 
-  ValorizacionSummary, 
+import {
+  ValorizacionResponse,
+  ValorizacionSummary,
   ValorizacionItem,
   AgotadoDetalleResponse,
   CaducidadDetalleResponse,
   SinVentasDetalleResponse
 } from '@/types/valorizacion';
 
-type FormatType = 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle';
+type FormatType = 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle' | 'tiendas-con-oportunidades' | 'agotado-por-tienda' | 'agotado-por-sku' | 'caducidad-por-tienda' | 'caducidad-por-sku' | 'sin-ventas-por-tienda' | 'sin-ventas-por-sku';
 
 interface UseValorizacionOptions {
   format?: FormatType;
@@ -70,7 +70,7 @@ export function useValorizacion<T = ValorizacionResponse>(
       }
 
       const response = await fetch(`/api/valorizacion?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -81,10 +81,28 @@ export function useValorizacion<T = ValorizacionResponse>(
         throw new Error(result.message || 'Failed to fetch data');
       }
 
-      setData(result.data);
+      // For detail formats and grouped formats, the API spreads the service response
+      // So we get { success: true, data: [...], total: number, timestamp: string }
+      // For other formats, we get { success: true, data: {...} }
+      // In both cases, result.data contains what we need, but for detail/grouped formats
+      // we need to pass the whole result (minus success) to maintain the structure
+      if (format.includes('-detalle') || format.includes('-por-')) {
+        // For detail and grouped formats, pass the entire response structure
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { success, ...detailData } = result;
+        setData(detailData as T);
+      } else {
+        // For other formats, just pass the data
+        setData(result.data);
+      }
     } catch (err) {
       setError(err as Error);
-      console.error('useValorizacion error:', err);
+      console.error('useValorizacion error:', {
+        format,
+        type,
+        error: err,
+        message: (err as Error).message
+      });
     } finally {
       setLoading(false);
     }
@@ -179,10 +197,10 @@ export function useValorizacionCritical() {
  */
 export function useAgotadoDetalle(options: { autoFetch?: boolean } = {}) {
   const { autoFetch = true } = options;
-  
-  return useValorizacion<AgotadoDetalleResponse>({ 
+
+  return useValorizacion<AgotadoDetalleResponse>({
     format: 'agotado-detalle',
-    autoFetch 
+    autoFetch
   });
 }
 
@@ -229,10 +247,10 @@ export function useAgotadoDetalle(options: { autoFetch?: boolean } = {}) {
  */
 export function useCaducidadDetalle(options: { autoFetch?: boolean } = {}) {
   const { autoFetch = true } = options;
-  
-  return useValorizacion<CaducidadDetalleResponse>({ 
+
+  return useValorizacion<CaducidadDetalleResponse>({
     format: 'caducidad-detalle',
-    autoFetch 
+    autoFetch
   });
 }
 
@@ -271,10 +289,99 @@ export function useCaducidadDetalle(options: { autoFetch?: boolean } = {}) {
  */
 export function useSinVentasDetalle(options: { autoFetch?: boolean } = {}) {
   const { autoFetch = true } = options;
-  
-  return useValorizacion<SinVentasDetalleResponse>({ 
+
+  return useValorizacion<SinVentasDetalleResponse>({
     format: 'sin-ventas-detalle',
-    autoFetch 
+    autoFetch
+  });
+}
+
+/**
+ * Hook for getting total number of stores with opportunities
+ * Fetches from: gonac.metricas_riesgo where valorizacion = 'Total'
+ * 
+ * @example
+ * ```tsx
+ * const { data, loading, error, refetch } = useTiendasConOportunidades();
+ * 
+ * if (loading) return <div>Loading...</div>;
+ * if (error) return <div>Error: {error.message}</div>;
+ * 
+ * return <div>Tiendas con Oportunidades: {data}</div>;
+ * ```
+ */
+export function useTiendasConOportunidades(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = true } = options;
+
+  return useValorizacion<number>({
+    format: 'tiendas-con-oportunidades',
+    autoFetch
+  });
+}
+
+/**
+ * Hook for Agotado data grouped by store
+ */
+export function useAgotadoPorTienda(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = false } = options;
+  return useValorizacion<{ data: Array<{ store_name: string; impacto_total: number; registros: number }>; total: number; timestamp: string }>({
+    format: 'agotado-por-tienda',
+    autoFetch
+  });
+}
+
+/**
+ * Hook for Agotado data grouped by SKU
+ */
+export function useAgotadoPorSKU(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = false } = options;
+  return useValorizacion<{ data: Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>; total: number; timestamp: string }>({
+    format: 'agotado-por-sku',
+    autoFetch
+  });
+}
+
+/**
+ * Hook for Caducidad data grouped by store
+ */
+export function useCaducidadPorTienda(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = false } = options;
+  return useValorizacion<{ data: Array<{ store_name: string; impacto_total: number; registros: number }>; total: number; timestamp: string }>({
+    format: 'caducidad-por-tienda',
+    autoFetch
+  });
+}
+
+/**
+ * Hook for Caducidad data grouped by SKU
+ */
+export function useCaducidadPorSKU(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = false } = options;
+  return useValorizacion<{ data: Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>; total: number; timestamp: string }>({
+    format: 'caducidad-por-sku',
+    autoFetch
+  });
+}
+
+/**
+ * Hook for Sin Ventas data grouped by store
+ */
+export function useSinVentasPorTienda(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = false } = options;
+  return useValorizacion<{ data: Array<{ store_name: string; impacto_total: number; registros: number }>; total: number; timestamp: string }>({
+    format: 'sin-ventas-por-tienda',
+    autoFetch
+  });
+}
+
+/**
+ * Hook for Sin Ventas data grouped by SKU
+ */
+export function useSinVentasPorSKU(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = false } = options;
+  return useValorizacion<{ data: Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>; total: number; timestamp: string }>({
+    format: 'sin-ventas-por-sku',
+    autoFetch
   });
 }
 

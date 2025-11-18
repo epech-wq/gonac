@@ -8,7 +8,7 @@ import { ValorizacionService } from '@/services/valorizacion.service';
  * Fetches valorizacion data (Agotado, Caducidad, Sin Ventas)
  * 
  * Query Parameters:
- * - format: 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle'
+ * - format: 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle' | 'tiendas-con-oportunidades'
  * - type: 'Agotado' | 'Caducidad' | 'Sin Ventas' (optional)
  * 
  * Examples:
@@ -17,6 +17,7 @@ import { ValorizacionService } from '@/services/valorizacion.service';
  * - GET /api/valorizacion?format=agotado-detalle
  * - GET /api/valorizacion?format=caducidad-detalle
  * - GET /api/valorizacion?format=sin-ventas-detalle
+ * - GET /api/valorizacion?format=tiendas-con-oportunidades
  * - GET /api/valorizacion?type=Agotado
  */
 export async function GET(request: NextRequest) {
@@ -53,6 +54,65 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         ...data,
+      });
+    }
+
+    // Handle grouped by store formats
+    if (format === 'agotado-por-tienda') {
+      const data = await service.getAgotadoPorTienda();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    if (format === 'caducidad-por-tienda') {
+      const data = await service.getCaducidadPorTienda();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    if (format === 'sin-ventas-por-tienda') {
+      const data = await service.getSinVentasPorTienda();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    // Handle grouped by SKU formats
+    if (format === 'agotado-por-sku') {
+      const data = await service.getAgotadoPorSKU();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    if (format === 'caducidad-por-sku') {
+      const data = await service.getCaducidadPorSKU();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    if (format === 'sin-ventas-por-sku') {
+      const data = await service.getSinVentasPorSKU();
+      return NextResponse.json({
+        success: true,
+        ...data,
+      });
+    }
+
+    // Handle tiendas con oportunidades request
+    if (format === 'tiendas-con-oportunidades') {
+      const data = await service.getTiendasConOportunidades();
+      return NextResponse.json({
+        success: true,
+        data,
       });
     }
 
