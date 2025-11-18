@@ -27,18 +27,26 @@ export const useTiendasData = (segment?: string) => {
 
   const storeMetrics: StoreMetrics = useMemo(() => ({
     totalTiendas: segmentacionData?.summary.total_tiendas || DEFAULT_METRICS.totalTiendas,
-    ventasTotales: segmentacionData?.summary.total_ventas_valor
-      ? parseFloat(segmentacionData.summary.total_ventas_valor.replace(/[^0-9.-]/g, ''))
-      : DEFAULT_METRICS.ventasTotales,
-    unidadesVendidas: segmentacionData?.summary.total_ventas_unidades
-      ? parseFloat(segmentacionData.summary.total_ventas_unidades.replace(/[^0-9.-]/g, ''))
-      : DEFAULT_METRICS.unidadesVendidas,
+    // Use metricasData from mvw_metricas_consolidadas_segmentadas (respects segment filter)
+    // Fallback to segmentacionData if metricasData is not available
+    ventasTotales: metricasData?.ventas_totales_pesos !== undefined && metricasData.ventas_totales_pesos !== null
+      ? metricasData.ventas_totales_pesos
+      : (segmentacionData?.summary.total_ventas_valor
+          ? parseFloat(segmentacionData.summary.total_ventas_valor.replace(/[^0-9.-]/g, ''))
+          : DEFAULT_METRICS.ventasTotales),
+    unidadesVendidas: metricasData?.ventas_totales_unidades !== undefined && metricasData.ventas_totales_unidades !== null
+      ? metricasData.ventas_totales_unidades
+      : (segmentacionData?.summary.total_ventas_unidades
+          ? parseFloat(segmentacionData.summary.total_ventas_unidades.replace(/[^0-9.-]/g, ''))
+          : DEFAULT_METRICS.unidadesVendidas),
     ventaPromedio: metricasData?.avg_venta_promedio_diaria
       ? metricasData.avg_venta_promedio_diaria * 7
       : DEFAULT_METRICS.ventaPromedio,
-    diasInventario: segmentacionData?.summary.promedio_dias_inventario
-      ? parseFloat(segmentacionData.summary.promedio_dias_inventario)
-      : DEFAULT_METRICS.diasInventario,
+    diasInventario: metricasData?.promedio_dias_inventario !== undefined && metricasData.promedio_dias_inventario !== null
+      ? metricasData.promedio_dias_inventario
+      : (segmentacionData?.summary.promedio_dias_inventario
+          ? parseFloat(segmentacionData.summary.promedio_dias_inventario)
+          : DEFAULT_METRICS.diasInventario),
   }), [segmentacionData, metricasData]);
 
   const opportunities: Opportunity[] = useMemo(() => {
