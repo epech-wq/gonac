@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
-import { useCambioInventario } from '@/hooks/useCambioInventario';
+import { useCambioInventario, useRedistribucionDetalle } from '@/hooks/useCambioInventario';
 
 interface TransferenciaInventario {
   id: string;
@@ -72,6 +72,7 @@ export default function CambioInventarioCard({
   // Estados para vistas de detalle
   const [showDetailByTienda, setShowDetailByTienda] = useState(false);
   const [showDetailBySKU, setShowDetailBySKU] = useState(false);
+  const [showRedistribucionDetalle, setShowRedistribucionDetalle] = useState(false);
 
   // Update local state when data is loaded from database
   useEffect(() => {
@@ -83,69 +84,47 @@ export default function CambioInventarioCard({
     }
   }, [simulacionData]);
 
-  // Datos de ejemplo de transferencias - enfocado en Slow y Dead stores con riesgo de caducidad
-  const transferencias: TransferenciaInventario[] = useMemo(() => [
-    {
-      id: '1',
-      sku: 'SKU-001',
-      producto: 'Producto A 500g',
-      tiendaOrigen: 'Tienda 045 - Zona Norte',
-      tiendaDestino: 'Tienda 012 - Centro',
-      unidades: 48,
-      valorInventario: 14400,
-      diasInventarioOrigenInicial: 85,
-      diasInventarioOrigenFinal: 60,
-      diasInventarioDestinoInicial: 3,
-      diasInventarioDestinoFinal: 12,
-      segmentoOrigen: 'slow',
-      segmentoDestino: 'hot'
-    },
-    {
-      id: '2',
-      sku: 'SKU-003',
-      producto: 'Producto C 1kg',
-      tiendaOrigen: 'Tienda 078 - Periferia',
-      tiendaDestino: 'Tienda 023 - Plaza Principal',
-      unidades: 36,
-      valorInventario: 12960,
-      diasInventarioOrigenInicial: 92,
-      diasInventarioOrigenFinal: 68,
-      diasInventarioDestinoInicial: 2,
-      diasInventarioDestinoFinal: 10,
-      segmentoOrigen: 'dead',
-      segmentoDestino: 'hot'
-    },
-    {
-      id: '3',
-      sku: 'SKU-005',
-      producto: 'Producto E 750g',
-      tiendaOrigen: 'Tienda 091 - Suburbio',
-      tiendaDestino: 'Tienda 012 - Centro',
-      unidades: 24,
-      valorInventario: 8640,
-      diasInventarioOrigenInicial: 78,
-      diasInventarioOrigenFinal: 55,
-      diasInventarioDestinoInicial: 4,
-      diasInventarioDestinoFinal: 11,
-      segmentoOrigen: 'slow',
-      segmentoDestino: 'balanceada'
-    },
-    {
-      id: '4',
-      sku: 'SKU-002',
-      producto: 'Producto B 250g',
-      tiendaOrigen: 'Tienda 045 - Zona Norte',
-      tiendaDestino: 'Tienda 034 - Comercial',
-      unidades: 60,
-      valorInventario: 10800,
-      diasInventarioOrigenInicial: 88,
-      diasInventarioOrigenFinal: 65,
-      diasInventarioDestinoInicial: 5,
-      diasInventarioDestinoFinal: 15,
-      segmentoOrigen: 'slow',
-      segmentoDestino: 'hot'
+  // Fetch detailed redistribution data - auto-fetch when detail view is shown
+  // The hook will automatically refetch when maxNivelInventarioDestino changes
+  const { data: detalleData, loading: detalleLoading } = useRedistribucionDetalle(
+    maxNivelInventarioDestino,
+    { autoFetch: showRedistribucionDetalle || showDetailByTienda || showDetailBySKU }
+  );
+
+  // Transform database data to TransferenciaInventario format
+  const transferencias: TransferenciaInventario[] = useMemo(() => {
+    // Use real data if available
+    if (detalleData?.data && detalleData.data.length > 0) {
+      return detalleData.data.map((item, index) => {
+        // Calculate days of inventory for origin (before transfer)
+        // Using dias_hasta_caducidad as initial, and reducing based on quantity to redistribute
+        const diasInventarioOrigenInicial = item.dias_hasta_caducidad;
+        // Estimate final days: reduce by the days it would take to sell the redistributed quantity
+        const diasInventarioOrigenFinal = Math.max(0, 
+          diasInventarioOrigenInicial - Math.ceil(item.cantidad_a_redistribuir / (item.venta_promedio_diaria_destino || 1))
+        );
+
+        return {
+          id: `${item.id_store_origen}-${item.id_store_destino}-${item.sku}-${item.id_lote}-${index}`,
+          sku: `SKU-${item.sku}`,
+          producto: `Producto ${item.sku}`, // Could be enhanced with product name lookup
+          tiendaOrigen: `Tienda ${item.id_store_origen}`, // Could be enhanced with store name lookup
+          tiendaDestino: `Tienda ${item.id_store_destino}`,
+          unidades: item.cantidad_a_redistribuir,
+          valorInventario: item.valor_total,
+          diasInventarioOrigenInicial: Math.round(diasInventarioOrigenInicial),
+          diasInventarioOrigenFinal: Math.round(diasInventarioOrigenFinal),
+          diasInventarioDestinoInicial: 0, // Initial days in destination (not provided by function)
+          diasInventarioDestinoFinal: Math.round(item.dias_inventario_proyectado),
+          segmentoOrigen: 'slow' as const, // Could be determined from store segmentation
+          segmentoDestino: 'hot' as const
+        };
+      });
     }
-  ], []);
+
+    // Fallback: return empty array if no data
+    return [];
+  }, [detalleData]);
 
   // Calcular métricas de impacto (ROI) - from database or calculated
   const metricas = useMemo(() => {
@@ -593,6 +572,15 @@ export default function CambioInventarioCard({
             </svg>
             {showDetailBySKU ? 'Ocultar' : 'Ver'} Detalle por SKU
           </button>
+          <button
+            onClick={() => setShowRedistribucionDetalle(!showRedistribucionDetalle)}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            {showRedistribucionDetalle ? 'Ocultar' : 'Ver'} Detalle de Redistribución
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -619,8 +607,23 @@ export default function CambioInventarioCard({
       {/* Detalle por Tienda */}
       {showDetailByTienda && (
         <div className="space-y-4">
-          {/* Tiendas Origen */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          {detalleLoading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+              <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Cargando detalles...</span>
+            </div>
+          )}
+          {!detalleLoading && transferencias.length === 0 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                No hay datos de redistribución disponibles para los parámetros actuales.
+              </p>
+            </div>
+          )}
+          {!detalleLoading && transferencias.length > 0 && (
+            <>
+              {/* Tiendas Origen */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                 Detalle de Tiendas Origen (Slow/Dead)
@@ -700,11 +703,28 @@ export default function CambioInventarioCard({
               </table>
             </div>
           </div>
+            </>
+          )}
         </div>
       )}
 
       {/* Detalle por SKU */}
       {showDetailBySKU && (
+        <div className="space-y-4">
+          {detalleLoading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Cargando detalles...</span>
+            </div>
+          )}
+          {!detalleLoading && transferencias.length === 0 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                No hay datos de redistribución disponibles para los parámetros actuales.
+              </p>
+            </div>
+          )}
+          {!detalleLoading && transferencias.length > 0 && (
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-indigo-900/20">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -745,6 +765,127 @@ export default function CambioInventarioCard({
               </tbody>
             </table>
           </div>
+        </div>
+          )}
+        </div>
+      )}
+
+      {/* Detalle de Redistribución - Raw Data from fn_redistribucion_caducidad */}
+      {showRedistribucionDetalle && (
+        <div className="space-y-4">
+          {detalleLoading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+              <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Cargando datos de redistribución...</span>
+            </div>
+          )}
+          {!detalleLoading && (!detalleData?.data || detalleData.data.length === 0) && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                No hay datos de redistribución disponibles para los parámetros actuales (Máximo nivel: {maxNivelInventarioDestino} días).
+              </p>
+            </div>
+          )}
+          {!detalleLoading && detalleData?.data && detalleData.data.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-teal-50 dark:bg-teal-900/20">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Detalle de Redistribución de Caducidad
+                  </h4>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                    {detalleData.total} registros | Máximo nivel destino: {maxNivelInventarioDestino} días
+                  </span>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo Operación</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tienda Origen</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tienda Destino</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SKU</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Lote</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Inventario Remanente</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fecha Caducidad</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días hasta Caducidad</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Capacidad Evacuación</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cantidad a Redistribuir</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Precio Unitario</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor Total</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Venta Promedio Diaria</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Proyectado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    {detalleData.data.map((item, index) => (
+                      <tr key={`${item.id_store_origen}-${item.id_store_destino}-${item.sku}-${item.id_lote}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                            {item.tipo_operacion}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                          Tienda {item.id_store_origen}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                          Tienda {item.id_store_destino}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                          {item.sku}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {item.id_lote}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">
+                          {formatNumber(item.inventario_remanente)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {item.fecha_caducidad ? new Date(item.fecha_caducidad).toLocaleDateString('es-MX') : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            item.dias_hasta_caducidad <= 30 
+                              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                              : item.dias_hasta_caducidad <= 60
+                              ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                              : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          }`}>
+                            {item.dias_hasta_caducidad}d
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">
+                          {formatNumber(item.capacidad_evacuacion_destino)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-medium text-blue-600 dark:text-blue-400">
+                          {formatNumber(item.cantidad_a_redistribuir)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">
+                          {formatCurrency(item.precio_unitario)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-medium text-purple-600 dark:text-purple-400">
+                          {formatCurrency(item.valor_total)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">
+                          {formatNumber(item.venta_promedio_diaria_destino)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            item.dias_inventario_proyectado <= 10
+                              ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                              : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          }`}>
+                            {item.dias_inventario_proyectado}d
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

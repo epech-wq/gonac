@@ -35,3 +35,34 @@ export interface CambioInventarioResponse {
   source: string;
 }
 
+/**
+ * Detailed transfer record from fn_redistribucion_caducidad
+ */
+export interface RedistribucionCaducidadDetalle {
+  tipo_operacion: string;
+  id_store_origen: number;
+  id_store_destino: number;
+  sku: number;
+  id_lote: string;
+  inventario_remanente: number;
+  fecha_caducidad: string; // DATE as string
+  dias_hasta_caducidad: number;
+  capacidad_evacuacion_destino: number;
+  cantidad_a_redistribuir: number;
+  precio_unitario: number;
+  valor_total: number;
+  venta_promedio_diaria_destino: number;
+  dias_inventario_proyectado: number;
+}
+
+/**
+ * Response for detailed redistribution data
+ */
+export interface RedistribucionCaducidadResponse {
+  success: boolean;
+  data: RedistribucionCaducidadDetalle[];
+  total: number;
+  timestamp: string;
+  source: string;
+}
+
