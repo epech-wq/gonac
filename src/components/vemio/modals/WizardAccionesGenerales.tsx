@@ -34,8 +34,10 @@ export interface ParametrosAccionGeneral {
   duracionHoras?: number;
 
   // Cambio de Inventario
-  costoTransporte?: number;
-  inventarioMinimo?: number;
+  maxNivelInventarioDestino?: number;
+  costoLogisticoPorcentaje?: number;
+  minUnidadesMoverA?: number;
+  minUnidadesMoverDesde?: number;
 }
 
 export interface DatosAccionGeneral {
@@ -315,7 +317,17 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
       case 'cambio_inventario':
         return (
           <div className="space-y-6">
-            <CambioInventarioCard showTitle={false} showConfig={true} onChatOpen={onChatOpen} />
+            <CambioInventarioCard 
+              showTitle={false} 
+              showConfig={true} 
+              onChatOpen={onChatOpen}
+              onAprobar={handleEjecutarAccion}
+              onAjustar={() => onChatOpen && onChatOpen({
+                tipo: 'cambio_inventario',
+                titulo: 'Ajustar Parámetros - Balanceo de Inventarios',
+                contexto: 'Ajuste de parámetros de simulación para balanceo de inventario'
+              })}
+            />
 
             <div className="bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
@@ -327,8 +339,9 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
                     Optimización Automática
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Las transferencias se calculan identificando tiendas con exceso de inventario y tiendas con necesidad crítica.
-                    El sistema optimiza los movimientos para maximizar el beneficio neto considerando costos de transporte.
+                    Simulación de balanceo de inventario enfocada en mitigar caducidad. El sistema identifica inventario con alto riesgo
+                    de caducidad en tiendas Slow y Dead, y calcula transferencias óptimas hacia tiendas con alta rotación o niveles bajos.
+                    Los parámetros de simulación permiten ajustar el máximo nivel de inventario en destino, costo logístico, y mínimos de unidades.
                   </p>
                 </div>
               </div>
@@ -367,7 +380,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
                 : accionInfo.id === 'visita_promotoria'
                   ? 'Revisión de tiendas críticas y planificación de visitas de promotoría en campo'
                   : accionInfo.id === 'cambio_inventario'
-                    ? 'Optimización de inventario mediante transferencias entre tiendas para maximizar ventas y reducir caducidad'
+                    ? 'Simulación de balanceo de inventario para mitigar caducidad: transferencias desde tiendas Slow/Dead con riesgo hacia tiendas con alta rotación'
                     : 'Define los parámetros específicos para esta acción prescriptiva'}
         </p>
       </div>
