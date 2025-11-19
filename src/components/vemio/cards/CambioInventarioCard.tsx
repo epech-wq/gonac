@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
+import { useCambioInventario } from '@/hooks/useCambioInventario';
 
 interface TransferenciaInventario {
   id: string;
@@ -59,7 +60,10 @@ export default function CambioInventarioCard({
   onAprobar,
   onAjustar
 }: CambioInventarioCardProps) {
-  // Parámetros de Simulación
+  // Fetch data from database
+  const { data: simulacionData, loading, error } = useCambioInventario({ autoFetch: true });
+
+  // Parámetros de Simulación (from database, editable)
   const [maxNivelInventarioDestino, setMaxNivelInventarioDestino] = useState<number>(30);
   const [costoLogisticoPorcentaje, setCostoLogisticoPorcentaje] = useState<number>(5);
   const [minUnidadesMoverA, setMinUnidadesMoverA] = useState<number>(10);
@@ -68,6 +72,16 @@ export default function CambioInventarioCard({
   // Estados para vistas de detalle
   const [showDetailByTienda, setShowDetailByTienda] = useState(false);
   const [showDetailBySKU, setShowDetailBySKU] = useState(false);
+
+  // Update local state when data is loaded from database
+  useEffect(() => {
+    if (simulacionData?.data) {
+      setMaxNivelInventarioDestino(simulacionData.data.max_dias_inventario_destino);
+      setCostoLogisticoPorcentaje(simulacionData.data.costo_logistico_pct);
+      setMinUnidadesMoverA(simulacionData.data.min_unidades_mover_a_tienda);
+      setMinUnidadesMoverDesde(simulacionData.data.min_unidades_mover_desde_tienda);
+    }
+  }, [simulacionData]);
 
   // Datos de ejemplo de transferencias - enfocado en Slow y Dead stores con riesgo de caducidad
   const transferencias: TransferenciaInventario[] = useMemo(() => [
@@ -133,17 +147,31 @@ export default function CambioInventarioCard({
     }
   ], []);
 
-  // Calcular métricas de impacto (ROI)
+  // Calcular métricas de impacto (ROI) - from database or calculated
   const metricas = useMemo(() => {
+    // Use database data if available, otherwise calculate from mock transferencias
+    if (simulacionData?.data) {
+      return {
+        inventarioMovilizarUnidades: simulacionData.data.inventario_movilizar_unidades,
+        inventarioMovilizarValor: simulacionData.data.inventario_movilizar_pesos,
+        numTiendasOrigen: simulacionData.data.num_tiendas_origen,
+        numTiendasDestino: simulacionData.data.num_tiendas_destino,
+        diasInventarioCriticasInicial: simulacionData.data.dias_inventario_critico_inicial,
+        diasInventarioCriticasFinal: simulacionData.data.dias_inventario_critico_final,
+        diasInventarioDestinoInicial: simulacionData.data.dias_inventario_destino_inicial,
+        diasInventarioDestinoFinal: simulacionData.data.dias_inventario_destino_final,
+        costoIniciativa: simulacionData.data.costo_iniciativa
+      };
+    }
+
+    // Fallback: calculate from mock transferencias
     const totalUnidades = transferencias.reduce((sum, t) => sum + t.unidades, 0);
     const totalValorInventario = transferencias.reduce((sum, t) => sum + t.valorInventario, 0);
     const costoLogistico = totalValorInventario * (costoLogisticoPorcentaje / 100);
     
-    // Tiendas únicas
     const tiendasOrigen = new Set(transferencias.map(t => t.tiendaOrigen));
     const tiendasDestino = new Set(transferencias.map(t => t.tiendaDestino));
     
-    // Días de inventario promedio
     const diasInvCriticasInicial = transferencias
       .filter(t => t.segmentoOrigen === 'slow' || t.segmentoOrigen === 'dead')
       .reduce((sum, t) => sum + t.diasInventarioOrigenInicial, 0) / 
@@ -171,7 +199,7 @@ export default function CambioInventarioCard({
       diasInventarioDestinoFinal: Math.round(diasInvDestinoFinal),
       costoIniciativa: costoLogistico
     };
-  }, [transferencias, costoLogisticoPorcentaje]);
+  }, [simulacionData, transferencias, costoLogisticoPorcentaje]);
 
   // Generar datos de detalle por tienda
   const detallePorTienda = useMemo(() => {
@@ -274,6 +302,47 @@ export default function CambioInventarioCard({
       });
     }
   };
+
+  // Show loading state
+  if (loading && !simulacionData) {
+    return (
+      <div className="space-y-6">
+        {showTitle && (
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              Mitigar Caducidad - Balanceo de Inventarios
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Cargando datos de simulación...
+            </p>
+          </div>
+        )}
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        {showTitle && (
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              Mitigar Caducidad - Balanceo de Inventarios
+            </h3>
+          </div>
+        )}
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+          <p className="text-sm text-red-800 dark:text-red-200">
+            Error al cargar datos: {error.message}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleAprobar = () => {
     if (onAprobar) {
@@ -453,13 +522,13 @@ export default function CambioInventarioCard({
             <div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Inicial</div>
               <div className="text-xl font-bold text-red-600 dark:text-red-400">
-                {metricas.diasInventarioCriticasInicial} días
+                {Math.round(metricas.diasInventarioCriticasInicial)} días
               </div>
             </div>
             <div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Final</div>
               <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                {metricas.diasInventarioCriticasFinal} días
+                {Math.round(metricas.diasInventarioCriticasFinal)} días
               </div>
             </div>
           </div>
@@ -473,13 +542,13 @@ export default function CambioInventarioCard({
             <div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Inicial</div>
               <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400">
-                {metricas.diasInventarioDestinoInicial} días
+                {Math.round(metricas.diasInventarioDestinoInicial)} días
               </div>
             </div>
             <div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Final</div>
               <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                {metricas.diasInventarioDestinoFinal} días
+                {Math.round(metricas.diasInventarioDestinoFinal)} días
               </div>
             </div>
           </div>
