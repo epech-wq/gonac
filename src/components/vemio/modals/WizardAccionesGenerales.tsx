@@ -6,36 +6,42 @@ import ReabastoUrgenteCard from "../cards/ReabastoUrgenteCard";
 import ExhibicionesAdicionalesCard from "../cards/ExhibicionesAdicionalesCard";
 import PromocionEvacuarCard from "../cards/PromocionEvacuarCard";
 import VisitaPromotoriaCard from "../cards/VisitaPromotoriaCard";
+import CambioInventarioCard from "../cards/CambioInventarioCard";
 
-export type TipoAccionGeneral = 
+export type TipoAccionGeneral =
   | "reabasto_urgente"
   | "exhibiciones_adicionales"
   | "promocion_evacuar"
-  | "visita_promotoria";
+  | "visita_promotoria"
+  | "cambio_inventario";
 
 export interface ParametrosAccionGeneral {
   // Reabasto Urgente
   diasCobertura?: number;
   nivelStockObjetivo?: number;
-  
+
   // Exhibiciones Adicionales
   costoExhibicion?: number;
   incrementoVentasEsperado?: number;
-  
+
   // Promoción Evacuar
   porcentajeDescuento?: number;
   elasticidadPrecio?: number;
   duracionDias?: number;
-  
+
   // Visita Promotoría
   objetivoVisita?: string;
   duracionHoras?: number;
+
+  // Cambio de Inventario
+  costoTransporte?: number;
+  inventarioMinimo?: number;
 }
 
 export interface DatosAccionGeneral {
   accionSeleccionada: TipoAccionGeneral | null;
   parametros: ParametrosAccionGeneral;
-  
+
   // Métricas calculadas
   costoEstimado: number;
   roiProyectado: number;
@@ -83,18 +89,18 @@ export default function WizardAccionesGenerales({
   useEffect(() => {
     setMounted(true);
     document.body.style.overflow = 'hidden';
-    
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleCerrar();
     };
-    
+
     document.addEventListener('keydown', handleEscape);
-    
+
     return () => {
       document.body.style.overflow = 'unset';
       document.removeEventListener('keydown', handleEscape);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -119,9 +125,9 @@ export default function WizardAccionesGenerales({
   if (!mounted) return null;
 
   const modalContent = (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center p-4"
-      style={{ 
+      style={{
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
@@ -129,7 +135,7 @@ export default function WizardAccionesGenerales({
       }}
       onClick={handleCerrar}
     >
-      <div 
+      <div
         className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
@@ -166,8 +172,8 @@ export default function WizardAccionesGenerales({
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {accionInfo.id === 'reabasto_urgente' 
-                  ? 'Análisis y Ejecución de Reabasto Urgente' 
+                {accionInfo.id === 'reabasto_urgente'
+                  ? 'Análisis y Ejecución de Reabasto Urgente'
                   : 'Configurar y Ejecutar Acción'}
               </span>
               <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-full font-medium">
@@ -214,7 +220,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
         return (
           <div className="space-y-6">
             <ReabastoUrgenteCard showTitle={false} showButtons={true} onChatOpen={onChatOpen} />
-            
+
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <svg className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +231,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
                     Datos en Tiempo Real
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Las métricas mostradas se calculan automáticamente basándose en el estado actual del inventario, 
+                    Las métricas mostradas se calculan automáticamente basándose en el estado actual del inventario,
                     ventas promedio y nivel de stock en las {accionInfo.tiendas} tiendas HOT y Balanceadas con inventario crítico.
                   </p>
                 </div>
@@ -238,7 +244,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
         return (
           <div className="space-y-6">
             <ExhibicionesAdicionalesCard showTitle={false} showConfig={true} />
-            
+
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <svg className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,7 +255,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
                     Datos Calculados en Tiempo Real
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Las métricas mostradas se calculan automáticamente basándose en el costo y el incremento esperado en ventas. 
+                    Las métricas mostradas se calculan automáticamente basándose en el costo y el incremento esperado en ventas.
                     Los datos se actualizan al modificar los parámetros para mostrar las oportunidades viables en tiempo real.
                   </p>
                 </div>
@@ -262,7 +268,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
         return (
           <div className="space-y-6">
             <PromocionEvacuarCard showTitle={false} showConfig={true} onChatOpen={onChatOpen} />
-            
+
             <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <svg className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,7 +279,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
                     Datos Calculados en Tiempo Real
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Las métricas se calculan automáticamente con base en categorías en riesgo de caducidad, 
+                    Las métricas se calculan automáticamente con base en categorías en riesgo de caducidad,
                     descuento configurado y elasticidad de precio. Los datos se actualizan al modificar los parámetros.
                   </p>
                 </div>
@@ -286,7 +292,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
         return (
           <div className="space-y-6">
             <VisitaPromotoriaCard showTitle={false} showPhoneMockup={true} onChatOpen={onChatOpen} />
-            
+
             <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <svg className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,8 +303,32 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
                     Datos en Tiempo Real
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Los datos mostrados provienen de tiendas críticas con productos sin venta. 
+                    Los datos mostrados provienen de tiendas críticas con productos sin venta.
                     El mockup muestra la app móvil que usarán los promotores en campo para ejecutar la visita.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'cambio_inventario':
+        return (
+          <div className="space-y-6">
+            <CambioInventarioCard showTitle={false} showConfig={true} onChatOpen={onChatOpen} />
+
+            <div className="bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 text-teal-600 dark:text-teal-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
+                    Optimización Automática
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Las transferencias se calculan identificando tiendas con exceso de inventario y tiendas con necesidad crítica.
+                    El sistema optimiza los movimientos para maximizar el beneficio neto considerando costos de transporte.
                   </p>
                 </div>
               </div>
@@ -315,26 +345,30 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          {accionInfo.id === 'reabasto_urgente' 
+          {accionInfo.id === 'reabasto_urgente'
             ? 'Análisis de Reabasto Urgente'
             : accionInfo.id === 'exhibiciones_adicionales'
-            ? 'Análisis de Exhibiciones Adicionales'
-            : accionInfo.id === 'promocion_evacuar'
-            ? 'Análisis de Promoción para Evacuar Inventario'
-            : accionInfo.id === 'visita_promotoria'
-            ? 'Análisis de Visita Promotoría'
-            : 'Configurar Parámetros de Acción'}
+              ? 'Análisis de Exhibiciones Adicionales'
+              : accionInfo.id === 'promocion_evacuar'
+                ? 'Análisis de Promoción para Evacuar Inventario'
+                : accionInfo.id === 'visita_promotoria'
+                  ? 'Análisis de Visita Promotoría'
+                  : accionInfo.id === 'cambio_inventario'
+                    ? 'Análisis de Cambio de Inventario'
+                    : 'Configurar Parámetros de Acción'}
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
           {accionInfo.id === 'reabasto_urgente'
             ? 'Revisión de métricas calculadas automáticamente con datos en tiempo real'
             : accionInfo.id === 'exhibiciones_adicionales'
-            ? 'Configuración y análisis de oportunidades viables con ROI positivo'
-            : accionInfo.id === 'promocion_evacuar'
-            ? 'Configuración y cálculo de descuentos estratégicos para evacuar inventario en riesgo'
-            : accionInfo.id === 'visita_promotoria'
-            ? 'Revisión de tiendas críticas y planificación de visitas de promotoría en campo'
-            : 'Define los parámetros específicos para esta acción prescriptiva'}
+              ? 'Configuración y análisis de oportunidades viables con ROI positivo'
+              : accionInfo.id === 'promocion_evacuar'
+                ? 'Configuración y cálculo de descuentos estratégicos para evacuar inventario en riesgo'
+                : accionInfo.id === 'visita_promotoria'
+                  ? 'Revisión de tiendas críticas y planificación de visitas de promotoría en campo'
+                  : accionInfo.id === 'cambio_inventario'
+                    ? 'Optimización de inventario mediante transferencias entre tiendas para maximizar ventas y reducir caducidad'
+                    : 'Define los parámetros específicos para esta acción prescriptiva'}
         </p>
       </div>
 
@@ -350,7 +384,7 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
           </svg>
           <span>Datos validados y listos para ejecutar</span>
         </div>
-        
+
         <button
           onClick={handleEjecutarAccion}
           className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl font-medium transform hover:scale-105"

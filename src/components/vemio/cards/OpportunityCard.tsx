@@ -80,9 +80,9 @@ export default function OpportunityCard({
               Acciones Recomendadas
             </h5>
           </div>
-          
-          {/* Grid de 2 columnas cuando hay múltiples acciones */}
-          <div className={type === 'sinVenta' ? 'grid grid-cols-2 gap-2' : ''}>
+
+          {/* Grid de 2 columnas para caducidad, 2 columnas para sinVenta */}
+          <div className={type === 'caducidad' || type === 'sinVenta' ? 'grid grid-cols-2 gap-2' : ''}>
             {/* Reabasto Urgente - ROJO (Crítico/Urgente) para Agotado */}
             {type === 'agotado' && (
               <button
@@ -97,22 +97,38 @@ export default function OpportunityCard({
                 </span>
               </button>
             )}
-            
-            {/* Promoción Evacuar - NARANJA (Advertencia/Tiempo limitado) */}
+
+            {/* Caducidad tiene 2 acciones en grid 2x1 */}
             {type === 'caducidad' && (
-              <button
-                onClick={() => onActionClick?.('promocion_evacuar')}
-                className="w-full text-left px-3 py-2.5 text-xs font-medium text-white bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-orange-700 dark:border-orange-600"
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                  Promoción Evacuar Inventario
-                </span>
-              </button>
+              <>
+                {/* Promoción Evacuar - NARANJA (Advertencia/Tiempo limitado) */}
+                <button
+                  onClick={() => onActionClick?.('promocion_evacuar')}
+                  className="text-center px-2 py-2 text-xs font-medium text-white bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-orange-700 dark:border-orange-600"
+                >
+                  <span className="flex flex-col items-center gap-1">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <span className="leading-tight">Promoción Evacuar Inventario</span>
+                  </span>
+                </button>
+
+                {/* Cambio de Inventario - TEAL (Optimización/Transferencia) */}
+                <button
+                  onClick={() => onActionClick?.('cambio_inventario')}
+                  className="text-center px-2 py-2 text-xs font-medium text-white bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-teal-700 dark:border-teal-600"
+                >
+                  <span className="flex flex-col items-center gap-1">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <span className="leading-tight">Cambio de Inventario</span>
+                  </span>
+                </button>
+              </>
             )}
-            
+
             {/* Sin Venta tiene 2 acciones en grid 2x1 */}
             {type === 'sinVenta' && (
               <>
@@ -128,7 +144,7 @@ export default function OpportunityCard({
                     <span className="leading-tight">Visita Promotoría</span>
                   </span>
                 </button>
-                
+
                 {/* Exhibiciones Adicionales - AZUL (Oportunidad/Crecimiento) */}
                 <button
                   onClick={() => onActionClick?.('exhibiciones_adicionales')}
@@ -189,12 +205,12 @@ export default function OpportunityCard({
 }
 
 // Sub-component for detail table
-function OpportunityDetailTable({ 
-  type, 
-  detailData 
-}: { 
-  type: OpportunityType; 
-  detailData: DetailRecord[] 
+function OpportunityDetailTable({
+  type,
+  detailData
+}: {
+  type: OpportunityType;
+  detailData: DetailRecord[]
 }) {
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
