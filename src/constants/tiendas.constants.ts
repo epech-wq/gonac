@@ -15,6 +15,7 @@ export const RISK_COLORS: Record<RiskLevel, string> = {
   'Crítico': 'bg-red-500 text-white',
   'Alto': 'bg-orange-500 text-white',
   'Medio': 'bg-yellow-500 text-white',
+  'Bajo': 'bg-blue-500 text-white',
 } as const;
 
 export const SEGMENT_COLORS: Record<SegmentType, string> = {

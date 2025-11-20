@@ -113,8 +113,9 @@ export default function OpportunitiesSection({ opportunities, onChatOpen }: Oppo
   const sortedOpportunities = [...opportunities].sort((a, b) => b.impacto - a.impacto);
 
   // Determine label based on opportunity type
-  const getImpactoLabel = (type: OpportunityType): 'Crítico' | 'Alto' | 'Medio' => {
-    if (type === 'caducidad' || type === 'sinVenta') return 'Crítico';
+  const getImpactoLabel = (type: OpportunityType): 'Crítico' | 'Alto' | 'Medio' | 'Bajo' => {
+    if (type === 'caducidad') return 'Crítico';
+    if (type === 'sinVenta') return 'Bajo';
     if (type === 'agotado') return 'Medio';
     return 'Medio'; // Default fallback
   };

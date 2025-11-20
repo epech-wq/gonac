@@ -14,7 +14,7 @@ interface OpportunityCardProps {
   impacto: number;
   risk: RiskLevel;
   impactoColor: string;
-  impactoLabel: 'Crítico' | 'Alto' | 'Medio';
+  impactoLabel: 'Crítico' | 'Alto' | 'Medio' | 'Bajo';
   isExpanded: boolean;
   detailData: DetailRecord[];
   isLoading: boolean;

@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react';
 import type { TipoAccionGeneral } from '@/components/vemio/modals/WizardAccionesGenerales';
 
-export type RiskLevel = 'Crítico' | 'Alto' | 'Medio';
+export type RiskLevel = 'Crítico' | 'Alto' | 'Medio' | 'Bajo';
 
 export type OpportunityType = 'agotado' | 'caducidad' | 'sinVenta';
 

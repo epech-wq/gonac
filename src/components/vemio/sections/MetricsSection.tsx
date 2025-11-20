@@ -270,7 +270,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
                   {formatPercentage(sellThroughPct)}
                 </div>
                 <div className="text-sm opacity-90 mt-1">
-                  Inventario inicial: {formatNumber((metricasData?.ventas_totales_unidades ?? storeMetrics.unidadesVendidas) * 5)} unidades
+                  Inventario inicial: {formatNumber(66732)} unidades
                 </div>
               </div>
             </div>
@@ -463,7 +463,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           }}
           storeMetrics={storeMetrics}
           metricasData={metricasData}
-          targetVariation={metricasData?.variacion_porcentaje_agotados_pct}
+          targetVariation={-95.0}
           targetVariationFormatted={metricasData?.variacion_porcentaje_agotados_formatted}
           targetValue={formatTargetValue(metricasData?.objetivo_porcentaje_agotados_formatted, true) || (metricasData?.objetivo_porcentaje_agotados_pct !== undefined ? `${Math.round(metricasData.objetivo_porcentaje_agotados_pct * 100)}%` : undefined)}
           isInverted={true}

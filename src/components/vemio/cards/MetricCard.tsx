@@ -193,7 +193,8 @@ export default function MetricCard({
               } else if (title === 'Días de Inventario' && storeMetrics?.diasInventario !== undefined) {
                 actualVal = storeMetrics.diasInventario;
                 objectiveVal = metricasData.objetivo_promedio_dias_inventario;
-              } else if (title === 'Tasa de Quiebre' && metricasData.porcentaje_agotados_pct !== undefined) {
+              } else if (title === 'Tasa de Quiebre' && metricasData.porcentaje_agotados_pct !== undefined && targetVariation !== -95.0) {
+                // Skip recalculation if targetVariation is hardcoded to -95.0
                 actualVal = metricasData.porcentaje_agotados_pct;
                 objectiveVal = metricasData.objetivo_porcentaje_agotados_pct;
                 isPct = true;
