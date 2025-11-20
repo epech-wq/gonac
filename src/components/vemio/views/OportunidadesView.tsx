@@ -160,7 +160,7 @@ export default function OportunidadesView({ data: propData }: OportunidadesViewP
       case 'agotado':
         return 'Inventario < 10 días (Tiendas Hot y Balanceadas)';
       case 'caducidad':
-        return 'Inventario remanente al 1-feb-2025 (Tiendas Slow y Críticas)';
+        return 'Inventario remanente post fecha de caducidad (Tiendas Slow y Críticas)';
       case 'sinVenta':
         return 'Ventas <= 0 unidades';
     }

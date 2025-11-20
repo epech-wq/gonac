@@ -41,7 +41,7 @@ export const SEGMENT_TITLES: Record<string, string> = {
 
 export const OPPORTUNITY_DESCRIPTIONS: Record<string, string> = {
   agotado: 'Inventario < 10 días (Tiendas Hot y Balanceadas)',
-  caducidad: 'Inventario remanente al 1-feb-2025 (Tiendas Slow y Críticas)',
+  caducidad: 'Inventario remanente post fecha de caducidad (Tiendas Slow y Críticas)',
   sinVenta: 'Ventas <= 0 unidades',
 } as const;
 
