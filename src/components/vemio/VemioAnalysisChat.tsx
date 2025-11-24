@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, ReactElement } from "react";
-import { CopyButton } from "@/components/ai/TextGeneratorContent";
+import { CopyButton } from "@/components/lib/ai/TextGeneratorContent";
 
 interface ChatMessage {
   id: string;

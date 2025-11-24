@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import VemioDashboard from "@/components/vemio/VemioDashboard";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import ProtectedRoute from "@/components/lib/auth/ProtectedRoute";
 
 export default function RootPage() {
   const [chatOpen, setChatOpen] = useState(false);
