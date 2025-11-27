@@ -10,6 +10,7 @@ import { useState } from 'react';
 import MetricsSection from './MetricsSection';
 import OpportunitiesSection from './OpportunitiesSection';
 import ImpactoTotalBanner from './ImpactoTotalBanner';
+import ParametrosOptimizacionSection from './ParametrosOptimizacionSection';
 import { useTiendasData } from '@/hooks/useTiendasData';
 
 interface TiendasConsolidadasProps {
@@ -151,6 +152,9 @@ export default function TiendasConsolidadas({ chatOpen = false, onCardClick }: T
           enableAnalysis={true}
           onCardClick={onCardClick}
         />
+
+        {/* Parámetros de Optimización Section */}
+        <ParametrosOptimizacionSection />
 
         {/* Impacto Total Banner */}
         <ImpactoTotalBanner
