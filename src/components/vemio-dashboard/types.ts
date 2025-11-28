@@ -102,7 +102,9 @@ export interface CoDisenoModalProps {
 }
 
 export interface AnalisisCausasContentProps {
-  onVolver: () => void;
+  onVolver?: () => void;
+  backButtonLabel?: string;
+  showBackButton?: boolean;
 }
 
 // DatePicker Types

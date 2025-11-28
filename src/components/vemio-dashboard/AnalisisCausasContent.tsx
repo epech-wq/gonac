@@ -8,6 +8,8 @@ import type { CausaCard, AnalisisCausasContentProps } from "./types";
 
 const AnalisisCausasContent: React.FC<AnalisisCausasContentProps> = ({
   onVolver,
+  backButtonLabel = "Volver a oportunidades",
+  showBackButton = true,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -113,13 +115,16 @@ const AnalisisCausasContent: React.FC<AnalisisCausasContentProps> = ({
     <div className="space-y-6">
       {/* Header with navigation */}
       <div className="flex items-center justify-between">
-        <button
-          onClick={onVolver}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition"
-        >
-          <AngleLeftIcon />
-          Volver a oportunidades
-        </button>
+        {showBackButton && onVolver && (
+          <button
+            onClick={onVolver}
+            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition"
+          >
+            <AngleLeftIcon />
+            {backButtonLabel}
+          </button>
+        )}
+        {!showBackButton && <div />}
         <Button
           variant="primary"
           size="sm"

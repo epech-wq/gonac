@@ -16,6 +16,7 @@ import { useTiendasData } from '@/hooks/useTiendasData';
 interface TiendasConsolidadasProps {
   chatOpen?: boolean;
   onCardClick?: (cardData: any) => void;
+  onVerAnalisisCompleto?: () => void;
 }
 
 type SegmentFilter = 'Hot' | 'Balanceadas' | 'Slow' | '';
@@ -28,7 +29,7 @@ const SEGMENT_MAP: Record<string, string> = {
   '': '',
 };
 
-export default function TiendasConsolidadas({ chatOpen = false, onCardClick }: TiendasConsolidadasProps) {
+export default function TiendasConsolidadas({ chatOpen = false, onCardClick, onVerAnalisisCompleto }: TiendasConsolidadasProps) {
   const [selectedSegment, setSelectedSegment] = useState<SegmentFilter>('');
 
   // Map the display segment to the actual database segment value
@@ -164,7 +165,11 @@ export default function TiendasConsolidadas({ chatOpen = false, onCardClick }: T
         />
 
         {/* Opportunities Section */}
-        <OpportunitiesSection opportunities={opportunities} onChatOpen={onCardClick} />
+        <OpportunitiesSection 
+          opportunities={opportunities} 
+          onChatOpen={onCardClick}
+          onVerAnalisisCompleto={onVerAnalisisCompleto}
+        />
         </div>
       </div>
     </div>

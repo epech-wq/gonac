@@ -20,6 +20,7 @@ interface OpportunityCardProps {
   isLoading: boolean;
   onToggleExpand: () => void;
   onActionClick?: (actionType: string) => void;
+  onVerAnalisisCompleto?: () => void;
 }
 
 export default function OpportunityCard({
@@ -36,6 +37,7 @@ export default function OpportunityCard({
   isLoading,
   onToggleExpand,
   onActionClick,
+  onVerAnalisisCompleto,
 }: OpportunityCardProps) {
   return (
     <div className="rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
@@ -161,6 +163,18 @@ export default function OpportunityCard({
             )}
           </div>
         </div>
+
+        {/* Ver análisis completo link */}
+        {onVerAnalisisCompleto && (
+          <div className="mb-3">
+            <button
+              onClick={onVerAnalisisCompleto}
+              className="text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
+            >
+              Ver análisis completo &gt;
+            </button>
+          </div>
+        )}
 
         {/* Toggle Detail Button */}
         {isLoading ? (

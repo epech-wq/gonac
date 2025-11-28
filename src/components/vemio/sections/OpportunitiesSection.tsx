@@ -21,9 +21,10 @@ import type { Opportunity, OpportunityType, DetailRecord } from '@/types/tiendas
 interface OpportunitiesSectionProps {
   opportunities: Opportunity[];
   onChatOpen?: (cardData: any) => void;
+  onVerAnalisisCompleto?: () => void;
 }
 
-export default function OpportunitiesSection({ opportunities, onChatOpen }: OpportunitiesSectionProps) {
+export default function OpportunitiesSection({ opportunities, onChatOpen, onVerAnalisisCompleto }: OpportunitiesSectionProps) {
   const [expandedOportunidad, setExpandedOportunidad] = useState<OpportunityType | null>(null);
   const [modalAction, setModalAction] = useState<{ tipo: TipoAccionGeneral; opportunity: Opportunity } | null>(null);
 
@@ -144,6 +145,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen }: Oppo
               isLoading={getDetailLoading(opportunity.type)}
               onToggleExpand={() => toggleOportunidadExpanded(opportunity.type)}
               onActionClick={(actionType) => handleActionClick(actionType, opportunity)}
+              onVerAnalisisCompleto={onVerAnalisisCompleto}
             />
           ))}
         </div>
