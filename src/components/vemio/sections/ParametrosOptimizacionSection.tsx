@@ -61,7 +61,17 @@ export default function ParametrosOptimizacionSection() {
   // Different rules for different parameters:
   // - días inventario, punto de reorden, tamaño de pedido: greater is better (green if deviation > 0)
   // - frecuencia optima: less is better (green if deviation < 0)
+  // - 0% deviation shows gray color
   const getDeviationBadge = (desviacion: number, paramId: number) => {
+    // If deviation is 0, use gray color
+    if (Math.abs(desviacion) < 0.01) {
+      return {
+        value: "0.0",
+        color: "light" as const, // Gray color
+        rawDeviation: desviacion,
+      };
+    }
+
     let color: "success" | "warning" | "error" = "success";
     
     // Frecuencia Óptima (id: 4) - less is better
@@ -86,7 +96,6 @@ export default function ParametrosOptimizacionSection() {
     
     return {
       value: Math.abs(desviacion).toFixed(1),
-      isPositive: desviacion > 0,
       color,
       rawDeviation: desviacion,
     };
@@ -150,7 +159,6 @@ export default function ParametrosOptimizacionSection() {
                     </h4>
                   </div>
                   <Badge color={deviation.color} size="sm">
-                    {deviation.isPositive ? "+" : "-"}
                     {deviation.value}%
                   </Badge>
                 </div>
