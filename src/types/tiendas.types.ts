@@ -7,7 +7,7 @@ import type { TipoAccionGeneral } from '@/components/vemio/modals/WizardAcciones
 
 export type RiskLevel = 'Crítico' | 'Alto' | 'Medio' | 'Bajo';
 
-export type OpportunityType = 'agotado' | 'caducidad' | 'sinVenta';
+export type OpportunityType = 'agotado' | 'caducidad' | 'sinVenta' | 'ventaIncremental';
 
 export type SegmentType = 'hot' | 'balanceada' | 'slow' | 'critica';
 

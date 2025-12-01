@@ -27,7 +27,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose }) => {
         <div className="bg-brand-600 dark:bg-brand-700 px-8 py-6 flex items-start justify-between">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">
-              Co-Diseño de Plan de Acción
+              Ajustar Parametros
             </h2>
             <p className="text-brand-100 text-sm">
               Venta Incremental

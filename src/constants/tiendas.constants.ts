@@ -29,6 +29,7 @@ export const OPPORTUNITY_COLORS: Record<string, string> = {
   agotado: 'text-red-600 dark:text-red-400',
   caducidad: 'text-orange-600 dark:text-orange-400',
   sinVenta: 'text-purple-600 dark:text-purple-400',
+  ventaIncremental: 'text-green-600 dark:text-green-400',
 } as const;
 
 export const SEGMENT_TITLES: Record<string, string> = {

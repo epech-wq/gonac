@@ -50,6 +50,8 @@ export const getOportunidadRiskLevel = (type: string): RiskLevel => {
       return 'Alto';
     case 'sinVenta':
       return 'Medio';
+    case 'ventaIncremental':
+      return 'Alto';
     default:
       return 'Medio';
   }

@@ -79,6 +79,15 @@ export const useTiendasData = (segment?: string) => {
           risk: 'Crítico',
           impactoColor: 'text-purple-600 dark:text-purple-400',
         },
+        {
+          type: 'ventaIncremental',
+          title: 'Venta Incremental',
+          description: 'Oportunidad de optimización de parámetros para incrementar ventas',
+          tiendas: 15,
+          impacto: 250000,
+          risk: 'Alto',
+          impactoColor: 'text-green-600 dark:text-green-400',
+        },
       ];
     }
 
@@ -109,6 +118,15 @@ export const useTiendasData = (segment?: string) => {
         impacto: valorizacionData.sinVentas.impacto,
         risk: getOportunidadRiskLevel('sinVenta'),
         impactoColor: getOportunidadColor('sinVenta'),
+      },
+      {
+        type: 'ventaIncremental',
+        title: 'Venta Incremental',
+        description: 'Oportunidad de optimización de parámetros para incrementar ventas',
+        tiendas: 15,
+        impacto: 250000,
+        risk: 'Alto',
+        impactoColor: 'text-green-600 dark:text-green-400',
       },
     ];
   }, [valorizacionData]);

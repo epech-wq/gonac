@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import OpportunityCard from '../cards/OpportunityCard';
 import WizardAccionesGenerales from '../modals/WizardAccionesGenerales';
+import { CoDisenoModal } from '@/components/vemio-dashboard';
 import type { TipoAccionGeneral } from '../modals/WizardAccionesGenerales';
 import {
   useAgotadoDetalle,
@@ -27,6 +28,7 @@ interface OpportunitiesSectionProps {
 export default function OpportunitiesSection({ opportunities, onChatOpen, onVerAnalisisCompleto }: OpportunitiesSectionProps) {
   const [expandedOportunidad, setExpandedOportunidad] = useState<OpportunityType | null>(null);
   const [modalAction, setModalAction] = useState<{ tipo: TipoAccionGeneral; opportunity: Opportunity } | null>(null);
+  const [coDisenoModalOpen, setCoDisenoModalOpen] = useState(false);
 
   // Fetch detailed data
   const { data: agotadoDetalleData, loading: agotadoLoading } = useAgotadoDetalle();
@@ -38,6 +40,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
       case 'agotado': return agotadoLoading;
       case 'caducidad': return caducidadLoading;
       case 'sinVenta': return sinVentasLoading;
+      case 'ventaIncremental': return false;
     }
   };
 
@@ -49,6 +52,8 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
         return caducidadDetalleData ? transformCaducidadData(caducidadDetalleData) : [];
       case 'sinVenta':
         return sinVentasDetalleData ? transformSinVentasData(sinVentasDetalleData) : [];
+      case 'ventaIncremental':
+        return [];
     }
   };
 
@@ -57,6 +62,10 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   };
 
   const handleActionClick = (actionType: string, opportunity: Opportunity) => {
+    if (actionType === 'ajustar_parametro' && opportunity.type === 'ventaIncremental') {
+      setCoDisenoModalOpen(true);
+      return;
+    }
     setModalAction({
       tipo: actionType as TipoAccionGeneral,
       opportunity
@@ -118,6 +127,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
     if (type === 'caducidad') return 'Crítico';
     if (type === 'sinVenta') return 'Bajo';
     if (type === 'agotado') return 'Medio';
+    if (type === 'ventaIncremental') return 'Alto';
     return 'Medio'; // Default fallback
   };
 
@@ -128,7 +138,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
           Áreas de Oportunidades Identificadas
         </h3>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {sortedOpportunities.map((opportunity) => (
             <OpportunityCard
               key={opportunity.type}
@@ -145,7 +155,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
               isLoading={getDetailLoading(opportunity.type)}
               onToggleExpand={() => toggleOportunidadExpanded(opportunity.type)}
               onActionClick={(actionType) => handleActionClick(actionType, opportunity)}
-              onVerAnalisisCompleto={onVerAnalisisCompleto}
+              onVerAnalisisCompleto={opportunity.type === 'ventaIncremental' ? onVerAnalisisCompleto : undefined}
             />
           ))}
         </div>
@@ -160,6 +170,12 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
           onChatOpen={onChatOpen}
         />
       )}
+
+      {/* Co-Diseño Modal */}
+      <CoDisenoModal
+        isOpen={coDisenoModalOpen}
+        onClose={() => setCoDisenoModalOpen(false)}
+      />
     </>
   );
 }
