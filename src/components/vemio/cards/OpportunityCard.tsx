@@ -2,6 +2,7 @@
  * Opportunity Card Component
  */
 
+import { useState } from 'react';
 import type { RiskLevel, OpportunityType, DetailRecord } from '@/types/tiendas.types';
 import { getBadgeColor, getSegmentColor } from '@/utils/tiendas.mappers';
 import { formatCurrency, formatNumber, formatDate } from '@/utils/formatters';
@@ -39,6 +40,104 @@ export default function OpportunityCard({
   onActionClick,
   onVerAnalisisCompleto,
 }: OpportunityCardProps) {
+  const [showAnalisisCompleto, setShowAnalisisCompleto] = useState(false);
+
+  // Mock data for causas - similar to AnalisisCausasContent
+  const causas = [
+    {
+      id: 1,
+      titulo: "Dias Inventario",
+      subtitulo: "Autoservicio > Centro > Walmart",
+      tendencia: "down" as const,
+      actual: 8,
+      optimo: 14,
+      desvio: "-43%",
+      correlacion: 85,
+    },
+    {
+      id: 2,
+      titulo: "Tamaño Pedido",
+      subtitulo: "Bebidas > RefreshCo",
+      tendencia: "up" as const,
+      actual: 650,
+      optimo: 500,
+      desvio: "+30%",
+      correlacion: 78,
+    },
+    {
+      id: 3,
+      titulo: "Frecuencia",
+      subtitulo: "Conveniencia > Norte",
+      tendencia: "neutral" as const,
+      actual: 72,
+      optimo: 85,
+      desvio: "-15%",
+      correlacion: 65,
+    },
+  ];
+
+  const getTrendIcon = (tendencia: "up" | "down" | "neutral") => {
+    switch (tendencia) {
+      case "up":
+        return (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-green-600 dark:text-green-400"
+          >
+            <path
+              d="M10 15V5M10 5L5 10M10 5L15 10"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        );
+      case "down":
+        return (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-red-600 dark:text-red-400"
+          >
+            <path
+              d="M10 5V15M10 15L15 10M10 15L5 10"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        );
+      case "neutral":
+        return (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-gray-600 dark:text-gray-400"
+          >
+            <path
+              d="M5 10H15"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        );
+    }
+  };
+
   return (
     <div className="rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
       <div className="relative p-4">
@@ -181,12 +280,20 @@ export default function OpportunityCard({
 
         {/* Ver análisis completo link - Only for Venta Incremental */}
         {onVerAnalisisCompleto && type === 'ventaIncremental' && (
-          <div className="mb-3">
+          <div className="mb-3 flex justify-center">
             <button
-              onClick={onVerAnalisisCompleto}
-              className="text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
+              onClick={() => setShowAnalisisCompleto(!showAnalisisCompleto)}
+              className="text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors flex items-center gap-1"
             >
-              Ver análisis completo &gt;
+              Ver análisis completo
+              <svg
+                className={`h-4 w-4 transform transition-transform ${showAnalisisCompleto ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
           </div>
         )}
@@ -228,6 +335,81 @@ export default function OpportunityCard({
       {/* Expanded Details Table */}
       {isExpanded && detailData.length > 0 && (
         <OpportunityDetailTable type={type} detailData={detailData} />
+      )}
+
+      {/* Análisis Completo Dropdown - Only for Venta Incremental */}
+      {showAnalisisCompleto && type === 'ventaIncremental' && (
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+            Top 3 Causas Principales
+          </h3>
+          <div className="space-y-4">
+            {causas.map((causa) => (
+              <div
+                key={causa.id}
+                className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+              >
+                {/* Header with number circle, title and trend icon */}
+                <div className="flex items-start gap-3 mb-4">
+                  {/* Number circle */}
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white font-semibold text-sm flex-shrink-0">
+                    {causa.id}
+                  </div>
+                  {/* Title and subtitle with trend */}
+                  <div className="flex-1 flex items-start justify-between min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {causa.titulo}
+                      </h4>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                        {causa.subtitulo}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0 ml-2">
+                      {getTrendIcon(causa.tendencia)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats in row - compact layout */}
+                <div className="grid grid-cols-4 gap-2">
+                  <div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+                      Actual
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {causa.actual}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+                      Óptimo
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {causa.optimo}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+                      Desvío
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {causa.desvio}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+                      Correlación
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {causa.correlacion}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

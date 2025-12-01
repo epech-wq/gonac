@@ -134,26 +134,20 @@ export default function ParametrosOptimizacionSection() {
                 key={param.id}
                 className="rounded-2xl border p-5 bg-white dark:bg-white/[0.03] border-gray-200 dark:border-gray-800 transition-all"
               >
-                {/* Header with icon, title and badge */}
+                {/* Header with title and icon on the right */}
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center min-w-[2.5rem] min-h-[2.5rem] w-10 h-10 bg-gray-100 rounded-lg dark:bg-gray-800 flex-shrink-0">
-                      <div className="text-gray-700 dark:text-gray-300">
-                        {param.icon}
-                      </div>
+                  <h4 className="text-sm font-medium text-gray-800 dark:text-white/90">
+                    {param.title}
+                  </h4>
+                  <div className="flex items-center justify-center min-w-[2.5rem] min-h-[2.5rem] w-10 h-10 bg-gray-100 rounded-lg dark:bg-gray-800 flex-shrink-0">
+                    <div className="text-gray-700 dark:text-gray-300">
+                      {param.icon}
                     </div>
-                    <h4 className="text-sm font-medium text-gray-800 dark:text-white/90">
-                      {param.title}
-                    </h4>
                   </div>
-                  <Badge color={deviation.color} size="sm">
-                    {deviation.isPositive ? "+" : "-"}
-                    {deviation.value}%
-                  </Badge>
                 </div>
 
                 {/* Two columns for Optimized and Actual */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-3">
                   {/* Optimized Value */}
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -179,6 +173,17 @@ export default function ParametrosOptimizacionSection() {
                       {param.unit}
                     </p>
                   </div>
+                </div>
+
+                {/* Badge below the values with label */}
+                <div className="flex items-center gap-2">
+                  <Badge color={deviation.color} size="sm">
+                    {deviation.isPositive ? "+" : "-"}
+                    {deviation.value}%
+                  </Badge>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                    Desviación del objetivo
+                  </span>
                 </div>
               </div>
             );
