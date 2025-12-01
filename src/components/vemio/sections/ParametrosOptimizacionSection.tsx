@@ -54,16 +54,31 @@ export default function ParametrosOptimizacionSection() {
   ] : [];
 
   // Calculate deviation from target with color coding
-  const calculateDeviationFromTarget = (target: number, actual: number) => {
+  // Different rules for different parameters:
+  // - días inventario, punto de reorden, tamaño de pedido: greater is better (green if actual > optimized)
+  // - frecuencia optima: less is better (green if actual < optimized)
+  const calculateDeviationFromTarget = (target: number, actual: number, paramId: number) => {
     const deviation = ((actual - target) / target) * 100;
     let color: "success" | "warning" | "error" = "success";
     
-    if (deviation <= -10) {
-      color = "error"; // Rojo: <-10%
-    } else if (deviation < 0) {
-      color = "warning"; // Amarillo: -10% a 0%
+    // Frecuencia Óptima (id: 4) - less is better
+    if (paramId === 4) {
+      if (actual < target) {
+        color = "success"; // Verde: actual es menor que optimizado (mejor)
+      } else if (actual <= target * 1.1) {
+        color = "warning"; // Amarillo: hasta 10% más que optimizado
+      } else {
+        color = "error"; // Rojo: más de 10% sobre optimizado
+      }
     } else {
-      color = "success"; // Verde: cumple o supera
+      // Días inventario, Punto de reorden, Tamaño de pedido - greater is better
+      if (actual > target) {
+        color = "success"; // Verde: actual es mayor que optimizado (mejor)
+      } else if (actual >= target * 0.9) {
+        color = "warning"; // Amarillo: hasta 10% menos que optimizado
+      } else {
+        color = "error"; // Rojo: más de 10% bajo optimizado
+      }
     }
     
     return {
@@ -112,7 +127,7 @@ export default function ParametrosOptimizacionSection() {
       {!loading && !error && parameters.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {parameters.map((param) => {
-            const deviation = calculateDeviationFromTarget(param.optimized, param.actual);
+            const deviation = calculateDeviationFromTarget(param.optimized, param.actual, param.id);
 
             return (
               <div
