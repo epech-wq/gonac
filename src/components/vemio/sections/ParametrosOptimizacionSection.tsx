@@ -24,6 +24,7 @@ export default function ParametrosOptimizacionSection() {
       title: "Días de Inventario",
       optimized: data.data.dias_inventario_optimo,
       actual: data.data.dias_inventario_real,
+      desviacion: data.data.desviacion_dias_inventario_pct,
       unit: "días",
       icon: <TimeIcon />,
     },
@@ -32,6 +33,7 @@ export default function ParametrosOptimizacionSection() {
       title: "Punto de Reorden",
       optimized: data.data.punto_reorden_optimo,
       actual: data.data.punto_reorden_real,
+      desviacion: data.data.desviacion_punto_reorden_pct,
       unit: "unidades",
       icon: <BoxTapped />,
     },
@@ -40,6 +42,7 @@ export default function ParametrosOptimizacionSection() {
       title: "Tamaño de Pedido Óptimo",
       optimized: data.data.tamano_pedido_optimo,
       actual: data.data.tamano_pedido_real,
+      desviacion: data.data.desviacion_tamano_pedido_pct,
       unit: "unidades",
       icon: <BoxIconLine />,
     },
@@ -48,33 +51,33 @@ export default function ParametrosOptimizacionSection() {
       title: "Frecuencia Óptima",
       optimized: data.data.frecuencia_optima,
       actual: data.data.frecuencia_real,
+      desviacion: data.data.desviacion_frecuencia_pct,
       unit: "días",
       icon: <CalenderIcon />,
     },
   ] : [];
 
-  // Calculate deviation from target with color coding
+  // Get badge color and format based on deviation percentage
   // Different rules for different parameters:
-  // - días inventario, punto de reorden, tamaño de pedido: greater is better (green if actual > optimized)
-  // - frecuencia optima: less is better (green if actual < optimized)
-  const calculateDeviationFromTarget = (target: number, actual: number, paramId: number) => {
-    const deviation = ((actual - target) / target) * 100;
+  // - días inventario, punto de reorden, tamaño de pedido: greater is better (green if deviation > 0)
+  // - frecuencia optima: less is better (green if deviation < 0)
+  const getDeviationBadge = (desviacion: number, paramId: number) => {
     let color: "success" | "warning" | "error" = "success";
     
     // Frecuencia Óptima (id: 4) - less is better
     if (paramId === 4) {
-      if (actual < target) {
+      if (desviacion < 0) {
         color = "success"; // Verde: actual es menor que optimizado (mejor)
-      } else if (actual <= target * 1.1) {
+      } else if (desviacion <= 10) {
         color = "warning"; // Amarillo: hasta 10% más que optimizado
       } else {
         color = "error"; // Rojo: más de 10% sobre optimizado
       }
     } else {
       // Días inventario, Punto de reorden, Tamaño de pedido - greater is better
-      if (actual > target) {
+      if (desviacion > 0) {
         color = "success"; // Verde: actual es mayor que optimizado (mejor)
-      } else if (actual >= target * 0.9) {
+      } else if (desviacion >= -10) {
         color = "warning"; // Amarillo: hasta 10% menos que optimizado
       } else {
         color = "error"; // Rojo: más de 10% bajo optimizado
@@ -82,10 +85,10 @@ export default function ParametrosOptimizacionSection() {
     }
     
     return {
-      value: Math.abs(deviation).toFixed(1),
-      isPositive: deviation > 0,
+      value: Math.abs(desviacion).toFixed(1),
+      isPositive: desviacion > 0,
       color,
-      rawDeviation: deviation,
+      rawDeviation: desviacion,
     };
   };
 
@@ -127,7 +130,7 @@ export default function ParametrosOptimizacionSection() {
       {!loading && !error && parameters.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {parameters.map((param) => {
-            const deviation = calculateDeviationFromTarget(param.optimized, param.actual, param.id);
+            const deviation = getDeviationBadge(param.desviacion, param.id);
 
             return (
               <div

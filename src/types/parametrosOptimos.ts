@@ -11,6 +11,10 @@ export interface ParametrosOptimos {
   tamano_pedido_real: number;
   frecuencia_optima: number;
   frecuencia_real: number;
+  desviacion_dias_inventario_pct: number;
+  desviacion_punto_reorden_pct: number;
+  desviacion_tamano_pedido_pct: number;
+  desviacion_frecuencia_pct: number;
 }
 
 export interface ParametrosOptimosResponse {
