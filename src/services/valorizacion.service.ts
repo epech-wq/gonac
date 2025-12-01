@@ -5,7 +5,8 @@ import {
   ValorizacionItem,
   AgotadoDetalleResponse,
   CaducidadDetalleResponse,
-  SinVentasDetalleResponse
+  SinVentasDetalleResponse,
+  VentaIncrementalDetalleResponse
 } from '@/types/valorizacion';
 
 /**
@@ -295,6 +296,40 @@ export class ValorizacionService {
     } catch (error) {
       throw new Error(
         `Service error getting sin ventas por SKU: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Get Venta Incremental data from vw_comparacion_optimo_real
+   * Uses id_store and impacto columns to calculate opportunities
+   */
+  async getVentaIncremental(): Promise<ValorizacionItem> {
+    try {
+      return await this.repository.getVentaIncrementalData();
+    } catch (error) {
+      throw new Error(
+        `Service error getting venta incremental: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
+   * Get detailed Venta Incremental opportunities from vw_comparacion_optimo_real_tienda
+   * Returns store, SKU, segment, region, and impact information
+   */
+  async getVentaIncrementalDetalle(): Promise<VentaIncrementalDetalleResponse> {
+    try {
+      const data = await this.repository.getVentaIncrementalDetalle();
+
+      return {
+        data,
+        total: data.length,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      throw new Error(
+        `Service error getting venta incremental details: ${(error as Error).message}`
       );
     }
   }

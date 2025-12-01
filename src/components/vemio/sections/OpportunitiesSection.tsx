@@ -10,12 +10,14 @@ import type { TipoAccionGeneral } from '../modals/WizardAccionesGenerales';
 import {
   useAgotadoDetalle,
   useCaducidadDetalle,
-  useSinVentasDetalle
+  useSinVentasDetalle,
+  useVentaIncrementalDetalle
 } from '@/hooks/useValorizacion';
 import {
   transformAgotadoData,
   transformCaducidadData,
-  transformSinVentasData
+  transformSinVentasData,
+  transformVentaIncrementalData
 } from '@/utils/tiendas.mappers';
 import type { Opportunity, OpportunityType, DetailRecord } from '@/types/tiendas.types';
 
@@ -34,13 +36,14 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   const { data: agotadoDetalleData, loading: agotadoLoading } = useAgotadoDetalle();
   const { data: caducidadDetalleData, loading: caducidadLoading } = useCaducidadDetalle();
   const { data: sinVentasDetalleData, loading: sinVentasLoading } = useSinVentasDetalle();
+  const { data: ventaIncrementalDetalleData, loading: ventaIncrementalLoading } = useVentaIncrementalDetalle();
 
   const getDetailLoading = (type: OpportunityType): boolean => {
     switch (type) {
       case 'agotado': return agotadoLoading;
       case 'caducidad': return caducidadLoading;
       case 'sinVenta': return sinVentasLoading;
-      case 'ventaIncremental': return false;
+      case 'ventaIncremental': return ventaIncrementalLoading;
     }
   };
 
@@ -53,7 +56,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
       case 'sinVenta':
         return sinVentasDetalleData ? transformSinVentasData(sinVentasDetalleData) : [];
       case 'ventaIncremental':
-        return [];
+        return ventaIncrementalDetalleData ? transformVentaIncrementalData(ventaIncrementalDetalleData) : [];
     }
   };
 

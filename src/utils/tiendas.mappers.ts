@@ -182,3 +182,30 @@ export const transformSinVentasData = (response: ApiResponse): DetailRecord[] =>
   });
 };
 
+interface VentaIncrementalItem {
+  store_name: string;
+  sku: number;
+  segment: string;
+  region: string;
+  impacto: number;
+  optimo_dias_inventario: number | null;
+  real_dias_inventario: number | null;
+  desviacion_dias_inventario: number | null;
+}
+
+export const transformVentaIncrementalData = (response: ApiResponse): DetailRecord[] => {
+  if (!response?.data || !Array.isArray(response.data)) return [];
+  
+  return response.data.map((item: unknown, index: number) => {
+    const ventaIncrementalItem = item as VentaIncrementalItem;
+    return {
+      id: `ventaincremental-${index}`,
+      tienda: ventaIncrementalItem.store_name,
+      sku: String(ventaIncrementalItem.sku),
+      segmentoTienda: ventaIncrementalItem.segment?.toLowerCase(),
+      impactoEstimado: ventaIncrementalItem.impacto,
+      diasInventario: ventaIncrementalItem.real_dias_inventario || undefined,
+    };
+  });
+};
+

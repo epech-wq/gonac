@@ -5,10 +5,11 @@ import {
   ValorizacionItem,
   AgotadoDetalleResponse,
   CaducidadDetalleResponse,
-  SinVentasDetalleResponse
+  SinVentasDetalleResponse,
+  VentaIncrementalDetalleResponse
 } from '@/types/valorizacion';
 
-type FormatType = 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle' | 'tiendas-con-oportunidades' | 'agotado-por-tienda' | 'agotado-por-sku' | 'caducidad-por-tienda' | 'caducidad-por-sku' | 'sin-ventas-por-tienda' | 'sin-ventas-por-sku';
+type FormatType = 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle' | 'tiendas-con-oportunidades' | 'venta-incremental' | 'venta-incremental-detalle' | 'agotado-por-tienda' | 'agotado-por-sku' | 'caducidad-por-tienda' | 'caducidad-por-sku' | 'sin-ventas-por-tienda' | 'sin-ventas-por-sku';
 
 interface UseValorizacionOptions {
   format?: FormatType;
@@ -320,6 +321,34 @@ export function useTiendasConOportunidades(options: { autoFetch?: boolean } = {}
 }
 
 /**
+ * Hook for Venta Incremental data
+ * Fetches from: gonac.vw_comparacion_optimo_real using id_store and impacto columns
+ * 
+ * @example
+ * ```tsx
+ * const { data, loading, error, refetch } = useVentaIncremental();
+ * 
+ * if (loading) return <div>Loading...</div>;
+ * if (error) return <div>Error: {error.message}</div>;
+ * 
+ * return (
+ *   <div>
+ *     <div>Tiendas: {data?.tiendas}</div>
+ *     <div>Impacto: ${data?.impacto}</div>
+ *   </div>
+ * );
+ * ```
+ */
+export function useVentaIncremental(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = true } = options;
+
+  return useValorizacion<ValorizacionItem>({
+    format: 'venta-incremental',
+    autoFetch
+  });
+}
+
+/**
  * Hook for Agotado data grouped by store
  */
 export function useAgotadoPorTienda(options: { autoFetch?: boolean } = {}) {
@@ -381,6 +410,52 @@ export function useSinVentasPorSKU(options: { autoFetch?: boolean } = {}) {
   const { autoFetch = false } = options;
   return useValorizacion<{ data: Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>; total: number; timestamp: string }>({
     format: 'sin-ventas-por-sku',
+    autoFetch
+  });
+}
+
+/**
+ * Hook for detailed Venta Incremental opportunities
+ * Returns store, SKU, segment, region, and impact information from vw_comparacion_optimo_real_tienda
+ * 
+ * @example
+ * ```tsx
+ * const { data, loading, error, refetch } = useVentaIncrementalDetalle();
+ * 
+ * if (loading) return <div>Loading...</div>;
+ * if (error) return <div>Error: {error.message}</div>;
+ * 
+ * return (
+ *   <table>
+ *     <thead>
+ *       <tr>
+ *         <th>Store</th>
+ *         <th>SKU</th>
+ *         <th>Segment</th>
+ *         <th>Region</th>
+ *         <th>Impact</th>
+ *       </tr>
+ *     </thead>
+ *     <tbody>
+ *       {data?.data.map((item, index) => (
+ *         <tr key={index}>
+ *           <td>{item.store_name}</td>
+ *           <td>{item.sku}</td>
+ *           <td>{item.segment}</td>
+ *           <td>{item.region}</td>
+ *           <td>${item.impacto}</td>
+ *         </tr>
+ *       ))}
+ *     </tbody>
+ *   </table>
+ * );
+ * ```
+ */
+export function useVentaIncrementalDetalle(options: { autoFetch?: boolean } = {}) {
+  const { autoFetch = true } = options;
+
+  return useValorizacion<VentaIncrementalDetalleResponse>({
+    format: 'venta-incremental-detalle',
     autoFetch
   });
 }

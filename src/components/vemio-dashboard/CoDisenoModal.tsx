@@ -8,6 +8,7 @@ import type { CoDisenoModalProps } from "./types";
 const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose }) => {
   const [diasInventario, setDiasInventario] = useState(14);
   const [tamanoPedido, setTamanoPedido] = useState(500);
+  const [frecuenciaOptima, setFrecuenciaOptima] = useState(7);
   const [responsable, setResponsable] = useState("");
   const [fechaLimite, setFechaLimite] = useState("");
 
@@ -127,6 +128,30 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose }) => {
                     type="number"
                     value={tamanoPedido}
                     onChange={(e) => setTamanoPedido(Number(e.target.value))}
+                    className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Frecuencia Optima */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Frecuencia Optima
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min="1"
+                    max="30"
+                    step="1"
+                    value={frecuenciaOptima}
+                    onChange={(e) => setFrecuenciaOptima(Number(e.target.value))}
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                  />
+                  <input
+                    type="number"
+                    value={frecuenciaOptima}
+                    onChange={(e) => setFrecuenciaOptima(Number(e.target.value))}
                     className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
                   />
                 </div>

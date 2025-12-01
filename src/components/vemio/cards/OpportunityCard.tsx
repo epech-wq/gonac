@@ -276,6 +276,16 @@ function OpportunityDetailTable({
                   </th>
                 </>
               )}
+              {type === 'ventaIncremental' && (
+                <>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Días Inv.
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Segmento
+                  </th>
+                </>
+              )}
               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                 Impacto
               </th>
@@ -313,6 +323,18 @@ function OpportunityDetailTable({
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getSegmentColor(registro.segmentoTienda || '')}`}>
                         {registro.segmentoTienda}
+                      </span>
+                    </td>
+                  </>
+                )}
+                {type === 'ventaIncremental' && (
+                  <>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-blue-600 font-medium">
+                      {registro.diasInventario ? `${registro.diasInventario}d` : '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getSegmentColor(registro.segmentoTienda || '')}`}>
+                        {registro.segmentoTienda || '-'}
                       </span>
                     </td>
                   </>

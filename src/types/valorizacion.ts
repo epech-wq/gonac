@@ -4,7 +4,7 @@
  */
 
 export interface ValorizacionItem {
-  valorizacion: 'Agotado' | 'Caducidad' | 'Sin Ventas';
+  valorizacion: 'Agotado' | 'Caducidad' | 'Sin Ventas' | 'Venta Incremental';
   tiendas: number;
   impacto: number;
 }
@@ -92,6 +92,29 @@ export interface SinVentasDetalle {
  */
 export interface SinVentasDetalleResponse {
   data: SinVentasDetalle[];
+  total: number;
+  timestamp: string;
+}
+
+/**
+ * Detail record for Venta Incremental opportunities
+ */
+export interface VentaIncrementalDetalle {
+  store_name: string;
+  sku: number;
+  segment: string;
+  region: string;
+  impacto: number;
+  optimo_dias_inventario: number | null;
+  real_dias_inventario: number | null;
+  desviacion_dias_inventario: number | null;
+}
+
+/**
+ * Response for Venta Incremental details
+ */
+export interface VentaIncrementalDetalleResponse {
+  data: VentaIncrementalDetalle[];
   total: number;
   timestamp: string;
 }

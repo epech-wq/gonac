@@ -3,7 +3,8 @@ import {
   ValorizacionItem,
   AgotadoDetalle,
   CaducidadDetalle,
-  SinVentasDetalle
+  SinVentasDetalle,
+  VentaIncrementalDetalle
 } from '@/types/valorizacion';
 
 /**
@@ -494,6 +495,87 @@ export class ValorizacionRepository {
       impacto_total: values.impacto,
       registros: values.count,
       tiendas_afectadas: values.stores.size
+    }));
+  }
+
+  /**
+   * Fetch Venta Incremental data from vw_comparacion_optimo_real
+   * Uses id_store and impacto columns to calculate opportunities
+   */
+  async getVentaIncrementalData(): Promise<ValorizacionItem> {
+    const { data, error } = await this.supabase
+      .schema('gonac')
+      .from('vw_comparacion_optimo_real')
+      .select('id_store, impacto');
+
+    if (error) {
+      throw new Error(`Venta Incremental query error: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      return {
+        valorizacion: 'Venta Incremental',
+        tiendas: 0,
+        impacto: 0,
+      };
+    }
+
+    // Count distinct stores
+    const uniqueStores = new Set(data.map((item: Record<string, unknown>) => item.id_store));
+    
+    // Sum impacto values
+    const totalImpacto = data.reduce((sum: number, item: Record<string, unknown>) => {
+      const impacto = Number(item.impacto) || 0;
+      return sum + impacto;
+    }, 0);
+
+    return {
+      valorizacion: 'Venta Incremental',
+      tiendas: uniqueStores.size,
+      impacto: totalImpacto,
+    };
+  }
+
+  /**
+   * Get detailed Venta Incremental opportunities from vw_comparacion_optimo_real_tienda
+   * Returns store, SKU, segment, region, and impact information
+   * Note: Since vw_comparacion_optimo_real_tienda is a view, we'll use sku number directly
+   * If product names are needed, they can be added via a join in the future
+   */
+  async getVentaIncrementalDetalle(): Promise<VentaIncrementalDetalle[]> {
+    const { data, error } = await this.supabase
+      .schema('gonac')
+      .from('vw_comparacion_optimo_real_tienda')
+      .select(`
+        store_name,
+        sku,
+        segment,
+        region,
+        impacto,
+        optimo_dias_inventario,
+        real_dias_inventario,
+        desviacion_dias_inventario
+      `)
+      .order('impacto', { ascending: false, nullsFirst: false });
+
+    if (error) {
+      throw new Error(`Error fetching venta incremental details: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Transform the data to match the expected format
+    return data.map((item) => ({
+      store_name: String(item.store_name || ''),
+      sku: Number(item.sku) || 0,
+      segment: String(item.segment || ''),
+      region: String(item.region || ''),
+      impacto: Number(item.impacto) || 0,
+      optimo_dias_inventario: item.optimo_dias_inventario ? Number(item.optimo_dias_inventario) : null,
+      real_dias_inventario: item.real_dias_inventario ? Number(item.real_dias_inventario) : null,
+      desviacion_dias_inventario: item.desviacion_dias_inventario ? Number(item.desviacion_dias_inventario) : null,
     }));
   }
 }

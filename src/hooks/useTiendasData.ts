@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { useSegmentacionFormatted } from '@/hooks/useSegmentacion';
 import { useMetricasFormatted } from '@/hooks/useMetricas';
-import { useValorizacionSummary, useTiendasConOportunidades } from '@/hooks/useValorizacion';
+import { useValorizacionSummary, useTiendasConOportunidades, useVentaIncremental } from '@/hooks/useValorizacion';
 import type { StoreMetrics, Opportunity } from '@/types/tiendas.types';
 import { DEFAULT_METRICS } from '@/constants/tiendas.constants';
 import {
@@ -24,6 +24,8 @@ export const useTiendasData = (segment?: string) => {
     useValorizacionSummary();
   const { data: tiendasConOportunidadesData, loading: loadingTiendasConOportunidades } = 
     useTiendasConOportunidades();
+  const { data: ventaIncrementalData, loading: loadingVentaIncremental } = 
+    useVentaIncremental();
 
   const storeMetrics: StoreMetrics = useMemo(() => ({
     totalTiendas: segmentacionData?.summary.total_tiendas || DEFAULT_METRICS.totalTiendas,
@@ -83,8 +85,8 @@ export const useTiendasData = (segment?: string) => {
           type: 'ventaIncremental',
           title: 'Venta Incremental',
           description: 'Oportunidad de optimización de parámetros para incrementar ventas',
-          tiendas: 15,
-          impacto: 250000,
+          tiendas: ventaIncrementalData?.tiendas || 0,
+          impacto: ventaIncrementalData?.impacto || 0,
           risk: 'Alto',
           impactoColor: 'text-green-600 dark:text-green-400',
         },
@@ -123,13 +125,13 @@ export const useTiendasData = (segment?: string) => {
         type: 'ventaIncremental',
         title: 'Venta Incremental',
         description: 'Oportunidad de optimización de parámetros para incrementar ventas',
-        tiendas: 15,
-        impacto: 250000,
+        tiendas: ventaIncrementalData?.tiendas || 0,
+        impacto: ventaIncrementalData?.impacto || 0,
         risk: 'Alto',
         impactoColor: 'text-green-600 dark:text-green-400',
       },
     ];
-  }, [valorizacionData]);
+  }, [valorizacionData, ventaIncrementalData]);
 
   const segments = useMemo(() => ({
     hot: segmentacionData?.cards.find(c => c.segment.toLowerCase() === 'hot'),
@@ -166,7 +168,7 @@ export const useTiendasData = (segment?: string) => {
     tiendasConOportunidades,
     
     // Loading states
-    loading: loadingSegmentacion || loadingMetricas || loadingValorizacion || loadingTiendasConOportunidades,
+    loading: loadingSegmentacion || loadingMetricas || loadingValorizacion || loadingTiendasConOportunidades || loadingVentaIncremental,
     error: errorSegmentacion || errorMetricas,
   };
 };

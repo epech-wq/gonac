@@ -8,7 +8,7 @@ import { ValorizacionService } from '@/services/valorizacion.service';
  * Fetches valorizacion data (Agotado, Caducidad, Sin Ventas)
  * 
  * Query Parameters:
- * - format: 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle' | 'tiendas-con-oportunidades'
+ * - format: 'default' | 'summary' | 'percentages' | 'critical' | 'agotado-detalle' | 'caducidad-detalle' | 'sin-ventas-detalle' | 'tiendas-con-oportunidades' | 'venta-incremental' | 'venta-incremental-detalle'
  * - type: 'Agotado' | 'Caducidad' | 'Sin Ventas' (optional)
  * 
  * Examples:
@@ -18,6 +18,8 @@ import { ValorizacionService } from '@/services/valorizacion.service';
  * - GET /api/valorizacion?format=caducidad-detalle
  * - GET /api/valorizacion?format=sin-ventas-detalle
  * - GET /api/valorizacion?format=tiendas-con-oportunidades
+ * - GET /api/valorizacion?format=venta-incremental
+ * - GET /api/valorizacion?format=venta-incremental-detalle
  * - GET /api/valorizacion?type=Agotado
  */
 export async function GET(request: NextRequest) {
@@ -113,6 +115,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data,
+      });
+    }
+
+    // Handle venta incremental request
+    if (format === 'venta-incremental') {
+      const data = await service.getVentaIncremental();
+      return NextResponse.json({
+        success: true,
+        data,
+      });
+    }
+
+    // Handle venta incremental detalle request
+    if (format === 'venta-incremental-detalle') {
+      const data = await service.getVentaIncrementalDetalle();
+      return NextResponse.json({
+        success: true,
+        ...data,
       });
     }
 
