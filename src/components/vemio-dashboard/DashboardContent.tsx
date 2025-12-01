@@ -392,8 +392,8 @@ const DashboardContent: React.FC = () => {
           {kpis.map((kpi) => {
             // Calculate variation vs previous period
             const variation = ((kpi.value - kpi.previousPeriod) / kpi.previousPeriod) * 100;
-            const variationColor: "success" | "error" | "default" = 
-              variation > 0 ? "success" : variation < 0 ? "error" : "default";
+            const variationColor: "success" | "error" | "info" = 
+              variation > 0 ? "success" : variation < 0 ? "error" : "info";
 
             // Calculate 90-day projection (simple linear projection)
             const projection = kpi.value * 3; // Assuming monthly data, 90d = 3 months

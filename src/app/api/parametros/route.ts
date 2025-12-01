@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { ParametrosRepository } from '@/repositories/parametros.repository';
 import { ParametrosService } from '@/services/parametros.service';
 import { ParametrosFilters } from '@/types/parametros';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = createServerSupabaseClient();
     const repository = new ParametrosRepository(supabase);
     const service = new ParametrosService(repository);
 

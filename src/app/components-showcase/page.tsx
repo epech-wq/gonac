@@ -167,10 +167,6 @@ export default function ComponentsShowcasePage() {
               <CoDisenoModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={(data) => {
-                  console.log("Modal data saved:", data);
-                  setIsModalOpen(false);
-                }}
               />
             </div>
           </div>
