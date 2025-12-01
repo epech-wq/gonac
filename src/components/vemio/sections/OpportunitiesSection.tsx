@@ -31,6 +31,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   const [expandedOportunidad, setExpandedOportunidad] = useState<OpportunityType | null>(null);
   const [modalAction, setModalAction] = useState<{ tipo: TipoAccionGeneral; opportunity: Opportunity } | null>(null);
   const [coDisenoModalOpen, setCoDisenoModalOpen] = useState(false);
+  const [ventaIncrementalImpacto, setVentaIncrementalImpacto] = useState<number>(0);
 
   // Fetch detailed data
   const { data: agotadoDetalleData, loading: agotadoLoading } = useAgotadoDetalle();
@@ -66,6 +67,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
 
   const handleActionClick = (actionType: string, opportunity: Opportunity) => {
     if (actionType === 'ajustar_parametro' && opportunity.type === 'ventaIncremental') {
+      setVentaIncrementalImpacto(opportunity.impacto);
       setCoDisenoModalOpen(true);
       return;
     }
@@ -178,6 +180,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
       <CoDisenoModal
         isOpen={coDisenoModalOpen}
         onClose={() => setCoDisenoModalOpen(false)}
+        impacto={ventaIncrementalImpacto}
       />
     </>
   );

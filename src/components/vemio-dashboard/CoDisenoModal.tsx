@@ -1,16 +1,112 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Button from "@/components/ui/button/Button";
 import DatePicker from "./DatePicker";
 import { CloseIcon, BoltIcon, InfoIcon, CheckCircleIcon } from "@/icons";
 import type { CoDisenoModalProps } from "./types";
+import { formatCurrency } from "@/utils/formatters";
 
-const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose }) => {
+interface OportunidadRow {
+  id_store: number;
+  sku: number;
+  store_name: string;
+  region: string;
+  segment: string;
+  optimo_dias_inventario_actual: number;
+  optimo_tamano_pedido_actual: number;
+  optimo_frecuencia_actual: number;
+  real_dias_inventario: number;
+  real_tamano_pedido: number;
+  real_frecuencia: number;
+  valor_dias_inventario_real: number;
+  valor_tamano_pedido_real: number;
+  valor_frecuencia_real: number;
+  valor_dias_inventario_propuesto: number;
+  valor_tamano_pedido_propuesto: number;
+  valor_frecuencia_propuesto: number;
+  diferencia_valor_dias_inventario: number;
+  diferencia_valor_tamano_pedido: number;
+  diferencia_valor_frecuencia: number;
+  impacto: number;
+}
+
+const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto = 0 }) => {
   const [diasInventario, setDiasInventario] = useState(14);
   const [tamanoPedido, setTamanoPedido] = useState(500);
   const [frecuenciaOptima, setFrecuenciaOptima] = useState(7);
   const [responsable, setResponsable] = useState("");
   const [fechaLimite, setFechaLimite] = useState("");
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [oportunidadData, setOportunidadData] = useState<OportunidadRow[]>([]);
+  const [showDetails, setShowDetails] = useState(false);
+  const mountedRef = useRef(false);
+
+  // Debounced function to call the SQL function
+  useEffect(() => {
+    // Skip on initial mount
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+
+    if (!isOpen) return;
+
+    setIsCalculating(true);
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch('/api/valorizacion/calcular-oportunidad', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            p_dias_inventario_optimo_propuesto: diasInventario,
+            p_tamano_pedido_optimo_propuesto: tamanoPedido,
+            p_frecuencia_optima_propuesta: frecuenciaOptima,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.success) {
+          // Store the returned data
+          if (Array.isArray(result.data)) {
+            setOportunidadData(result.data);
+          }
+        } else {
+          console.error('Error calculating opportunity:', result.message);
+        }
+      } catch (error) {
+        console.error('Error calling calcular-oportunidad API:', error);
+      } finally {
+        setIsCalculating(false);
+      }
+    }, 800); // 800ms debounce delay
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [diasInventario, tamanoPedido, frecuenciaOptima, isOpen]);
+
+  // Reset mounted ref when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      mountedRef.current = false;
+      setOportunidadData([]);
+      setShowDetails(false);
+    }
+  }, [isOpen]);
+
+  // Calculate new Valor Actual from the sum of all impacto values
+  const nuevoValorActual = oportunidadData.length > 0
+    ? oportunidadData.reduce((sum, row) => sum + (Number(row.impacto) || 0), 0)
+    : impacto;
+
+  // Get first 5 rows for display
+  const displayedRows = oportunidadData.slice(0, 5);
 
   if (!isOpen) return null;
 
@@ -51,7 +147,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose }) => {
                 Valor Actual
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                $250K
+                {nuevoValorActual > 0 ? formatCurrency(nuevoValorActual) : '$0'}
               </p>
             </div>
             <div className="bg-success-50 dark:bg-success-500/10 border border-success-200 dark:border-success-800 rounded-xl p-4">
@@ -82,6 +178,12 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose }) => {
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 (recálculo en tiempo real)
               </span>
+              {isCalculating && (
+                <div className="ml-2 flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500"></div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Calculando...</span>
+                </div>
+              )}
             </div>
 
             {/* Sliders */}
@@ -198,13 +300,94 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose }) => {
                 </h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   Al ajustar los parámetros seleccionados, el valor estimado de la
-                  oportunidad disminuye a $250K con un ROI del 150%. La proyección
+                  oportunidad es {nuevoValorActual > 0 ? formatCurrency(nuevoValorActual) : '$0'} con un ROI del 150%. La proyección
                   considera correlaciones ML entre parámetros y el comportamiento
                   histórico en Autoservicio &gt; Centro &gt; Walmart.
                 </p>
               </div>
             </div>
           </div>
+
+          {/* Details Dropdown */}
+          {oportunidadData.length > 0 && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setShowDetails(!showDetails)}
+                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <InfoIcon />
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    Detalle de Oportunidades ({oportunidadData.length} registros)
+                  </span>
+                </div>
+                <svg
+                  className={`h-5 w-5 text-gray-600 dark:text-gray-400 transform transition-transform ${
+                    showDetails ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showDetails && (
+                <div className="p-6 bg-white dark:bg-gray-900">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Tienda
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            SKU
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Región
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Segmento
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Impacto
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                        {displayedRows.map((row, index) => (
+                          <tr key={`${row.id_store}-${row.sku}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              {row.store_name}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              {row.sku}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                              {row.region}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                              {row.segment}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                              {formatCurrency(Number(row.impacto) || 0)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {oportunidadData.length > 5 && (
+                      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                        Mostrando 5 de {oportunidadData.length} registros
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-3 pt-4">

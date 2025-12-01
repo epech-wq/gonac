@@ -99,6 +99,7 @@ export interface CausaCard {
 export interface CoDisenoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  impacto?: number; // Impacto potencial value from Venta Incremental card
 }
 
 export interface AnalisisCausasContentProps {

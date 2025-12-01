@@ -578,5 +578,34 @@ export class ValorizacionRepository {
       desviacion_dias_inventario: item.desviacion_dias_inventario ? Number(item.desviacion_dias_inventario) : null,
     }));
   }
+
+  /**
+   * Calculate proposed opportunity value using SQL function
+   * Calls: gonac.fn_calcular_valor_oportunidad_propuesto
+   * Note: p_periodo_tiempo uses database default value (30)
+   * 
+   * @param params - Parameters for the calculation
+   * @returns The calculated opportunity value
+   */
+  async calcularValorOportunidadPropuesto(params: {
+    p_dias_inventario_optimo_propuesto: number;
+    p_tamano_pedido_optimo_propuesto: number;
+    p_frecuencia_optima_propuesta: number;
+  }): Promise<any> {
+    const { data, error } = await this.supabase
+      .schema('gonac')
+      .rpc('fn_calcular_valor_oportunidad_propuesto', {
+        p_dias_inventario_optimo_propuesto: params.p_dias_inventario_optimo_propuesto,
+        p_tamano_pedido_optimo_propuesto: params.p_tamano_pedido_optimo_propuesto,
+        p_frecuencia_optima_propuesta: params.p_frecuencia_optima_propuesta,
+        // p_periodo_tiempo is not passed, so database default (30) will be used
+      });
+
+    if (error) {
+      throw new Error(`Error calculating proposed opportunity value: ${error.message}`);
+    }
+
+    return data;
+  }
 }
 
