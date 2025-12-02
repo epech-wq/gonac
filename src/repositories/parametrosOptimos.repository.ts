@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ParametrosOptimos } from '@/types/parametrosOptimos';
+import { getDbSchema } from '@/utils/env';
 
 /**
  * Repository for Parámetros Óptimos
@@ -15,7 +16,7 @@ export class ParametrosOptimosRepository {
    */
   async getParametrosOptimos(): Promise<ParametrosOptimos> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real_global')
       .select('optimo_dias_inventario, optimo_punto_reorden, optimo_tamano_pedido, optimo_frecuencia, real_dias_inventario, real_punto_reorden, real_tamano_pedido, real_frecuencia, desviacion_dias_inventario_pct, desviacion_punto_reorden_pct, desviacion_tamano_pedido_pct, desviacion_frecuencia_pct')
       .limit(1)

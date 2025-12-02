@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { MetricasConsolidadas } from '@/types/metricas';
+import { getDbSchema } from '@/utils/env';
 
 /**
  * Metricas Repository
@@ -16,7 +17,7 @@ export class MetricasRepository {
    */
   async getMetricasConsolidadas(): Promise<MetricasConsolidadas> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('mvw_metricas_consolidadas')
       .select('*')
       .single(); // Assuming the view returns a single row with aggregated metrics
@@ -104,9 +105,9 @@ export class MetricasRepository {
   async getMetricasConsolidadasWithFilters(filters?: {
     store_id?: string;
     category?: string;
-  }): Promise<MetricasConsolidadas[]> {
+  }  ): Promise<MetricasConsolidadas[]> {
     let query = this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('mvw_metricas_consolidadas')
       .select('*');
 
@@ -185,7 +186,7 @@ export class MetricasRepository {
     // Query without .single() first to see what we get, then take the first result
     // This handles cases where the segment might not match exactly or the table structure is different
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('mvw_metricas_consolidadas_segmentadas')
       .select('*')
       .eq('segment', segment)
@@ -198,7 +199,7 @@ export class MetricasRepository {
     if (!data || data.length === 0) {
       // Try case-insensitive match
       const { data: dataCaseInsensitive, error: errorCaseInsensitive } = await this.supabase
-        .schema('gonac')
+        .schema(getDbSchema())
         .from('mvw_metricas_consolidadas_segmentadas')
         .select('segment')
         .ilike('segment', segment)
@@ -207,7 +208,7 @@ export class MetricasRepository {
       if (errorCaseInsensitive) {
         // If case-insensitive also fails, try to get all segments to show what's available
         const { data: allSegments } = await this.supabase
-          .schema('gonac')
+          .schema(getDbSchema())
           .from('mvw_metricas_consolidadas_segmentadas')
           .select('segment')
           .limit(10);
@@ -223,7 +224,7 @@ export class MetricasRepository {
       if (!dataCaseInsensitive || dataCaseInsensitive.length === 0) {
         // Get all available segments to help with debugging
         const { data: allSegments } = await this.supabase
-          .schema('gonac')
+          .schema(getDbSchema())
           .from('mvw_metricas_consolidadas_segmentadas')
           .select('segment')
           .limit(10);
@@ -237,7 +238,7 @@ export class MetricasRepository {
 
       // Re-fetch full data with case-insensitive match
       const { data: fullDataCaseInsensitive, error: fullError } = await this.supabase
-        .schema('gonac')
+        .schema(getDbSchema())
         .from('mvw_metricas_consolidadas_segmentadas')
         .select('*')
         .ilike('segment', segment)

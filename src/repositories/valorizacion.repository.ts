@@ -6,6 +6,7 @@ import {
   SinVentasDetalle,
   VentaIncrementalDetalle
 } from '@/types/valorizacion';
+import { getDbSchema } from '@/utils/env';
 
 /**
  * Valorizacion Repository
@@ -19,21 +20,22 @@ export class ValorizacionRepository {
    * Retrieves Agotado, Caducidad, and Sin Ventas data
    */
   async getValorizacionData(): Promise<ValorizacionItem[]> {
+    const dbSchema = getDbSchema();
     const query = `
       SELECT 'Agotado' as valorizacion, 
              COUNT(DISTINCT(id_store))::int as tiendas, 
              SUM(impacto)::numeric as impacto
-      FROM gonac.agotamiento_detalle
+      FROM ${dbSchema}.agotamiento_detalle
       UNION ALL
       SELECT 'Caducidad' as valorizacion, 
              COUNT(DISTINCT(id_store))::int as tiendas, 
              SUM(impacto)::numeric as impacto
-      FROM gonac.caducidad_detalle
+      FROM ${dbSchema}.caducidad_detalle
       UNION ALL 
       SELECT 'Sin Ventas' as valorizacion, 
              COUNT(DISTINCT(id_store))::int as tiendas, 
              SUM(impacto)::numeric as impacto
-      FROM gonac.sin_ventas_detalle
+      FROM ${dbSchema}.sin_ventas_detalle
     `;
 
     const { data, error } = await this.supabase.rpc('exec_valorizacion_query', {
@@ -70,7 +72,7 @@ export class ValorizacionRepository {
    */
   private async getAgotadoData(): Promise<ValorizacionItem> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('agotamiento_detalle')
       .select('id_store, impacto');
 
@@ -93,7 +95,7 @@ export class ValorizacionRepository {
    */
   private async getCaducidadData(): Promise<ValorizacionItem> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('caducidad_detalle')
       .select('id_store, impacto');
 
@@ -116,7 +118,7 @@ export class ValorizacionRepository {
    */
   private async getSinVentasData(): Promise<ValorizacionItem> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('sin_ventas_detalle')
       .select('id_store, impacto');
 
@@ -156,7 +158,7 @@ export class ValorizacionRepository {
    */
   async getAgotadoDetalle(): Promise<AgotadoDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('agotamiento_detalle')
       .select(`
         segment,
@@ -204,7 +206,7 @@ export class ValorizacionRepository {
    */
   async getCaducidadDetalle(): Promise<CaducidadDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('caducidad_detalle')
       .select(`
         segment,
@@ -254,7 +256,7 @@ export class ValorizacionRepository {
    */
   async getSinVentasDetalle(): Promise<SinVentasDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('sin_ventas_detalle')
       .select(`
         impacto,
@@ -298,7 +300,7 @@ export class ValorizacionRepository {
    */
   async getTiendasConOportunidades(): Promise<number> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('metricas_riesgo')
       .select('tiendas')
       .eq('valorizacion', 'Total')
@@ -504,7 +506,7 @@ export class ValorizacionRepository {
    */
   async getVentaIncrementalData(): Promise<ValorizacionItem> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real')
       .select('id_store, impacto');
 
@@ -544,7 +546,7 @@ export class ValorizacionRepository {
    */
   async getVentaIncrementalDetalle(): Promise<VentaIncrementalDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real_tienda')
       .select(`
         store_name,
@@ -605,7 +607,7 @@ export class ValorizacionRepository {
     p_frecuencia_optima_propuesta: number;
   }): Promise<any> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .rpc('fn_calcular_valor_oportunidad_propuesto', {
         p_dias_inventario_optimo_propuesto: params.p_dias_inventario_optimo_propuesto,
         p_tamano_pedido_optimo_propuesto: params.p_tamano_pedido_optimo_propuesto,

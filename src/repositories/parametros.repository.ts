@@ -6,6 +6,7 @@ import {
   ComparacionOptimoRealGlobal,
   ParametrosFilters,
 } from '@/types/parametros';
+import { getDbSchema } from '@/utils/env';
 
 export class ParametrosRepository {
   constructor(private supabase: SupabaseClient) {}
@@ -16,7 +17,7 @@ export class ParametrosRepository {
    */
   async getParametrosOptimos(filters?: ParametrosFilters): Promise<ParametrosOptimos[]> {
     let query = this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('tab_parametros_optimos')
       .select('*');
 
@@ -42,7 +43,7 @@ export class ParametrosRepository {
    */
   async getComparacionOptimoReal(filters?: ParametrosFilters): Promise<ComparacionOptimoReal[]> {
     let query = this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real')
       .select('*');
 
@@ -95,7 +96,7 @@ export class ParametrosRepository {
    */
   async getComparacionPorTienda(filters?: ParametrosFilters): Promise<ComparacionOptimoRealTienda[]> {
     let query = this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real_tienda')
       .select('*');
 
@@ -134,7 +135,7 @@ export class ParametrosRepository {
    */
   async getComparacionGlobal(): Promise<ComparacionOptimoRealGlobal> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real_global')
       .select('*')
       .single();
@@ -155,7 +156,7 @@ export class ParametrosRepository {
    */
   async getUltimaFechaCalculo(): Promise<{ fecha: string; total_registros: number }> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('tab_parametros_optimos')
       .select('fecha_calculo')
       .order('fecha_calculo', { ascending: false })
@@ -168,7 +169,7 @@ export class ParametrosRepository {
 
     // Contar registros de esa fecha
     const { count } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('tab_parametros_optimos')
       .select('*', { count: 'exact', head: true })
       .eq('fecha_calculo', data.fecha_calculo);
@@ -184,7 +185,7 @@ export class ParametrosRepository {
    */
   async getTopTiendasPorImpacto(limit: number = 10): Promise<ComparacionOptimoRealTienda[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real_tienda')
       .select('*')
       .order('impacto', { ascending: false, nullsFirst: false })
@@ -202,7 +203,7 @@ export class ParametrosRepository {
    */
   async getTopSKUsCriticos(limit: number = 20): Promise<ComparacionOptimoReal[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real')
       .select('*')
       .order('ranking_desviacion', { ascending: true })
@@ -220,7 +221,7 @@ export class ParametrosRepository {
    */
   async getDistribucionPorSegmento(): Promise<{ segment: string; count: number; impacto_total: number }[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_comparacion_optimo_real')
       .select('segment, impacto')
       .not('segment', 'is', null);

@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CambioInventarioSimulacion, RedistribucionCaducidadDetalle } from '@/types/cambioInventario';
+import { getDbSchema } from '@/utils/env';
 
 /**
  * Repository for Cambio de Inventario (Inventory Balancing)
@@ -14,7 +15,7 @@ export class CambioInventarioRepository {
    */
   async getSimulacion(): Promise<CambioInventarioSimulacion> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_simulacion_reabastecimiento')
       .select('*')
       .single();
@@ -68,7 +69,7 @@ export class CambioInventarioRepository {
     p_dias_maximo_inventario: number = 30
   ): Promise<RedistribucionCaducidadDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .rpc('fn_redistribucion_caducidad', {
         p_dias_maximo_inventario: p_dias_maximo_inventario
       });
