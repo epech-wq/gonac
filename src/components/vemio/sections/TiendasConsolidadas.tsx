@@ -41,6 +41,7 @@ export default function TiendasConsolidadas({ chatOpen = false, onCardClick, onV
     metricasData,
     impactoTotal,
     tiendasConOportunidades,
+    porcentajeTiendasConOportunidades,
     loading,
     error,
   } = useTiendasData(dbSegment);
@@ -161,7 +162,7 @@ export default function TiendasConsolidadas({ chatOpen = false, onCardClick, onV
         <ImpactoTotalBanner
           impactoTotal={impactoTotal}
           tiendasConOportunidades={tiendasConOportunidades}
-          totalTiendas={storeMetrics.totalTiendas}
+          porcentajeTiendasConOportunidades={porcentajeTiendasConOportunidades}
         />
 
         {/* Opportunities Section */}

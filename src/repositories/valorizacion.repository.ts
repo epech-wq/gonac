@@ -296,13 +296,13 @@ export class ValorizacionRepository {
    * Get total number of stores with opportunities from metricas_riesgo table
    * Fetches from: gonac.metricas_riesgo where valorizacion = 'Total'
    * 
-   * @returns Number of stores with opportunities
+   * @returns Object with number of stores and percentage
    */
-  async getTiendasConOportunidades(): Promise<number> {
+  async getTiendasConOportunidades(): Promise<{ tiendas: number; porcentaje: number }> {
     const { data, error } = await this.supabase
       .schema(getDbSchema())
       .from('metricas_riesgo')
-      .select('tiendas')
+      .select('tiendas, porcentaje_respecto_total_tiendas')
       .eq('valorizacion', 'Total')
       .single();
 
@@ -314,7 +314,10 @@ export class ValorizacionRepository {
       throw new Error('No data returned from metricas_riesgo for Total valorizacion');
     }
 
-    return Number(data.tiendas) || 0;
+    return {
+      tiendas: Number(data.tiendas) || 0,
+      porcentaje: Number(data.porcentaje_respecto_total_tiendas) || 0,
+    };
   }
 
   /**

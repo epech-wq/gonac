@@ -314,7 +314,7 @@ export function useSinVentasDetalle(options: { autoFetch?: boolean } = {}) {
 export function useTiendasConOportunidades(options: { autoFetch?: boolean } = {}) {
   const { autoFetch = true } = options;
 
-  return useValorizacion<number>({
+  return useValorizacion<{ tiendas: number; porcentaje: number }>({
     format: 'tiendas-con-oportunidades',
     autoFetch
   });

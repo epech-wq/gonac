@@ -182,7 +182,7 @@ export class ValorizacionService {
    * Get total number of stores with opportunities from metricas_riesgo table
    * Fetches from: gonac.metricas_riesgo where valorizacion = 'Total'
    */
-  async getTiendasConOportunidades(): Promise<number> {
+  async getTiendasConOportunidades(): Promise<{ tiendas: number; porcentaje: number }> {
     try {
       return await this.repository.getTiendasConOportunidades();
     } catch (error) {

@@ -7,15 +7,15 @@ import { formatCurrency, formatNumber } from '@/utils/formatters';
 interface ImpactoTotalBannerProps {
   impactoTotal: number;
   tiendasConOportunidades: number;
-  totalTiendas: number;
+  porcentajeTiendasConOportunidades: number;
 }
 
 export default function ImpactoTotalBanner({
   impactoTotal,
   tiendasConOportunidades,
-  totalTiendas,
+  porcentajeTiendasConOportunidades,
 }: ImpactoTotalBannerProps) {
-  const porcentajeTiendasConOportunidades = ((tiendasConOportunidades / totalTiendas) * 100).toFixed(0);
+  const porcentajeFormatted = Math.trunc(porcentajeTiendasConOportunidades).toString();
 
   return (
     <div className="mt-8 rounded-lg bg-gradient-to-r from-green-500 via-blue-500 to-blue-600 p-6 text-white shadow-lg">
@@ -41,7 +41,7 @@ export default function ImpactoTotalBanner({
               {formatNumber(tiendasConOportunidades)}
             </div>
             <div className="text-sm opacity-90">
-              {porcentajeTiendasConOportunidades}% del total requiere acción
+              {porcentajeFormatted}% del total requiere acción
             </div>
           </div>
         </div>

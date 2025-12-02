@@ -151,11 +151,18 @@ export const useTiendasData = (segment?: string) => {
 
   const tiendasConOportunidades = useMemo(() => 
     tiendasConOportunidadesData !== null && tiendasConOportunidadesData !== undefined
-      ? tiendasConOportunidadesData
+      ? tiendasConOportunidadesData.tiendas
       : (valorizacionData 
           ? valorizacionData.agotado.tiendas + valorizacionData.caducidad.tiendas + valorizacionData.sinVentas.tiendas
           : 71),
     [tiendasConOportunidadesData, valorizacionData]
+  );
+
+  const porcentajeTiendasConOportunidades = useMemo(() => 
+    tiendasConOportunidadesData !== null && tiendasConOportunidadesData !== undefined
+      ? tiendasConOportunidadesData.porcentaje
+      : 0,
+    [tiendasConOportunidadesData]
   );
 
   return {
@@ -166,6 +173,7 @@ export const useTiendasData = (segment?: string) => {
     metricasData,
     impactoTotal,
     tiendasConOportunidades,
+    porcentajeTiendasConOportunidades,
     
     // Loading states
     loading: loadingSegmentacion || loadingMetricas || loadingValorizacion || loadingTiendasConOportunidades || loadingVentaIncremental,
