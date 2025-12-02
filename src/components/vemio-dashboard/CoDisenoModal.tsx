@@ -140,6 +140,8 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
   const [fechaLimite, setFechaLimite] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
   const [oportunidadData, setOportunidadData] = useState<OportunidadRow[]>([]);
+  const [impactoGlobalTotal, setImpactoGlobalTotal] = useState<number>(0);
+  const [diferenciaImpacto, setDiferenciaImpacto] = useState<number>(0);
   const [showDetails, setShowDetails] = useState(false);
   const mountedRef = useRef(false);
 
@@ -159,61 +161,81 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
     }
   }, [causasData, diasInventarioCausa?.optimo, tamanoPedidoCausa?.optimo, frecuenciaCausa?.optimo, diasInventarioRange, tamanoPedidoRange, frecuenciaRange]);
 
-  // Debounced function to call the SQL function
-  useEffect(() => {
-    // Skip on initial mount
-    if (!mountedRef.current) {
-      mountedRef.current = true;
-      return;
-    }
-
-    if (!isOpen) return;
-
+  // Function to fetch impact data from API
+  const fetchImpactoData = async (dias: number, tamano: number, frecuencia: number) => {
     setIsCalculating(true);
-    const timer = setTimeout(async () => {
-      try {
-        const response = await fetch('/api/valorizacion/calcular-oportunidad', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            p_dias_inventario_optimo_propuesto: diasInventario,
-            p_tamano_pedido_optimo_propuesto: tamanoPedido,
-            p_frecuencia_optima_propuesta: frecuenciaOptima,
-          }),
-        });
+    try {
+      const response = await fetch('/api/valorizacion/calcular-oportunidad', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          p_dias_inventario_optimo_propuesto: dias,
+          p_tamano_pedido_optimo_propuesto: tamano,
+          p_frecuencia_optima_propuesta: frecuencia,
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (result.success) {
-          // Store the returned data
-          if (Array.isArray(result.data)) {
-            setOportunidadData(result.data);
-          }
-        } else {
-          console.error('Error calculating opportunity:', result.message);
-        }
-      } catch (error) {
-        console.error('Error calling calcular-oportunidad API:', error);
-      } finally {
-        setIsCalculating(false);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const result = await response.json();
+      if (result.success) {
+        // Store the returned data
+        if (Array.isArray(result.data)) {
+          setOportunidadData(result.data);
+          // Extract impacto_global_total and diferencia_impacto from the first row
+          if (result.data.length > 0) {
+            if (result.data[0].impacto_global_total !== undefined) {
+              setImpactoGlobalTotal(result.data[0].impacto_global_total);
+            }
+            if (result.data[0].diferencia_impacto !== undefined) {
+              setDiferenciaImpacto(result.data[0].diferencia_impacto);
+            }
+          }
+        }
+      } else {
+        console.error('Error calculating opportunity:', result.message);
+      }
+    } catch (error) {
+      console.error('Error calling calcular-oportunidad API:', error);
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  // Call API when modal opens with initial values
+  useEffect(() => {
+    if (isOpen && !mountedRef.current) {
+      mountedRef.current = true;
+      // Call immediately with initial values
+      fetchImpactoData(diasInventario, tamanoPedido, frecuenciaOptima);
+    }
+  }, [isOpen]);
+
+  // Debounced function to call the SQL function when parameters change
+  useEffect(() => {
+    // Skip if modal is not open or if this is the initial mount
+    if (!isOpen || !mountedRef.current) return;
+
+    const timer = setTimeout(() => {
+      fetchImpactoData(diasInventario, tamanoPedido, frecuenciaOptima);
     }, 800); // 800ms debounce delay
 
     return () => {
       clearTimeout(timer);
     };
-  }, [diasInventario, tamanoPedido, frecuenciaOptima, isOpen]);
+  }, [diasInventario, tamanoPedido, frecuenciaOptima]);
 
   // Reset mounted ref when modal closes
   useEffect(() => {
     if (!isOpen) {
       mountedRef.current = false;
       setOportunidadData([]);
+      setImpactoGlobalTotal(0);
+      setDiferenciaImpacto(0);
       setShowDetails(false);
     }
   }, [isOpen]);
@@ -427,7 +449,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                 Valor Actual
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {nuevoValorActual > 0 ? formatCurrency(nuevoValorActual) : '$0'}
+                {formatCurrency(impacto)}
               </p>
             </div>
             <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
@@ -435,7 +457,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                 Impacto
               </p>
               <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
-                {nuevoValorActual > 0 ? formatCurrency(nuevoValorActual) : '$0'}
+                {impactoGlobalTotal > 0 ? formatCurrency(impactoGlobalTotal) : '$0'}
               </p>
             </div>
           </div>
@@ -551,7 +573,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                 </h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   Al ajustar los parámetros seleccionados, el valor estimado de la
-                  oportunidad es {nuevoValorActual > 0 ? formatCurrency(nuevoValorActual) : '$0'} con un ROI del 150%. La proyección
+                  oportunidad es {impactoGlobalTotal > 0 ? formatCurrency(impactoGlobalTotal) : '$0'} con un ROI del 150%. La proyección
                   considera correlaciones ML entre parámetros y el comportamiento
                   histórico en Autoservicio &gt; Centro &gt; Walmart.
                 </p>

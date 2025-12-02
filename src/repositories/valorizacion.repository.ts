@@ -621,5 +621,31 @@ export class ValorizacionRepository {
 
     return data;
   }
+
+  /**
+   * Calculate global impact using optimal parameters
+   * Calls: maquinsa.fn_calcular_impacto_optimos_globales
+   */
+  async calcularImpactoOptimosGlobales(params: {
+    p_dias_inventario_optimo_global: number;
+    p_tamano_pedido_optimo_global: number;
+    p_frecuencia_optima_global: number;
+    p_periodo_tiempo?: number;
+  }): Promise<any> {
+    const { data, error } = await this.supabase
+      .schema(getDbSchema())
+      .rpc('fn_calcular_impacto_optimos_globales', {
+        p_dias_inventario_optimo_global: params.p_dias_inventario_optimo_global,
+        p_tamano_pedido_optimo_global: params.p_tamano_pedido_optimo_global,
+        p_frecuencia_optima_global: params.p_frecuencia_optima_global,
+        p_periodo_tiempo: params.p_periodo_tiempo || 30,
+      });
+
+    if (error) {
+      throw new Error(`Error calculating global impact with optimal parameters: ${error.message}`);
+    }
+
+    return data;
+  }
 }
 

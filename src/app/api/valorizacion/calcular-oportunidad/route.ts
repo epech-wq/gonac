@@ -4,15 +4,16 @@ import { ValorizacionRepository } from '@/repositories/valorizacion.repository';
 
 /**
  * POST /api/valorizacion/calcular-oportunidad
- * Calculates proposed opportunity value using SQL function
+ * Calculates global impact using optimal parameters
+ * Uses: maquinsa.fn_calcular_impacto_optimos_globales
  * 
  * Body:
  * {
  *   p_dias_inventario_optimo_propuesto: number;
  *   p_tamano_pedido_optimo_propuesto: number;
  *   p_frecuencia_optima_propuesta: number;
+ *   p_periodo_tiempo?: number; // optional, defaults to 30
  * }
- * Note: p_periodo_tiempo uses database default value (30)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
       p_dias_inventario_optimo_propuesto,
       p_tamano_pedido_optimo_propuesto,
       p_frecuencia_optima_propuesta,
+      p_periodo_tiempo,
     } = body;
 
     // Validate required parameters
@@ -43,11 +45,12 @@ export async function POST(request: NextRequest) {
     const supabase = createServerSupabaseClient();
     const repository = new ValorizacionRepository(supabase);
 
-    // Call the SQL function (p_periodo_tiempo will use database default)
-    const data = await repository.calcularValorOportunidadPropuesto({
-      p_dias_inventario_optimo_propuesto,
-      p_tamano_pedido_optimo_propuesto,
-      p_frecuencia_optima_propuesta,
+    // Call the new SQL function fn_calcular_impacto_optimos_globales
+    const data = await repository.calcularImpactoOptimosGlobales({
+      p_dias_inventario_optimo_global: p_dias_inventario_optimo_propuesto,
+      p_tamano_pedido_optimo_global: p_tamano_pedido_optimo_propuesto,
+      p_frecuencia_optima_global: p_frecuencia_optima_propuesta,
+      p_periodo_tiempo: p_periodo_tiempo || 30,
     });
 
     return NextResponse.json({
