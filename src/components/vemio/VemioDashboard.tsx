@@ -144,12 +144,12 @@ export default function VemioDashboard({ onChatStateChange }: VemioDashboardProp
       <div className={`space-y-6 transition-all duration-300 ${chatOpen ? 'pr-[372px]' : ''}`}>
         <VemioHeader projectInfo={vemioMockData.projectInfo} />
         
-        {/* Vemio Filters */}
-        <VemioFilters
+        {/* Vemio Filters - Hidden */}
+        {/* <VemioFilters
           navigationState={navigationState}
           onNavigationChange={handleNavigationChange}
           onExport={handleExport}
-        />
+        /> */}
 
         {/* Breadcrumb - Only show if there are filters from first section */}
         {breadcrumbItems.length > 0 && (
