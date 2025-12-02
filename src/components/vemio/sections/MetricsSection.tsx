@@ -15,6 +15,7 @@ interface MetricasData {
   avg_venta_promedio_diaria?: number;
   cobertura_pct?: number;
   ventas_totales_unidades?: number;
+  inventario_inicial_total?: number;
   // Target data
   objetivo_ventas_totales_pesos?: number;
   objetivo_ventas_totales_pesos_formatted?: string;
@@ -270,7 +271,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
                   {formatPercentage(sellThroughPct)}
                 </div>
                 <div className="text-sm opacity-90 mt-1">
-                  Inventario inicial: {formatNumber(66732)} unidades
+                  Inventario inicial: {formatNumber(metricasData?.inventario_inicial_total || 0)} unidades
                 </div>
               </div>
             </div>
