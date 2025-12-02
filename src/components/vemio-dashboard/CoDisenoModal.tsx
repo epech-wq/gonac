@@ -101,8 +101,8 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
   const tamanoPedidoRange = useMemo(() => calculateDynamicRange(
     tamanoPedidoCausa?.actual,
     tamanoPedidoCausa?.optimo,
-    100,
-    1000,
+    0,
+    150,
     0.3
   ), [tamanoPedidoCausa?.actual, tamanoPedidoCausa?.optimo]);
   
@@ -131,7 +131,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
     getInitialValue(diasInventarioCausa?.optimo, 14, diasInventarioRange)
   );
   const [tamanoPedido, setTamanoPedido] = useState(() => 
-    getInitialValue(tamanoPedidoCausa?.optimo, 500, tamanoPedidoRange)
+    getInitialValue(tamanoPedidoCausa?.optimo, 80, tamanoPedidoRange)
   );
   const [frecuenciaOptima, setFrecuenciaOptima] = useState(() => 
     getInitialValue(frecuenciaCausa?.optimo, 7, frecuenciaRange)
@@ -486,7 +486,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                   onChange={setTamanoPedido}
                   min={tamanoPedidoRange.min}
                   max={tamanoPedidoRange.max}
-                  step={Math.max(10, Math.floor((tamanoPedidoRange.max - tamanoPedidoRange.min) / 50))}
+                  step={1}
                   optimo={tamanoPedidoCausa?.optimo}
                   real={tamanoPedidoCausa?.actual}
                   label="Tamaño de Pedido"
