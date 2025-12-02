@@ -420,8 +420,8 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
 
         {/* Content */}
         <div className="p-8 space-y-6">
-          {/* Three Indicator Cards */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Two Indicator Cards */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                 Valor Actual
@@ -430,20 +430,12 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                 {nuevoValorActual > 0 ? formatCurrency(nuevoValorActual) : '$0'}
               </p>
             </div>
-            <div className="bg-success-50 dark:bg-success-500/10 border border-success-200 dark:border-success-800 rounded-xl p-4">
-              <p className="text-xs text-success-700 dark:text-success-400 mb-2">
-                ROI Proyectado
+            <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+              <p className="text-xs text-blue-700 dark:text-blue-400 mb-2">
+                Impacto
               </p>
-              <p className="text-2xl font-bold text-success-900 dark:text-success-300">
-                150%
-              </p>
-            </div>
-            <div className="bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-800 rounded-xl p-4">
-              <p className="text-xs text-brand-700 dark:text-brand-400 mb-2">
-                Correlación ML
-              </p>
-              <p className="text-2xl font-bold text-brand-900 dark:text-brand-300">
-                85%
+              <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
+                {nuevoValorActual > 0 ? formatCurrency(nuevoValorActual) : '$0'}
               </p>
             </div>
           </div>
