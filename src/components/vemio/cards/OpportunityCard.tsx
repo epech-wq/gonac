@@ -2,8 +2,9 @@
  * Opportunity Card Component
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { RiskLevel, OpportunityType, DetailRecord } from '@/types/tiendas.types';
+import type { ComparacionOptimoRealGlobal } from '@/types/parametros';
 import { getBadgeColor, getSegmentColor } from '@/utils/tiendas.mappers';
 import { formatCurrency, formatNumber, formatDate } from '@/utils/formatters';
 
@@ -15,7 +16,7 @@ interface CausaData {
   actual: number;
   optimo: number;
   desvio: string;
-  correlacion: number;
+  impacto: number; // Changed from correlacion to impacto (valor)
 }
 
 interface OpportunityCardProps {
@@ -52,6 +53,91 @@ export default function OpportunityCard({
   onVerAnalisisCompleto,
 }: OpportunityCardProps) {
   const [showAnalisisCompleto, setShowAnalisisCompleto] = useState(false);
+  const [causas, setCausas] = useState<CausaData[]>([]);
+  const [causasLoading, setCausasLoading] = useState(false);
+
+  // Fetch real data when análisis completo is opened
+  useEffect(() => {
+    if (showAnalisisCompleto && type === 'ventaIncremental' && causas.length === 0) {
+      fetchCausasData();
+    }
+  }, [showAnalisisCompleto, type]);
+
+  const fetchCausasData = async () => {
+    try {
+      setCausasLoading(true);
+      const response = await fetch('/api/parametros?view=global');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch parametros data');
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success || !result.data) {
+        throw new Error('Invalid response format');
+      }
+      
+      const globalData: ComparacionOptimoRealGlobal = result.data;
+      
+      // Transform the data into CausaData format
+      const causasData: CausaData[] = [
+        {
+          id: 1,
+          titulo: "Días Inventario",
+          subtitulo: `${globalData.total_tiendas || 0} tiendas • ${globalData.total_skus || 0} SKUs`,
+          tendencia: getTendenciaFromData(globalData.real_dias_inventario, globalData.optimo_dias_inventario),
+          actual: globalData.real_dias_inventario || 0,
+          optimo: globalData.optimo_dias_inventario || 0,
+          desvio: formatDesvioFromData(globalData.desviacion_dias_inventario_pct),
+          impacto: globalData.valor_dias_inventario || 0,
+        },
+        {
+          id: 2,
+          titulo: "Tamaño Pedido",
+          subtitulo: `${globalData.total_tiendas || 0} tiendas • ${globalData.total_skus || 0} SKUs`,
+          tendencia: getTendenciaFromData(globalData.real_tamano_pedido, globalData.optimo_tamano_pedido),
+          actual: globalData.real_tamano_pedido || 0,
+          optimo: globalData.optimo_tamano_pedido || 0,
+          desvio: formatDesvioFromData(globalData.desviacion_tamano_pedido_pct),
+          impacto: globalData.valor_tamano_pedido || 0,
+        },
+        {
+          id: 3,
+          titulo: "Frecuencia",
+          subtitulo: `${globalData.total_tiendas || 0} tiendas • ${globalData.total_skus || 0} SKUs`,
+          tendencia: getTendenciaFromData(globalData.real_frecuencia, globalData.optimo_frecuencia),
+          actual: globalData.real_frecuencia || 0,
+          optimo: globalData.optimo_frecuencia || 0,
+          desvio: formatDesvioFromData(globalData.desviacion_frecuencia_pct),
+          impacto: globalData.valor_frecuencia || 0,
+        },
+      ];
+      
+      setCausas(causasData);
+    } catch (err) {
+      console.error('Error fetching causas data:', err);
+      // Set empty array on error to prevent retry loops
+      setCausas([]);
+    } finally {
+      setCausasLoading(false);
+    }
+  };
+
+  const getTendenciaFromData = (real: number | null, optimo: number | null): "up" | "down" | "neutral" => {
+    if (real === null || optimo === null) return "neutral";
+    const diff = real - optimo;
+    const diffPct = Math.abs(diff / optimo * 100);
+    
+    if (diffPct < 5) return "neutral";
+    return real > optimo ? "up" : "down";
+  };
+
+  const formatDesvioFromData = (desviacion_pct: number | null): string => {
+    if (desviacion_pct === null) return "0%";
+    const sign = desviacion_pct >= 0 ? "+" : "";
+    return `${sign}${desviacion_pct.toFixed(1)}%`;
+  };
 
   // Handle opening "Ver análisis completo" - close detail view if open
   const handleToggleAnalisisCompleto = () => {
@@ -72,40 +158,6 @@ export default function OpportunityCard({
     }
     onToggleExpand();
   };
-
-  // Mock data for causas - similar to AnalisisCausasContent
-  const causas = [
-    {
-      id: 1,
-      titulo: "Dias Inventario",
-      subtitulo: "Autoservicio > Centro > Walmart",
-      tendencia: "down" as const,
-      actual: 8,
-      optimo: 14,
-      desvio: "-43%",
-      correlacion: 85,
-    },
-    {
-      id: 2,
-      titulo: "Tamaño Pedido",
-      subtitulo: "Bebidas > RefreshCo",
-      tendencia: "up" as const,
-      actual: 650,
-      optimo: 500,
-      desvio: "+30%",
-      correlacion: 78,
-    },
-    {
-      id: 3,
-      titulo: "Frecuencia",
-      subtitulo: "Conveniencia > Norte",
-      tendencia: "neutral" as const,
-      actual: 72,
-      optimo: 85,
-      desvio: "-15%",
-      correlacion: 65,
-    },
-  ];
 
   const getTrendIcon = (tendencia: "up" | "down" | "neutral") => {
     switch (tendencia) {
@@ -379,8 +431,19 @@ export default function OpportunityCard({
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
             Top Causas Principales
           </h3>
-          <div className="space-y-4">
-            {causas.map((causa) => (
+          {causasLoading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-500"></div>
+            </div>
+          )}
+          {!causasLoading && causas.length === 0 && (
+            <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+              No hay datos disponibles
+            </div>
+          )}
+          {!causasLoading && causas.length > 0 && (
+            <div className="space-y-4">
+              {causas.map((causa) => (
               <div
                 key={causa.id}
                 className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
@@ -414,7 +477,7 @@ export default function OpportunityCard({
                       Actual
                     </p>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {causa.actual}
+                      {(Math.trunc(causa.actual * 10) / 10).toFixed(1)}
                     </p>
                   </div>
                   <div>
@@ -422,7 +485,7 @@ export default function OpportunityCard({
                       Óptimo
                     </p>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {causa.optimo}
+                      {(Math.trunc(causa.optimo * 10) / 10).toFixed(1)}
                     </p>
                   </div>
                   <div>
@@ -435,16 +498,17 @@ export default function OpportunityCard({
                   </div>
                   <div>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
-                      Correlación
+                      Impacto
                     </p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {causa.correlacion}%
+                    <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                      ${(Math.trunc((causa.impacto / 1000) * 10) / 10).toFixed(1)}K
                     </p>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

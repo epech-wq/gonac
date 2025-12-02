@@ -91,7 +91,7 @@ export interface CausaCard {
   actual: number;
   optimo: number;
   desvio: string;
-  correlacion: number;
+  impacto: number; // Changed from correlacion to impacto (valor)
   impactoProgreso: number;
 }
 
@@ -104,7 +104,7 @@ export interface CausaData {
   actual: number;
   optimo: number;
   desvio: string;
-  correlacion: number;
+  impacto: number; // Changed from correlacion to impacto (valor)
 }
 
 export interface CoDisenoModalProps {
