@@ -142,7 +142,6 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
   const [oportunidadData, setOportunidadData] = useState<OportunidadRow[]>([]);
   const [impactoGlobalTotal, setImpactoGlobalTotal] = useState<number>(0);
   const [diferenciaImpacto, setDiferenciaImpacto] = useState<number>(0);
-  const [showDetails, setShowDetails] = useState(false);
   const mountedRef = useRef(false);
 
   // Update sliders when causasData changes, clamping to dynamic ranges
@@ -236,7 +235,6 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
       setOportunidadData([]);
       setImpactoGlobalTotal(0);
       setDiferenciaImpacto(0);
-      setShowDetails(false);
     }
   }, [isOpen]);
 
@@ -244,9 +242,6 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
   const nuevoValorActual = oportunidadData.length > 0
     ? oportunidadData.reduce((sum, row) => sum + (Number(row.impacto) || 0), 0)
     : impacto;
-
-  // Get first 5 rows for display
-  const displayedRows = oportunidadData.slice(0, 5);
 
   // Helper function to calculate marker position percentage
   const calculateMarkerPosition = (value: number, min: number, max: number): number => {
@@ -580,87 +575,6 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
               </div>
             </div>
           </div>
-
-          {/* Details Dropdown */}
-          {oportunidadData.length > 0 && (
-            <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
-              <button
-                onClick={() => setShowDetails(!showDetails)}
-                className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <InfoIcon />
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    Detalle de Oportunidades ({oportunidadData.length} registros)
-                  </span>
-                </div>
-                <svg
-                  className={`h-5 w-5 text-gray-600 dark:text-gray-400 transform transition-transform ${
-                    showDetails ? 'rotate-180' : ''
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {showDetails && (
-                <div className="p-6 bg-white dark:bg-gray-900">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                      <thead className="bg-gray-50 dark:bg-gray-800">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Tienda
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            SKU
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Región
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Segmento
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Impacto
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                        {displayedRows.map((row, index) => (
-                          <tr key={`${row.id_store}-${row.sku}-${index}`} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {row.store_name}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {row.sku}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                              {row.region}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                              {row.segment}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                              {formatCurrency(Number(row.impacto) || 0)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {oportunidadData.length > 5 && (
-                      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                        Mostrando 5 de {oportunidadData.length} registros
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-3 pt-4">
