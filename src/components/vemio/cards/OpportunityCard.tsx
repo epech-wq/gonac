@@ -497,10 +497,31 @@ function OpportunityDetailTable({
               {type === 'ventaIncremental' && (
                 <>
                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Días Inv.
+                    Segmento
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                    Segmento
+                    Ópt. Días Inv.
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Real Días Inv.
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Ópt. Pto. Reorden
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Real Pto. Reorden
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Ópt. Tamaño Ped.
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Real Tamaño Ped.
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Ópt. Frecuencia
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    Real Frecuencia
                   </th>
                 </>
               )}
@@ -547,13 +568,34 @@ function OpportunityDetailTable({
                 )}
                 {type === 'ventaIncremental' && (
                   <>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-blue-600 font-medium">
-                      {registro.diasInventario ? `${registro.diasInventario}d` : '-'}
-                    </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getSegmentColor(registro.segmentoTienda || '')}`}>
                         {registro.segmentoTienda || '-'}
                       </span>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                      {registro.optimoDiasInventario !== null && registro.optimoDiasInventario !== undefined ? registro.optimoDiasInventario.toFixed(1) : '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                      {registro.realDiasInventario !== null && registro.realDiasInventario !== undefined ? registro.realDiasInventario.toFixed(1) : '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                      {registro.optimoPuntoReorden !== null && registro.optimoPuntoReorden !== undefined ? registro.optimoPuntoReorden.toFixed(0) : '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                      {registro.realPuntoReorden !== null && registro.realPuntoReorden !== undefined ? registro.realPuntoReorden.toFixed(0) : '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                      {registro.optimoTamanoPedido !== null && registro.optimoTamanoPedido !== undefined ? registro.optimoTamanoPedido.toFixed(0) : '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                      {registro.realTamanoPedido !== null && registro.realTamanoPedido !== undefined ? registro.realTamanoPedido.toFixed(0) : '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                      {registro.optimoFrecuencia !== null && registro.optimoFrecuencia !== undefined ? registro.optimoFrecuencia.toFixed(1) : '-'}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                      {registro.realFrecuencia !== null && registro.realFrecuencia !== undefined ? registro.realFrecuencia.toFixed(1) : '-'}
                     </td>
                   </>
                 )}

@@ -553,7 +553,13 @@ export class ValorizacionRepository {
         region,
         impacto,
         optimo_dias_inventario,
+        optimo_punto_reorden,
+        optimo_tamano_pedido,
+        optimo_frecuencia,
         real_dias_inventario,
+        real_punto_reorden,
+        real_tamano_pedido,
+        real_frecuencia,
         desviacion_dias_inventario
       `)
       .order('impacto', { ascending: false, nullsFirst: false });
@@ -574,7 +580,13 @@ export class ValorizacionRepository {
       region: String(item.region || ''),
       impacto: Number(item.impacto) || 0,
       optimo_dias_inventario: item.optimo_dias_inventario ? Number(item.optimo_dias_inventario) : null,
+      optimo_punto_reorden: item.optimo_punto_reorden ? Number(item.optimo_punto_reorden) : null,
+      optimo_tamano_pedido: item.optimo_tamano_pedido ? Number(item.optimo_tamano_pedido) : null,
+      optimo_frecuencia: item.optimo_frecuencia ? Number(item.optimo_frecuencia) : null,
       real_dias_inventario: item.real_dias_inventario ? Number(item.real_dias_inventario) : null,
+      real_punto_reorden: item.real_punto_reorden ? Number(item.real_punto_reorden) : null,
+      real_tamano_pedido: item.real_tamano_pedido ? Number(item.real_tamano_pedido) : null,
+      real_frecuencia: item.real_frecuencia ? Number(item.real_frecuencia) : null,
       desviacion_dias_inventario: item.desviacion_dias_inventario ? Number(item.desviacion_dias_inventario) : null,
     }));
   }

@@ -39,6 +39,15 @@ export interface DetailRecord {
   inventarioRemanente?: number;
   fechaCaducidad?: string;
   fechaDeteccion?: string;
+  // Venta Incremental specific fields
+  optimoDiasInventario?: number | null;
+  optimoPuntoReorden?: number | null;
+  optimoTamanoPedido?: number | null;
+  optimoFrecuencia?: number | null;
+  realDiasInventario?: number | null;
+  realPuntoReorden?: number | null;
+  realTamanoPedido?: number | null;
+  realFrecuencia?: number | null;
 }
 
 export interface Action {

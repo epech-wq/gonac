@@ -106,7 +106,13 @@ export interface VentaIncrementalDetalle {
   region: string;
   impacto: number;
   optimo_dias_inventario: number | null;
+  optimo_punto_reorden: number | null;
+  optimo_tamano_pedido: number | null;
+  optimo_frecuencia: number | null;
   real_dias_inventario: number | null;
+  real_punto_reorden: number | null;
+  real_tamano_pedido: number | null;
+  real_frecuencia: number | null;
   desviacion_dias_inventario: number | null;
 }
 

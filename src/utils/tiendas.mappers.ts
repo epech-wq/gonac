@@ -189,7 +189,13 @@ interface VentaIncrementalItem {
   region: string;
   impacto: number;
   optimo_dias_inventario: number | null;
+  optimo_punto_reorden: number | null;
+  optimo_tamano_pedido: number | null;
+  optimo_frecuencia: number | null;
   real_dias_inventario: number | null;
+  real_punto_reorden: number | null;
+  real_tamano_pedido: number | null;
+  real_frecuencia: number | null;
   desviacion_dias_inventario: number | null;
 }
 
@@ -205,6 +211,14 @@ export const transformVentaIncrementalData = (response: ApiResponse): DetailReco
       segmentoTienda: ventaIncrementalItem.segment?.toLowerCase(),
       impactoEstimado: ventaIncrementalItem.impacto,
       diasInventario: ventaIncrementalItem.real_dias_inventario || undefined,
+      optimoDiasInventario: ventaIncrementalItem.optimo_dias_inventario,
+      optimoPuntoReorden: ventaIncrementalItem.optimo_punto_reorden,
+      optimoTamanoPedido: ventaIncrementalItem.optimo_tamano_pedido,
+      optimoFrecuencia: ventaIncrementalItem.optimo_frecuencia,
+      realDiasInventario: ventaIncrementalItem.real_dias_inventario,
+      realPuntoReorden: ventaIncrementalItem.real_punto_reorden,
+      realTamanoPedido: ventaIncrementalItem.real_tamano_pedido,
+      realFrecuencia: ventaIncrementalItem.real_frecuencia,
     };
   });
 };
