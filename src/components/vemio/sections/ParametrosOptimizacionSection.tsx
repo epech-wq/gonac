@@ -17,7 +17,7 @@ import { useParametrosOptimos } from "@/hooks/useParametrosOptimos";
 export default function ParametrosOptimizacionSection() {
   const { data, loading, error } = useParametrosOptimos();
 
-  // Build parameters array from database data
+  // Build parameters array from database data (excluding Punto de Reorden)
   const parameters = data?.data ? [
     {
       id: 1,
@@ -27,14 +27,7 @@ export default function ParametrosOptimizacionSection() {
       unit: "días",
       icon: <TimeIcon />,
     },
-    {
-      id: 2,
-      title: "Punto de Reorden",
-      optimized: data.data.punto_reorden_optimo,
-      actual: data.data.punto_reorden_real,
-      unit: "unidades",
-      icon: <BoxTapped />,
-    },
+    // Punto de Reorden card is hidden
     {
       id: 3,
       title: "Tamaño de Pedido Óptimo",
@@ -98,8 +91,8 @@ export default function ParametrosOptimizacionSection() {
       
       {/* Loading State */}
       {loading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((id) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((id) => (
             <div
               key={id}
               className="rounded-2xl border p-5 bg-white dark:bg-white/[0.03] border-gray-200 dark:border-gray-800"
@@ -125,7 +118,7 @@ export default function ParametrosOptimizacionSection() {
 
       {/* Parameters Grid */}
       {!loading && !error && parameters.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {parameters.map((param) => {
             const deviation = calculateDeviationFromTarget(param.optimized, param.actual, param.id);
 

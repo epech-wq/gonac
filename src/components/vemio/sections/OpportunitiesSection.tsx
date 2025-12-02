@@ -127,13 +127,17 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   // Sort opportunities by impacto (highest to lowest)
   const sortedOpportunities = [...opportunities].sort((a, b) => b.impacto - a.impacto);
 
-  // Determine label based on opportunity type
-  const getImpactoLabel = (type: OpportunityType): 'Crítico' | 'Alto' | 'Medio' | 'Bajo' => {
-    if (type === 'caducidad') return 'Crítico';
-    if (type === 'sinVenta') return 'Bajo';
-    if (type === 'agotado') return 'Medio';
-    if (type === 'ventaIncremental') return 'Alto';
-    return 'Medio'; // Default fallback
+  // Determine label based on position in sorted order (hierarchy: Crítico > Alto > Medio > Bajo)
+  // If more than 4 cards, repeat "Medio" for intermediate cards
+  const getImpactoLabel = (index: number): 'Crítico' | 'Alto' | 'Medio' | 'Bajo' => {
+    // First 4 cards get unique labels
+    if (index === 0) return 'Crítico';
+    if (index === 1) return 'Alto';
+    if (index === 2) return 'Medio';
+    if (index === 3) return 'Bajo';
+    
+    // Cards beyond the 4th get "Medio" label
+    return 'Medio';
   };
 
   return (
@@ -144,7 +148,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
         </h3>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {sortedOpportunities.map((opportunity) => (
+          {sortedOpportunities.map((opportunity, index) => (
             <OpportunityCard
               key={opportunity.type}
               type={opportunity.type}
@@ -154,13 +158,13 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
               impacto={opportunity.impacto}
               risk={opportunity.risk}
               impactoColor={opportunity.impactoColor}
-              impactoLabel={getImpactoLabel(opportunity.type)}
+              impactoLabel={getImpactoLabel(index)}
               isExpanded={expandedOportunidad === opportunity.type}
               detailData={getDetailData(opportunity.type)}
               isLoading={getDetailLoading(opportunity.type)}
               onToggleExpand={() => toggleOportunidadExpanded(opportunity.type)}
               onActionClick={(actionType) => handleActionClick(actionType, opportunity)}
-              onVerAnalisisCompleto={opportunity.type === 'ventaIncremental' ? onVerAnalisisCompleto : undefined}
+              onVerAnalisisCompleto={onVerAnalisisCompleto}
             />
           ))}
         </div>

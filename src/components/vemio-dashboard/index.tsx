@@ -14,6 +14,7 @@ export { default as AnalisisCausasContent } from "./AnalisisCausasContent";
 // Supporting Components
 export { default as NavigationFilters } from "./NavigationFilters";
 export { default as NavigationBreadcrumb } from "./NavigationBreadcrumb";
+export { default as VemioFilters } from "./VemioFilters";
 export { default as CoDisenoModal } from "./CoDisenoModal";
 export { default as DatePicker } from "./DatePicker";
 

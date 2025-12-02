@@ -32,11 +32,22 @@ const NavigationBreadcrumb: React.FC<NavigationBreadcrumbProps> = ({
                 onClick={() => item.onClick?.() || onNavigate(item.level, item.value)}
                 className={`${
                   index === items.length - 1
-                    ? "text-gray-800 font-medium dark:text-white/90"
+                    ? "text-brand-600 font-semibold dark:text-brand-400"
                     : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 }`}
               >
-                {item.label}
+                {item.label.includes(':') ? (
+                  <>
+                    <span className={index === items.length - 1 ? "font-semibold" : ""}>
+                      {item.label.split(':')[0]}:
+                    </span>
+                    <span className="font-normal">
+                      {item.label.split(':')[1]}
+                    </span>
+                  </>
+                ) : (
+                  item.label
+                )}
               </button>
             </li>
           </React.Fragment>

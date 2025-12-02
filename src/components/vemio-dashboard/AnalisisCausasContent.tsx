@@ -148,10 +148,10 @@ const AnalisisCausasContent: React.FC<AnalisisCausasContentProps> = ({
       {/* Gap */}
       <div className="h-6" />
 
-      {/* Top 3 Causas Principales */}
+      {/* Top Causas Principales */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Top 3 Causas Principales
+          Top Causas Principales
         </h3>
         <div className="grid grid-cols-1 gap-6">
           {causas.map((causa) => (

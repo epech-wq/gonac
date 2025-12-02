@@ -42,6 +42,26 @@ export default function OpportunityCard({
 }: OpportunityCardProps) {
   const [showAnalisisCompleto, setShowAnalisisCompleto] = useState(false);
 
+  // Handle opening "Ver análisis completo" - close detail view if open
+  const handleToggleAnalisisCompleto = () => {
+    if (type === 'ventaIncremental') {
+      if (!showAnalisisCompleto && isExpanded) {
+        // Close detail view when opening análisis completo
+        onToggleExpand();
+      }
+      setShowAnalisisCompleto(!showAnalisisCompleto);
+    }
+  };
+
+  // Handle opening "Ver Detalle" - close análisis completo if open
+  const handleToggleDetalle = () => {
+    if (showAnalisisCompleto) {
+      // Close análisis completo when opening detail view
+      setShowAnalisisCompleto(false);
+    }
+    onToggleExpand();
+  };
+
   // Mock data for causas - similar to AnalisisCausasContent
   const causas = [
     {
@@ -278,16 +298,21 @@ export default function OpportunityCard({
           </div>
         </div>
 
-        {/* Ver análisis completo link - Only for Venta Incremental */}
-        {onVerAnalisisCompleto && type === 'ventaIncremental' && (
+        {/* Ver análisis completo link - Show for all cards, but disabled for non-ventaIncremental */}
+        {onVerAnalisisCompleto && (
           <div className="mb-3 flex justify-center">
             <button
-              onClick={() => setShowAnalisisCompleto(!showAnalisisCompleto)}
-              className="text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors flex items-center gap-1"
+              onClick={handleToggleAnalisisCompleto}
+              disabled={type !== 'ventaIncremental'}
+              className={`text-sm font-medium transition-colors flex items-center gap-1 ${
+                type === 'ventaIncremental'
+                  ? 'text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 cursor-pointer'
+                  : 'text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
+              }`}
             >
               Ver análisis completo
               <svg
-                className={`h-4 w-4 transform transition-transform ${showAnalisisCompleto ? 'rotate-180' : ''}`}
+                className={`h-4 w-4 transform transition-transform ${showAnalisisCompleto && type === 'ventaIncremental' ? 'rotate-180' : ''}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -309,7 +334,7 @@ export default function OpportunityCard({
           </button>
         ) : detailData.length > 0 ? (
           <button
-            onClick={onToggleExpand}
+            onClick={handleToggleDetalle}
             className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
           >
             <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -341,7 +366,7 @@ export default function OpportunityCard({
       {showAnalisisCompleto && type === 'ventaIncremental' && (
         <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-            Top 3 Causas Principales
+            Top Causas Principales
           </h3>
           <div className="space-y-4">
             {causas.map((causa) => (
