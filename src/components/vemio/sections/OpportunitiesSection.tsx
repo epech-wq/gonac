@@ -2,7 +2,7 @@
  * Opportunities Section Component
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import OpportunityCard from '../cards/OpportunityCard';
 import WizardAccionesGenerales from '../modals/WizardAccionesGenerales';
 import { CoDisenoModal } from '@/components/vemio-dashboard';
@@ -20,6 +20,8 @@ import {
   transformVentaIncrementalData
 } from '@/utils/tiendas.mappers';
 import type { Opportunity, OpportunityType, DetailRecord } from '@/types/tiendas.types';
+import { useParametrosOptimos } from '@/hooks/useParametrosOptimos';
+import type { CausaData } from '@/components/vemio-dashboard/types';
 
 interface OpportunitiesSectionProps {
   opportunities: Opportunity[];
@@ -33,6 +35,65 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   const [coDisenoModalOpen, setCoDisenoModalOpen] = useState(false);
   const [ventaIncrementalImpacto, setVentaIncrementalImpacto] = useState<number>(0);
   const [ventaIncrementalCausas, setVentaIncrementalCausas] = useState<any[]>([]);
+
+  // Fetch parametros data to share with Venta Incremental card
+  const { data: parametrosData } = useParametrosOptimos();
+
+  // Transform parametros data into CausaData format for Venta Incremental
+  const ventaIncrementalCausasData = useMemo((): CausaData[] => {
+    if (!parametrosData?.data) return [];
+
+    const globalData = parametrosData.data;
+
+    const getTendencia = (real: number | null, optimo: number | null): "up" | "down" | "neutral" => {
+      if (real === null || optimo === null) return "neutral";
+      const diff = real - optimo;
+      const diffPct = Math.abs(diff / optimo * 100);
+
+      if (diffPct < 5) return "neutral";
+      return real > optimo ? "up" : "down";
+    };
+
+    const formatDesvio = (real: number | null, optimo: number | null): string => {
+      if (real === null || optimo === null) return "0%";
+      const desviacion_pct = ((real - optimo) / optimo) * 100;
+      const sign = desviacion_pct >= 0 ? "+" : "";
+      return `${sign}${desviacion_pct.toFixed(1)}%`;
+    };
+
+    return [
+      {
+        id: 1,
+        titulo: "Días Inventario",
+        subtitulo: `Optimización de inventario`,
+        tendencia: getTendencia(globalData.dias_inventario_real, globalData.dias_inventario_optimo),
+        actual: globalData.dias_inventario_real || 0,
+        optimo: globalData.dias_inventario_optimo || 0,
+        desvio: formatDesvio(globalData.dias_inventario_real, globalData.dias_inventario_optimo),
+        impacto: globalData.valor_dias_inventario || 0,
+      },
+      {
+        id: 2,
+        titulo: "Tamaño Pedido",
+        subtitulo: `Optimización de pedidos`,
+        tendencia: getTendencia(globalData.tamano_pedido_real, globalData.tamano_pedido_optimo),
+        actual: globalData.tamano_pedido_real || 0,
+        optimo: globalData.tamano_pedido_optimo || 0,
+        desvio: formatDesvio(globalData.tamano_pedido_real, globalData.tamano_pedido_optimo),
+        impacto: globalData.valor_tamano_pedido || 0,
+      },
+      {
+        id: 3,
+        titulo: "Frecuencia",
+        subtitulo: `Optimización de frecuencia`,
+        tendencia: getTendencia(globalData.frecuencia_real, globalData.frecuencia_optima),
+        actual: globalData.frecuencia_real || 0,
+        optimo: globalData.frecuencia_optima || 0,
+        desvio: formatDesvio(globalData.frecuencia_real, globalData.frecuencia_optima),
+        impacto: globalData.valor_frecuencia || 0,
+      },
+    ];
+  }, [parametrosData]);
 
   // Fetch detailed data
   const { data: agotadoDetalleData, loading: agotadoLoading } = useAgotadoDetalle();
@@ -69,7 +130,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   const handleActionClick = (actionType: string, opportunity: Opportunity, causasData?: any[]) => {
     if (actionType === 'ajustar_parametro' && opportunity.type === 'ventaIncremental') {
       setVentaIncrementalImpacto(opportunity.impacto);
-      setVentaIncrementalCausas(causasData || []);
+      setVentaIncrementalCausas(ventaIncrementalCausasData);
       setCoDisenoModalOpen(true);
       return;
     }
@@ -137,7 +198,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
     if (index === 1) return 'Alto';
     if (index === 2) return 'Medio';
     if (index === 3) return 'Bajo';
-    
+
     // Cards beyond the 4th get "Medio" label
     return 'Medio';
   };
@@ -167,6 +228,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
               onToggleExpand={() => toggleOportunidadExpanded(opportunity.type)}
               onActionClick={(actionType, causasData) => handleActionClick(actionType, opportunity, causasData)}
               onVerAnalisisCompleto={onVerAnalisisCompleto}
+              preloadedCausasData={opportunity.type === 'ventaIncremental' ? ventaIncrementalCausasData : undefined}
             />
           ))}
         </div>

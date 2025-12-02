@@ -18,7 +18,7 @@ export class ParametrosOptimosRepository {
     const { data, error } = await this.supabase
       .schema(getDbSchema())
       .from('vw_comparacion_optimo_real_global')
-      .select('optimo_dias_inventario, optimo_punto_reorden, optimo_tamano_pedido, optimo_frecuencia, real_dias_inventario, real_punto_reorden, real_tamano_pedido, real_frecuencia, desviacion_dias_inventario_pct, desviacion_punto_reorden_pct, desviacion_tamano_pedido_pct, desviacion_frecuencia_pct')
+      .select('optimo_dias_inventario, optimo_punto_reorden, optimo_tamano_pedido, optimo_frecuencia, real_dias_inventario, real_punto_reorden, real_tamano_pedido, real_frecuencia, desviacion_dias_inventario_pct, desviacion_punto_reorden_pct, desviacion_tamano_pedido_pct, desviacion_frecuencia_pct, valor_dias_inventario, valor_tamano_pedido, valor_frecuencia')
       .limit(1)
       .maybeSingle();
 
@@ -43,6 +43,9 @@ export class ParametrosOptimosRepository {
       desviacion_punto_reorden_pct: Number(data.desviacion_punto_reorden_pct) || 0,
       desviacion_tamano_pedido_pct: Number(data.desviacion_tamano_pedido_pct) || 0,
       desviacion_frecuencia_pct: Number(data.desviacion_frecuencia_pct) || 0,
+      valor_dias_inventario: Number(data.valor_dias_inventario) || 0,
+      valor_tamano_pedido: Number(data.valor_tamano_pedido) || 0,
+      valor_frecuencia: Number(data.valor_frecuencia) || 0,
     };
   }
 }

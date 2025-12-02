@@ -4,7 +4,6 @@
 
 import { useState, useEffect } from 'react';
 import type { RiskLevel, OpportunityType, DetailRecord } from '@/types/tiendas.types';
-import type { ComparacionOptimoRealGlobal } from '@/types/parametros';
 import { getBadgeColor, getSegmentColor } from '@/utils/tiendas.mappers';
 import { formatCurrency, formatNumber, formatDate } from '@/utils/formatters';
 
@@ -34,6 +33,7 @@ interface OpportunityCardProps {
   onToggleExpand: () => void;
   onActionClick?: (actionType: string, causasData?: CausaData[]) => void;
   onVerAnalisisCompleto?: () => void;
+  preloadedCausasData?: CausaData[];
 }
 
 export default function OpportunityCard({
@@ -51,93 +51,18 @@ export default function OpportunityCard({
   onToggleExpand,
   onActionClick,
   onVerAnalisisCompleto,
+  preloadedCausasData,
 }: OpportunityCardProps) {
   const [showAnalisisCompleto, setShowAnalisisCompleto] = useState(false);
-  const [causas, setCausas] = useState<CausaData[]>([]);
+  const [causas, setCausas] = useState<CausaData[]>(preloadedCausasData || []);
   const [causasLoading, setCausasLoading] = useState(false);
 
-  // Fetch real data when análisis completo is opened
+  // Update causas when preloadedCausasData changes
   useEffect(() => {
-    if (showAnalisisCompleto && type === 'ventaIncremental' && causas.length === 0) {
-      fetchCausasData();
+    if (preloadedCausasData && preloadedCausasData.length > 0) {
+      setCausas(preloadedCausasData);
     }
-  }, [showAnalisisCompleto, type]);
-
-  const fetchCausasData = async () => {
-    try {
-      setCausasLoading(true);
-      const response = await fetch('/api/parametros?view=global');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch parametros data');
-      }
-      
-      const result = await response.json();
-      
-      if (!result.success || !result.data) {
-        throw new Error('Invalid response format');
-      }
-      
-      const globalData: ComparacionOptimoRealGlobal = result.data;
-      
-      // Transform the data into CausaData format
-      const causasData: CausaData[] = [
-        {
-          id: 1,
-          titulo: "Días Inventario",
-          subtitulo: `${globalData.total_tiendas || 0} tiendas • ${globalData.total_skus || 0} SKUs`,
-          tendencia: getTendenciaFromData(globalData.real_dias_inventario, globalData.optimo_dias_inventario),
-          actual: globalData.real_dias_inventario || 0,
-          optimo: globalData.optimo_dias_inventario || 0,
-          desvio: formatDesvioFromData(globalData.desviacion_dias_inventario_pct),
-          impacto: globalData.valor_dias_inventario || 0,
-        },
-        {
-          id: 2,
-          titulo: "Tamaño Pedido",
-          subtitulo: `${globalData.total_tiendas || 0} tiendas • ${globalData.total_skus || 0} SKUs`,
-          tendencia: getTendenciaFromData(globalData.real_tamano_pedido, globalData.optimo_tamano_pedido),
-          actual: globalData.real_tamano_pedido || 0,
-          optimo: globalData.optimo_tamano_pedido || 0,
-          desvio: formatDesvioFromData(globalData.desviacion_tamano_pedido_pct),
-          impacto: globalData.valor_tamano_pedido || 0,
-        },
-        {
-          id: 3,
-          titulo: "Frecuencia",
-          subtitulo: `${globalData.total_tiendas || 0} tiendas • ${globalData.total_skus || 0} SKUs`,
-          tendencia: getTendenciaFromData(globalData.real_frecuencia, globalData.optimo_frecuencia),
-          actual: globalData.real_frecuencia || 0,
-          optimo: globalData.optimo_frecuencia || 0,
-          desvio: formatDesvioFromData(globalData.desviacion_frecuencia_pct),
-          impacto: globalData.valor_frecuencia || 0,
-        },
-      ];
-      
-      setCausas(causasData);
-    } catch (err) {
-      console.error('Error fetching causas data:', err);
-      // Set empty array on error to prevent retry loops
-      setCausas([]);
-    } finally {
-      setCausasLoading(false);
-    }
-  };
-
-  const getTendenciaFromData = (real: number | null, optimo: number | null): "up" | "down" | "neutral" => {
-    if (real === null || optimo === null) return "neutral";
-    const diff = real - optimo;
-    const diffPct = Math.abs(diff / optimo * 100);
-    
-    if (diffPct < 5) return "neutral";
-    return real > optimo ? "up" : "down";
-  };
-
-  const formatDesvioFromData = (desviacion_pct: number | null): string => {
-    if (desviacion_pct === null) return "0%";
-    const sign = desviacion_pct >= 0 ? "+" : "";
-    return `${sign}${desviacion_pct.toFixed(1)}%`;
-  };
+  }, [preloadedCausasData]);
 
   // Handle opening "Ver análisis completo" - close detail view if open
   const handleToggleAnalisisCompleto = () => {
@@ -367,11 +292,10 @@ export default function OpportunityCard({
             <button
               onClick={handleToggleAnalisisCompleto}
               disabled={type !== 'ventaIncremental'}
-              className={`text-sm font-medium transition-colors flex items-center gap-1 ${
-                type === 'ventaIncremental'
-                  ? 'text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 cursor-pointer'
-                  : 'text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
-              }`}
+              className={`text-sm font-medium transition-colors flex items-center gap-1 ${type === 'ventaIncremental'
+                ? 'text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 cursor-pointer'
+                : 'text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
+                }`}
             >
               Ver análisis completo
               <svg
@@ -444,68 +368,68 @@ export default function OpportunityCard({
           {!causasLoading && causas.length > 0 && (
             <div className="space-y-4">
               {causas.map((causa) => (
-              <div
-                key={causa.id}
-                className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-              >
-                {/* Header with number circle, title and trend icon */}
-                <div className="flex items-start gap-3 mb-4">
-                  {/* Number circle */}
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white font-semibold text-sm flex-shrink-0">
-                    {causa.id}
+                <div
+                  key={causa.id}
+                  className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                >
+                  {/* Header with number circle, title and trend icon */}
+                  <div className="flex items-start gap-3 mb-4">
+                    {/* Number circle */}
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-500 text-white font-semibold text-sm flex-shrink-0">
+                      {causa.id}
+                    </div>
+                    {/* Title and subtitle with trend */}
+                    <div className="flex-1 flex items-start justify-between min-w-0">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {causa.titulo}
+                        </h4>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                          {causa.subtitulo}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0 ml-2">
+                        {getTrendIcon(causa.tendencia)}
+                      </div>
+                    </div>
                   </div>
-                  {/* Title and subtitle with trend */}
-                  <div className="flex-1 flex items-start justify-between min-w-0">
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {causa.titulo}
-                      </h4>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                        {causa.subtitulo}
+
+                  {/* Stats in row - compact layout */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+                        Actual
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {(Math.trunc(causa.actual * 10) / 10).toFixed(1)}
                       </p>
                     </div>
-                    <div className="flex-shrink-0 ml-2">
-                      {getTrendIcon(causa.tendencia)}
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+                        Óptimo
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {(Math.trunc(causa.optimo * 10) / 10).toFixed(1)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+                        Desvío
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {causa.desvio}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+                        Impacto
+                      </p>
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                        ${(Math.trunc((causa.impacto / 1000) * 10) / 10).toFixed(1)}K
+                      </p>
                     </div>
                   </div>
                 </div>
-
-                {/* Stats in row - compact layout */}
-                <div className="grid grid-cols-4 gap-2">
-                  <div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
-                      Actual
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {(Math.trunc(causa.actual * 10) / 10).toFixed(1)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
-                      Óptimo
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {(Math.trunc(causa.optimo * 10) / 10).toFixed(1)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
-                      Desvío
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {causa.desvio}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
-                      Impacto
-                    </p>
-                    <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-                      ${(Math.trunc((causa.impacto / 1000) * 10) / 10).toFixed(1)}K
-                    </p>
-                  </div>
-                </div>
-              </div>
               ))}
             </div>
           )}
