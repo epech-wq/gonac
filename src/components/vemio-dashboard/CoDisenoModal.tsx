@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Button from "@/components/ui/button/Button";
 import DatePicker from "./DatePicker";
 import { CloseIcon, BoltIcon, InfoIcon, CheckCircleIcon } from "@/icons";
 import type { CoDisenoModalProps } from "./types";
 import { formatCurrency } from "@/utils/formatters";
+import type { CausaData } from "./types";
 
 interface OportunidadRow {
   id_store: number;
@@ -30,16 +31,133 @@ interface OportunidadRow {
   impacto: number;
 }
 
-const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto = 0 }) => {
-  const [diasInventario, setDiasInventario] = useState(14);
-  const [tamanoPedido, setTamanoPedido] = useState(500);
-  const [frecuenciaOptima, setFrecuenciaOptima] = useState(7);
+// Helper function to calculate dynamic range with padding
+const calculateDynamicRange = (
+  actual: number | undefined,
+  optimo: number | undefined,
+  defaultMin: number,
+  defaultMax: number,
+  paddingPercent: number = 0.3 // 30% padding on each side
+): { min: number; max: number } => {
+  if (actual === undefined && optimo === undefined) {
+    return { min: defaultMin, max: defaultMax };
+  }
+
+  const values = [actual, optimo].filter((v): v is number => v !== undefined);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  
+  // Calculate range with padding
+  const range = maxValue - minValue;
+  // If range is 0 (actual === optimo), use a percentage of the value as padding
+  const padding = range === 0 
+    ? Math.max(minValue * paddingPercent, (defaultMax - defaultMin) * 0.1)
+    : Math.max(range * paddingPercent, range * 0.2); // At least 20% padding
+  
+  const calculatedMin = Math.max(defaultMin, Math.floor(minValue - padding));
+  const calculatedMax = Math.min(defaultMax, Math.ceil(maxValue + padding));
+  
+  // Ensure we have a reasonable range (at least 10% of default range)
+  const minRange = (defaultMax - defaultMin) * 0.1;
+  if (calculatedMax - calculatedMin < minRange) {
+    const center = (calculatedMin + calculatedMax) / 2;
+    return {
+      min: Math.max(defaultMin, Math.floor(center - minRange / 2)),
+      max: Math.min(defaultMax, Math.ceil(center + minRange / 2))
+    };
+  }
+  
+  return { min: calculatedMin, max: calculatedMax };
+};
+
+const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto = 0, causasData = [] }) => {
+  // Extract values from causas data
+  const diasInventarioCausa = causasData.find(c => 
+    c.titulo.toLowerCase().includes('dias') || 
+    c.titulo.toLowerCase().includes('inventario') ||
+    c.titulo.toLowerCase().includes('días')
+  );
+  const tamanoPedidoCausa = causasData.find(c => 
+    c.titulo.toLowerCase().includes('tamaño') || 
+    c.titulo.toLowerCase().includes('pedido') ||
+    c.titulo.toLowerCase().includes('tamano')
+  );
+  const frecuenciaCausa = causasData.find(c => 
+    c.titulo.toLowerCase().includes('frecuencia') ||
+    c.titulo.toLowerCase() === 'frecuencia' ||
+    c.titulo.toLowerCase().includes('frecuencia optima') ||
+    c.titulo.toLowerCase().includes('frecuencia óptima')
+  );
+
+  // Calculate dynamic ranges (recalculate when causasData changes)
+  const diasInventarioRange = useMemo(() => calculateDynamicRange(
+    diasInventarioCausa?.actual,
+    diasInventarioCausa?.optimo,
+    5,
+    30,
+    0.3
+  ), [diasInventarioCausa?.actual, diasInventarioCausa?.optimo]);
+  
+  const tamanoPedidoRange = useMemo(() => calculateDynamicRange(
+    tamanoPedidoCausa?.actual,
+    tamanoPedidoCausa?.optimo,
+    100,
+    1000,
+    0.3
+  ), [tamanoPedidoCausa?.actual, tamanoPedidoCausa?.optimo]);
+  
+  const frecuenciaRange = useMemo(() => {
+    const range = calculateDynamicRange(
+      frecuenciaCausa?.actual,
+      frecuenciaCausa?.optimo,
+      1,
+      120, // Increased max to 120 to allow values up to 100+
+      0.3
+    );
+    // Ensure min < max (at least a range of 1)
+    if (range.min >= range.max) {
+      return { min: 1, max: 120 };
+    }
+    return range;
+  }, [frecuenciaCausa?.actual, frecuenciaCausa?.optimo]);
+
+  // Initialize sliders with optimo values from causas, clamped to dynamic ranges
+  const getInitialValue = (optimo: number | undefined, defaultVal: number, range: { min: number; max: number }) => {
+    const value = optimo !== undefined ? optimo : defaultVal;
+    return Math.min(Math.max(value, range.min), range.max);
+  };
+
+  const [diasInventario, setDiasInventario] = useState(() => 
+    getInitialValue(diasInventarioCausa?.optimo, 14, diasInventarioRange)
+  );
+  const [tamanoPedido, setTamanoPedido] = useState(() => 
+    getInitialValue(tamanoPedidoCausa?.optimo, 500, tamanoPedidoRange)
+  );
+  const [frecuenciaOptima, setFrecuenciaOptima] = useState(() => 
+    getInitialValue(frecuenciaCausa?.optimo, 7, frecuenciaRange)
+  );
   const [responsable, setResponsable] = useState("");
   const [fechaLimite, setFechaLimite] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
   const [oportunidadData, setOportunidadData] = useState<OportunidadRow[]>([]);
   const [showDetails, setShowDetails] = useState(false);
   const mountedRef = useRef(false);
+
+  // Update sliders when causasData changes, clamping to dynamic ranges
+  useEffect(() => {
+    if (diasInventarioCausa?.optimo !== undefined) {
+      const clamped = Math.min(Math.max(diasInventarioCausa.optimo, diasInventarioRange.min), diasInventarioRange.max);
+      setDiasInventario(clamped);
+    }
+    if (tamanoPedidoCausa?.optimo !== undefined) {
+      const clamped = Math.min(Math.max(tamanoPedidoCausa.optimo, tamanoPedidoRange.min), tamanoPedidoRange.max);
+      setTamanoPedido(clamped);
+    }
+    if (frecuenciaCausa?.optimo !== undefined) {
+      const clamped = Math.min(Math.max(frecuenciaCausa.optimo, frecuenciaRange.min), frecuenciaRange.max);
+      setFrecuenciaOptima(clamped);
+    }
+  }, [causasData, diasInventarioCausa?.optimo, tamanoPedidoCausa?.optimo, frecuenciaCausa?.optimo, diasInventarioRange, tamanoPedidoRange, frecuenciaRange]);
 
   // Debounced function to call the SQL function
   useEffect(() => {
@@ -107,6 +225,168 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
 
   // Get first 5 rows for display
   const displayedRows = oportunidadData.slice(0, 5);
+
+  // Helper function to calculate marker position percentage
+  const calculateMarkerPosition = (value: number, min: number, max: number): number => {
+    if (max <= min) return 50; // Fallback if range is invalid
+    const position = ((value - min) / (max - min)) * 100;
+    // Clamp between 0 and 100 to prevent markers from going outside the slider
+    return Math.max(0, Math.min(100, position));
+  };
+
+  // Helper component for slider with markers
+  const SliderWithMarkers = ({ 
+    value, 
+    onChange, 
+    min, 
+    max, 
+    step = 1,
+    optimo, 
+    real,
+    label 
+  }: { 
+    value: number; 
+    onChange: (value: number) => void; 
+    min: number; 
+    max: number; 
+    step?: number;
+    optimo?: number; 
+    real?: number;
+    label: string;
+  }) => {
+    // Ensure min < max (handle edge cases)
+    const validMin = min < max ? min : Math.max(1, min - 1);
+    const validMax = max > min ? max : min + 1; // Use min + 1 as fallback instead of hardcoded 30
+    
+    const [localValue, setLocalValue] = useState(() => {
+      const clamped = Math.min(Math.max(value, validMin), validMax);
+      return clamped;
+    });
+    
+    const optimoPos = optimo !== undefined && optimo !== null && validMin < validMax 
+      ? calculateMarkerPosition(optimo, validMin, validMax) 
+      : null;
+    const realPos = real !== undefined && real !== null && validMin < validMax
+      ? calculateMarkerPosition(real, validMin, validMax) 
+      : null;
+
+    // Sync local value with prop value (clamped to min/max)
+    useEffect(() => {
+      const clampedValue = Math.min(Math.max(value, validMin), validMax);
+      setLocalValue(clampedValue);
+    }, [value, validMin, validMax]);
+
+    // Debounced onChange
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        if (localValue !== value) {
+          onChange(localValue);
+        }
+      }, 300); // 300ms debounce
+
+      return () => clearTimeout(timer);
+    }, [localValue, onChange, value]);
+
+    const handleSliderChange = (newValue: number) => {
+      const clampedValue = Math.min(Math.max(newValue, validMin), validMax);
+      setLocalValue(clampedValue);
+    };
+
+    const handleNumberChange = (newValue: number) => {
+      // Clamp value to min/max range
+      const clampedValue = Math.min(Math.max(newValue, validMin), validMax);
+      setLocalValue(clampedValue);
+      onChange(clampedValue); // Immediate update for number input
+    };
+
+    return (
+      <div className="relative">
+        {/* Markers above slider */}
+        {(optimoPos !== null || realPos !== null) && (
+          <div className="relative h-6 mb-2">
+            {/* Optimo marker */}
+            {optimoPos !== null && (
+              <div
+                className="absolute transform -translate-x-1/2"
+                style={{ left: `${optimoPos}%` }}
+              >
+                <div className="text-center">
+                  <span className="text-xs font-medium text-green-600 dark:text-green-400">Optimo</span>
+                </div>
+              </div>
+            )}
+            {/* Real marker */}
+            {realPos !== null && (
+              <div
+                className="absolute transform -translate-x-1/2"
+                style={{ left: `${realPos}%` }}
+              >
+                <div className="text-center">
+                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Real</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        <div className="flex items-center gap-4">
+          <div className="flex-1 relative">
+            {/* Background track */}
+            <div className="h-2 bg-gray-200 rounded-lg dark:bg-gray-700"></div>
+            
+            {/* Markers on track - dots */}
+            {(optimoPos !== null || realPos !== null) && (
+              <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none">
+                {/* Optimo marker dot */}
+                {optimoPos !== null && (
+                  <div
+                    className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: `${optimoPos}%` }}
+                  >
+                    <div className="w-3 h-3 rounded-full bg-green-500 dark:bg-green-400 border-2 border-white dark:border-gray-800 shadow-sm"></div>
+                  </div>
+                )}
+                {/* Real marker dot */}
+                {realPos !== null && (
+                  <div
+                    className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: `${realPos}%` }}
+                  >
+                    <div className="w-3 h-3 rounded-full bg-blue-500 dark:bg-blue-400 border-2 border-white dark:border-gray-800 shadow-sm"></div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Slider input */}
+            <input
+              type="range"
+              min={validMin}
+              max={validMax}
+              step={step}
+              value={localValue}
+              onChange={(e) => handleSliderChange(Number(e.target.value))}
+              className="absolute top-0 w-full h-2 bg-transparent appearance-none cursor-pointer z-10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-brand-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+            />
+          </div>
+          <input
+            type="number"
+            min={validMin}
+            max={validMax}
+            step={step}
+            value={localValue}
+            onChange={(e) => {
+              const numValue = Number(e.target.value);
+              if (!isNaN(numValue)) {
+                handleNumberChange(numValue);
+              }
+            }}
+            className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+          />
+        </div>
+      </div>
+    );
+  };
 
   if (!isOpen) return null;
 
@@ -193,22 +473,15 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Dias de inventario óptimo
                 </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="5"
-                    max="30"
-                    value={diasInventario}
-                    onChange={(e) => setDiasInventario(Number(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                  />
-                  <input
-                    type="number"
-                    value={diasInventario}
-                    onChange={(e) => setDiasInventario(Number(e.target.value))}
-                    className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                  />
-                </div>
+                <SliderWithMarkers
+                  value={diasInventario}
+                  onChange={setDiasInventario}
+                  min={diasInventarioRange.min}
+                  max={diasInventarioRange.max}
+                  optimo={diasInventarioCausa?.optimo}
+                  real={diasInventarioCausa?.actual}
+                  label="Dias de inventario"
+                />
               </div>
 
               {/* Tamaño de Pedido */}
@@ -216,23 +489,16 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Tamaño de Pedido
                 </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="100"
-                    max="1000"
-                    step="50"
-                    value={tamanoPedido}
-                    onChange={(e) => setTamanoPedido(Number(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                  />
-                  <input
-                    type="number"
-                    value={tamanoPedido}
-                    onChange={(e) => setTamanoPedido(Number(e.target.value))}
-                    className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                  />
-                </div>
+                <SliderWithMarkers
+                  value={tamanoPedido}
+                  onChange={setTamanoPedido}
+                  min={tamanoPedidoRange.min}
+                  max={tamanoPedidoRange.max}
+                  step={Math.max(10, Math.floor((tamanoPedidoRange.max - tamanoPedidoRange.min) / 50))}
+                  optimo={tamanoPedidoCausa?.optimo}
+                  real={tamanoPedidoCausa?.actual}
+                  label="Tamaño de Pedido"
+                />
               </div>
 
               {/* Frecuencia Optima */}
@@ -240,23 +506,16 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Frecuencia Optima
                 </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="1"
-                    max="30"
-                    step="1"
-                    value={frecuenciaOptima}
-                    onChange={(e) => setFrecuenciaOptima(Number(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                  />
-                  <input
-                    type="number"
-                    value={frecuenciaOptima}
-                    onChange={(e) => setFrecuenciaOptima(Number(e.target.value))}
-                    className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
-                  />
-                </div>
+                <SliderWithMarkers
+                  value={frecuenciaOptima}
+                  onChange={setFrecuenciaOptima}
+                  min={frecuenciaRange.min}
+                  max={frecuenciaRange.max}
+                  step={1}
+                  optimo={frecuenciaCausa?.optimo}
+                  real={frecuenciaCausa?.actual}
+                  label="Frecuencia Optima"
+                />
               </div>
             </div>
           </div>

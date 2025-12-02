@@ -7,6 +7,17 @@ import type { RiskLevel, OpportunityType, DetailRecord } from '@/types/tiendas.t
 import { getBadgeColor, getSegmentColor } from '@/utils/tiendas.mappers';
 import { formatCurrency, formatNumber, formatDate } from '@/utils/formatters';
 
+interface CausaData {
+  id: number;
+  titulo: string;
+  subtitulo: string;
+  tendencia: "up" | "down" | "neutral";
+  actual: number;
+  optimo: number;
+  desvio: string;
+  correlacion: number;
+}
+
 interface OpportunityCardProps {
   type: OpportunityType;
   title: string;
@@ -20,7 +31,7 @@ interface OpportunityCardProps {
   detailData: DetailRecord[];
   isLoading: boolean;
   onToggleExpand: () => void;
-  onActionClick?: (actionType: string) => void;
+  onActionClick?: (actionType: string, causasData?: CausaData[]) => void;
   onVerAnalisisCompleto?: () => void;
 }
 
@@ -284,7 +295,7 @@ export default function OpportunityCard({
             {/* Ajustar Parámetro - VERDE (Optimización) para Venta Incremental */}
             {type === 'ventaIncremental' && (
               <button
-                onClick={() => onActionClick?.('ajustar_parametro')}
+                onClick={() => onActionClick?.('ajustar_parametro', causas)}
                 className="w-full text-left px-3 py-2.5 text-xs font-medium text-white bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 rounded shadow-sm hover:shadow-md transition-all duration-200 border border-green-700 dark:border-green-600"
               >
                 <span className="flex items-center gap-2">

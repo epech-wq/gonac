@@ -96,10 +96,22 @@ export interface CausaCard {
 }
 
 // Modal Types
+export interface CausaData {
+  id: number;
+  titulo: string;
+  subtitulo: string;
+  tendencia: "up" | "down" | "neutral";
+  actual: number;
+  optimo: number;
+  desvio: string;
+  correlacion: number;
+}
+
 export interface CoDisenoModalProps {
   isOpen: boolean;
   onClose: () => void;
   impacto?: number; // Impacto potencial value from Venta Incremental card
+  causasData?: CausaData[]; // Data from "Ver análisis completo" section
 }
 
 export interface AnalisisCausasContentProps {

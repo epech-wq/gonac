@@ -32,6 +32,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   const [modalAction, setModalAction] = useState<{ tipo: TipoAccionGeneral; opportunity: Opportunity } | null>(null);
   const [coDisenoModalOpen, setCoDisenoModalOpen] = useState(false);
   const [ventaIncrementalImpacto, setVentaIncrementalImpacto] = useState<number>(0);
+  const [ventaIncrementalCausas, setVentaIncrementalCausas] = useState<any[]>([]);
 
   // Fetch detailed data
   const { data: agotadoDetalleData, loading: agotadoLoading } = useAgotadoDetalle();
@@ -65,9 +66,10 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
     setExpandedOportunidad(expandedOportunidad === type ? null : type);
   };
 
-  const handleActionClick = (actionType: string, opportunity: Opportunity) => {
+  const handleActionClick = (actionType: string, opportunity: Opportunity, causasData?: any[]) => {
     if (actionType === 'ajustar_parametro' && opportunity.type === 'ventaIncremental') {
       setVentaIncrementalImpacto(opportunity.impacto);
+      setVentaIncrementalCausas(causasData || []);
       setCoDisenoModalOpen(true);
       return;
     }
@@ -163,7 +165,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
               detailData={getDetailData(opportunity.type)}
               isLoading={getDetailLoading(opportunity.type)}
               onToggleExpand={() => toggleOportunidadExpanded(opportunity.type)}
-              onActionClick={(actionType) => handleActionClick(actionType, opportunity)}
+              onActionClick={(actionType, causasData) => handleActionClick(actionType, opportunity, causasData)}
               onVerAnalisisCompleto={onVerAnalisisCompleto}
             />
           ))}
@@ -183,8 +185,12 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
       {/* Co-Diseño Modal */}
       <CoDisenoModal
         isOpen={coDisenoModalOpen}
-        onClose={() => setCoDisenoModalOpen(false)}
+        onClose={() => {
+          setCoDisenoModalOpen(false);
+          setVentaIncrementalCausas([]);
+        }}
         impacto={ventaIncrementalImpacto}
+        causasData={ventaIncrementalCausas}
       />
     </>
   );

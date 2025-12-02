@@ -237,6 +237,7 @@ const AnalisisCausasContent: React.FC<AnalisisCausasContentProps> = ({
       <CoDisenoModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        causasData={causas}
       />
     </div>
   );
