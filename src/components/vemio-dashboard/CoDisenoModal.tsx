@@ -31,58 +31,70 @@ interface OportunidadRow {
   impacto: number;
 }
 
-// Helper function to calculate dynamic range with padding
+// Helper function to calculate dynamic range centered on optimo value
 const calculateDynamicRange = (
   actual: number | undefined,
   optimo: number | undefined,
   defaultMin: number,
   defaultMax: number,
-  paddingPercent: number = 0.3 // 30% padding on each side
+  paddingPercent: number = 0.5 // 50% range on each side of optimo
 ): { min: number; max: number } => {
-  if (actual === undefined && optimo === undefined) {
+  // If no optimo value, use default range
+  if (optimo === undefined || optimo === null) {
     return { min: defaultMin, max: defaultMax };
   }
 
-  const values = [actual, optimo].filter((v): v is number => v !== undefined);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  
-  // Calculate range with padding
-  const range = maxValue - minValue;
-  // If range is 0 (actual === optimo), use a percentage of the value as padding
-  const padding = range === 0 
-    ? Math.max(minValue * paddingPercent, (defaultMax - defaultMin) * 0.1)
-    : Math.max(range * paddingPercent, range * 0.2); // At least 20% padding
-  
-  const calculatedMin = Math.max(defaultMin, Math.floor(minValue - padding));
-  const calculatedMax = Math.min(defaultMax, Math.ceil(maxValue + padding));
-  
-  // Ensure we have a reasonable range (at least 10% of default range)
-  const minRange = (defaultMax - defaultMin) * 0.1;
-  if (calculatedMax - calculatedMin < minRange) {
-    const center = (calculatedMin + calculatedMax) / 2;
-    return {
-      min: Math.max(defaultMin, Math.floor(center - minRange / 2)),
-      max: Math.min(defaultMax, Math.ceil(center + minRange / 2))
-    };
+  // Calculate a symmetric range around the optimo value
+  // The range will be optimo +/- (optimo * paddingPercent)
+  const rangeSize = Math.max(optimo * paddingPercent, 5); // At least 5 units on each side
+
+  // Create symmetric range around optimo
+  let calculatedMin = optimo - rangeSize;
+  let calculatedMax = optimo + rangeSize;
+
+  // If the calculated range exceeds the default bounds, adjust symmetrically
+  if (calculatedMin < defaultMin) {
+    const deficit = defaultMin - calculatedMin;
+    calculatedMin = defaultMin;
+    calculatedMax = Math.min(defaultMax, optimo + rangeSize + deficit);
   }
-  
-  return { min: calculatedMin, max: calculatedMax };
+
+  if (calculatedMax > defaultMax) {
+    const excess = calculatedMax - defaultMax;
+    calculatedMax = defaultMax;
+    calculatedMin = Math.max(defaultMin, optimo - rangeSize - excess);
+  }
+
+  // Final symmetric adjustment to ensure optimo is exactly centered
+  const actualMin = Math.max(defaultMin, Math.floor(calculatedMin));
+  const actualMax = Math.min(defaultMax, Math.ceil(calculatedMax));
+
+  // Calculate the actual distances
+  const distToMin = optimo - actualMin;
+  const distToMax = actualMax - optimo;
+
+  // Make perfectly symmetric by using the smaller distance
+  const symmetricDist = Math.min(distToMin, distToMax);
+
+  return {
+    min: Math.max(defaultMin, optimo - symmetricDist),
+    max: Math.min(defaultMax, optimo + symmetricDist)
+  };
 };
 
 const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto = 0, causasData = [] }) => {
   // Extract values from causas data
-  const diasInventarioCausa = causasData.find(c => 
-    c.titulo.toLowerCase().includes('dias') || 
+  const diasInventarioCausa = causasData.find(c =>
+    c.titulo.toLowerCase().includes('dias') ||
     c.titulo.toLowerCase().includes('inventario') ||
     c.titulo.toLowerCase().includes('días')
   );
-  const tamanoPedidoCausa = causasData.find(c => 
-    c.titulo.toLowerCase().includes('tamaño') || 
+  const tamanoPedidoCausa = causasData.find(c =>
+    c.titulo.toLowerCase().includes('tamaño') ||
     c.titulo.toLowerCase().includes('pedido') ||
     c.titulo.toLowerCase().includes('tamano')
   );
-  const frecuenciaCausa = causasData.find(c => 
+  const frecuenciaCausa = causasData.find(c =>
     c.titulo.toLowerCase().includes('frecuencia') ||
     c.titulo.toLowerCase() === 'frecuencia' ||
     c.titulo.toLowerCase().includes('frecuencia optima') ||
@@ -95,24 +107,24 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
     diasInventarioCausa?.optimo,
     5,
     30,
-    0.3
+    0.5
   ), [diasInventarioCausa?.actual, diasInventarioCausa?.optimo]);
-  
+
   const tamanoPedidoRange = useMemo(() => calculateDynamicRange(
     tamanoPedidoCausa?.actual,
     tamanoPedidoCausa?.optimo,
     0,
     150,
-    0.3
+    0.5
   ), [tamanoPedidoCausa?.actual, tamanoPedidoCausa?.optimo]);
-  
+
   const frecuenciaRange = useMemo(() => {
     const range = calculateDynamicRange(
       frecuenciaCausa?.actual,
       frecuenciaCausa?.optimo,
       1,
       120, // Increased max to 120 to allow values up to 100+
-      0.3
+      0.5
     );
     // Ensure min < max (at least a range of 1)
     if (range.min >= range.max) {
@@ -127,13 +139,13 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
     return Math.min(Math.max(value, range.min), range.max);
   };
 
-  const [diasInventario, setDiasInventario] = useState(() => 
+  const [diasInventario, setDiasInventario] = useState(() =>
     getInitialValue(diasInventarioCausa?.optimo, 14, diasInventarioRange)
   );
-  const [tamanoPedido, setTamanoPedido] = useState(() => 
+  const [tamanoPedido, setTamanoPedido] = useState(() =>
     getInitialValue(tamanoPedidoCausa?.optimo, 80, tamanoPedidoRange)
   );
-  const [frecuenciaOptima, setFrecuenciaOptima] = useState(() => 
+  const [frecuenciaOptima, setFrecuenciaOptima] = useState(() =>
     getInitialValue(frecuenciaCausa?.optimo, 7, frecuenciaRange)
   );
   const [responsable, setResponsable] = useState("");
@@ -252,40 +264,48 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
   };
 
   // Helper component for slider with markers
-  const SliderWithMarkers = ({ 
-    value, 
-    onChange, 
-    min, 
-    max, 
+  const SliderWithMarkers = ({
+    value,
+    onChange,
+    min,
+    max,
     step = 1,
-    optimo, 
+    optimo,
     real,
-    label 
-  }: { 
-    value: number; 
-    onChange: (value: number) => void; 
-    min: number; 
-    max: number; 
+    label
+  }: {
+    value: number;
+    onChange: (value: number) => void;
+    min: number;
+    max: number;
     step?: number;
-    optimo?: number; 
+    optimo?: number;
     real?: number;
     label: string;
   }) => {
     // Ensure min < max (handle edge cases)
     const validMin = min < max ? min : Math.max(1, min - 1);
     const validMax = max > min ? max : min + 1; // Use min + 1 as fallback instead of hardcoded 30
-    
+
     const [localValue, setLocalValue] = useState(() => {
       const clamped = Math.min(Math.max(value, validMin), validMax);
       return clamped;
     });
-    
-    const optimoPos = optimo !== undefined && optimo !== null && validMin < validMax 
-      ? calculateMarkerPosition(optimo, validMin, validMax) 
-      : null;
-    const realPos = real !== undefined && real !== null && validMin < validMax
-      ? calculateMarkerPosition(real, validMin, validMax) 
-      : null;
+
+    // Always position Optimo marker at the center (50%)
+    const optimoPos = 50;
+
+    // Calculate the difference from optimo value
+    const deltaFromOptimo = optimo !== undefined && optimo !== null
+      ? localValue - optimo
+      : 0;
+
+    // Format the delta display with +/- sign (always show sign)
+    const formatDelta = (delta: number): string => {
+      if (delta === 0) return '0';
+      const sign = delta > 0 ? '+' : '';
+      return `${sign}${delta.toFixed(step < 1 ? 1 : 0)}`;
+    };
 
     // Sync local value with prop value (clamped to min/max)
     useEffect(() => {
@@ -309,9 +329,11 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
       setLocalValue(clampedValue);
     };
 
-    const handleNumberChange = (newValue: number) => {
+    const handleDeltaChange = (deltaValue: number) => {
+      // Calculate the new absolute value from the delta
+      const newAbsoluteValue = (optimo ?? 0) + deltaValue;
       // Clamp value to min/max range
-      const clampedValue = Math.min(Math.max(newValue, validMin), validMax);
+      const clampedValue = Math.min(Math.max(newAbsoluteValue, validMin), validMax);
       setLocalValue(clampedValue);
       onChange(clampedValue); // Immediate update for number input
     };
@@ -319,62 +341,34 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
     return (
       <div className="relative">
         {/* Markers above slider */}
-        {(optimoPos !== null || realPos !== null) && (
-          <div className="relative h-6 mb-2">
-            {/* Optimo marker */}
-            {optimoPos !== null && (
-              <div
-                className="absolute transform -translate-x-1/2"
-                style={{ left: `${optimoPos}%` }}
-              >
-                <div className="text-center">
-                  <span className="text-xs font-medium text-green-600 dark:text-green-400">Optimo</span>
-                </div>
-              </div>
-            )}
-            {/* Real marker */}
-            {realPos !== null && (
-              <div
-                className="absolute transform -translate-x-1/2"
-                style={{ left: `${realPos}%` }}
-              >
-                <div className="text-center">
-                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Real</span>
-                </div>
-              </div>
-            )}
+        <div className="relative h-6 mb-2">
+          {/* Optimo marker - always centered */}
+          <div
+            className="absolute transform -translate-x-1/2"
+            style={{ left: `${optimoPos}%` }}
+          >
+            <div className="text-center">
+              <span className="text-xs font-medium text-green-600 dark:text-green-400">Optimo</span>
+            </div>
           </div>
-        )}
-        
+        </div>
+
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
             {/* Background track */}
             <div className="h-2 bg-gray-200 rounded-lg dark:bg-gray-700"></div>
-            
+
             {/* Markers on track - dots */}
-            {(optimoPos !== null || realPos !== null) && (
-              <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none">
-                {/* Optimo marker dot */}
-                {optimoPos !== null && (
-                  <div
-                    className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                    style={{ left: `${optimoPos}%` }}
-                  >
-                    <div className="w-3 h-3 rounded-full bg-green-500 dark:bg-green-400 border-2 border-white dark:border-gray-800 shadow-sm"></div>
-                  </div>
-                )}
-                {/* Real marker dot */}
-                {realPos !== null && (
-                  <div
-                    className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                    style={{ left: `${realPos}%` }}
-                  >
-                    <div className="w-3 h-3 rounded-full bg-blue-500 dark:bg-blue-400 border-2 border-white dark:border-gray-800 shadow-sm"></div>
-                  </div>
-                )}
+            <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none">
+              {/* Optimo marker dot - always centered */}
+              <div
+                className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${optimoPos}%` }}
+              >
+                <div className="w-3 h-3 rounded-full bg-green-500 dark:bg-green-400 border-2 border-white dark:border-gray-800 shadow-sm"></div>
               </div>
-            )}
-            
+            </div>
+
             {/* Slider input */}
             <input
               type="range"
@@ -387,18 +381,17 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
             />
           </div>
           <input
-            type="number"
-            min={validMin}
-            max={validMax}
-            step={step}
-            value={localValue}
+            type="text"
+            value={formatDelta(deltaFromOptimo)}
             onChange={(e) => {
-              const numValue = Number(e.target.value);
+              // Parse the input, handling +/- signs
+              const inputValue = e.target.value.trim();
+              const numValue = Number(inputValue);
               if (!isNaN(numValue)) {
-                handleNumberChange(numValue);
+                handleDeltaChange(numValue);
               }
             }}
-            className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+            className="w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none text-center"
           />
         </div>
       </div>
