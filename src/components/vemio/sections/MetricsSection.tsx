@@ -136,7 +136,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
       <div className="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
         {/* Ventas Totales */}
         <div
-          className={`relative rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg transition-all ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
+          className={`relative rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg transition-all flex flex-col justify-between ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
           onMouseEnter={(e) => {
             if (enableAnalysis) {
               const badge = e.currentTarget.querySelector('.vemio-badge');
@@ -179,32 +179,34 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               </svg>
             </div>
           </div>
-          {metricasData?.variacion_ventas_totales_pct !== undefined && metricasData?.objetivo_ventas_totales_pesos_formatted && metricasData?.objetivo_ventas_totales_pesos !== undefined && (
-            <div className="mt-4 flex items-center justify-end">
-              <div className="flex items-center gap-2">
-                {(() => {
-                  // Verify variation matches actual vs objective
-                  const verifiedVariation = verifyVariation(
-                    storeMetrics.ventasTotales,
-                    metricasData.objetivo_ventas_totales_pesos,
-                    metricasData.variacion_ventas_totales_pct
-                  );
-                  return (
-                    <div className={`flex items-center rounded-full px-2 py-1 text-sm ${verifiedVariation >= 0
-                      ? 'bg-white/20 text-white'
-                      : 'bg-white/10 text-white/80'
-                      }`}>
-                      {getArrowIcon(verifiedVariation)}
-                      <span className="ml-1">{formatVariation(verifiedVariation)}</span>
-                    </div>
-                  );
-                })()}
-                <span className="text-sm opacity-90">vs Objetivo: {metricasData.objetivo_ventas_totales_pesos_formatted}</span>
+          <div className="mt-auto">
+            {metricasData?.variacion_ventas_totales_pct !== undefined && metricasData?.objetivo_ventas_totales_pesos_formatted && metricasData?.objetivo_ventas_totales_pesos !== undefined && (
+              <div className="mt-4 flex items-center justify-end">
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    // Verify variation matches actual vs objective
+                    const verifiedVariation = verifyVariation(
+                      storeMetrics.ventasTotales,
+                      metricasData.objetivo_ventas_totales_pesos,
+                      metricasData.variacion_ventas_totales_pct
+                    );
+                    return (
+                      <div className={`flex items-center rounded-full px-2 py-1 text-sm ${verifiedVariation >= 0
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white/10 text-white/80'
+                        }`}>
+                        {getArrowIcon(verifiedVariation)}
+                        <span className="ml-1">{formatVariation(verifiedVariation)}</span>
+                      </div>
+                    );
+                  })()}
+                  <span className="text-sm opacity-90">vs Objetivo: {metricasData.objetivo_ventas_totales_pesos_formatted}</span>
+                </div>
               </div>
+            )}
+            <div className="mt-2 h-2 rounded-full bg-white/20">
+              <div className="h-2 rounded-full bg-white" style={{ width: '82%' }}></div>
             </div>
-          )}
-          <div className="mt-2 h-2 rounded-full bg-white/20">
-            <div className="h-2 rounded-full bg-white" style={{ width: '82%' }}></div>
           </div>
           {/* Vemio Analysis Badge */}
           {enableAnalysis && (
@@ -231,7 +233,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
 
         {/* Sell-Through */}
         <div
-          className={`relative rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg transition-all flex flex-col ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
+          className={`relative rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg transition-all flex flex-col justify-between ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
           onMouseEnter={(e) => {
             if (enableAnalysis) {
               const badge = e.currentTarget.querySelector('.vemio-badge');
@@ -276,38 +278,40 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               </svg>
             </div>
           </div>
-          {metricasData?.objetivo_sell_through_pct !== undefined && (
-            <div className="mt-4 flex items-center justify-end">
-              <div className="flex items-center gap-2">
-                {(() => {
-                  // Verify variation matches actual vs objective
-                  const calculatedVariation = getSellThroughVariation();
-                  const verifiedVariation = verifyVariation(
-                    sellThroughPct,
-                    metricasData.objetivo_sell_through_pct,
-                    calculatedVariation
-                  );
-                  return (
-                    <>
-                      <div className={`flex items-center rounded-full px-2 py-1 text-sm ${verifiedVariation >= 0
-                        ? 'bg-white/20 text-white'
-                        : 'bg-white/10 text-white/80'
-                        }`}>
-                        {getArrowIcon(verifiedVariation)}
-                        <span className="ml-1">{formatVariation(verifiedVariation)}</span>
-                      </div>
-                      <span className="text-sm opacity-90">vs Objetivo: {formatTargetValue(metricasData.objetivo_sell_through_formatted, true) || `${Math.round(metricasData.objetivo_sell_through_pct * 100)}%`}</span>
-                    </>
-                  );
-                })()}
+          <div className="mt-auto">
+            {metricasData?.objetivo_sell_through_pct !== undefined && (
+              <div className="mt-4 flex items-center justify-end">
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    // Verify variation matches actual vs objective
+                    const calculatedVariation = getSellThroughVariation();
+                    const verifiedVariation = verifyVariation(
+                      sellThroughPct,
+                      metricasData.objetivo_sell_through_pct,
+                      calculatedVariation
+                    );
+                    return (
+                      <>
+                        <div className={`flex items-center rounded-full px-2 py-1 text-sm ${verifiedVariation >= 0
+                          ? 'bg-white/20 text-white'
+                          : 'bg-white/10 text-white/80'
+                          }`}>
+                          {getArrowIcon(verifiedVariation)}
+                          <span className="ml-1">{formatVariation(verifiedVariation)}</span>
+                        </div>
+                        <span className="text-sm opacity-90">vs Objetivo: {formatTargetValue(metricasData.objetivo_sell_through_formatted, true) || `${Math.round(metricasData.objetivo_sell_through_pct * 100)}%`}</span>
+                      </>
+                    );
+                  })()}
+                </div>
               </div>
+            )}
+            <div className="mt-2 h-2 rounded-full bg-white/20">
+              <div
+                className="h-2 rounded-full bg-white"
+                style={{ width: `${Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100)}%` }}
+              ></div>
             </div>
-          )}
-          <div className="mt-2 h-2 rounded-full bg-white/20">
-            <div
-              className="h-2 rounded-full bg-white"
-              style={{ width: `${Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100)}%` }}
-            ></div>
           </div>
           {/* Vemio Analysis Badge */}
           {enableAnalysis && (
