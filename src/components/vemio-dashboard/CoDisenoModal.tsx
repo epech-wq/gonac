@@ -267,8 +267,9 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
   };
 
   // Use pct_valor_capturado from database if available, otherwise calculate
+  // Multiply by 100 to convert from decimal (e.g., 0.15) to percentage (15%)
   const percentageDifference = pctValorCapturado !== 0
-    ? pctValorCapturado
+    ? pctValorCapturado * 100
     : (impacto > 0 ? ((impactoGlobalTotal - impacto) / impacto) * 100 : 0);
 
   // Helper component for slider with markers
