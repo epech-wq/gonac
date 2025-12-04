@@ -22,6 +22,8 @@ import {
 import type { Opportunity, OpportunityType, DetailRecord } from '@/types/tiendas.types';
 import { useParametrosOptimos } from '@/hooks/useParametrosOptimos';
 import type { CausaData } from '@/components/vemio-dashboard/types';
+import TemporalityFilter from '../filters/TemporalityFilter';
+import type { TemporalityPeriod } from '../filters/TemporalityFilter';
 
 interface OpportunitiesSectionProps {
   opportunities: Opportunity[];
@@ -35,6 +37,13 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   const [coDisenoModalOpen, setCoDisenoModalOpen] = useState(false);
   const [ventaIncrementalImpacto, setVentaIncrementalImpacto] = useState<number>(0);
   const [ventaIncrementalCausas, setVentaIncrementalCausas] = useState<any[]>([]);
+  const [opportunitiesTemporality, setOpportunitiesTemporality] = useState<TemporalityPeriod>('month');
+
+  const handleOpportunitiesTemporalityChange = (period: TemporalityPeriod) => {
+    setOpportunitiesTemporality(period);
+    // TODO: Implement data filtering based on period
+    console.log('Opportunities temporality period changed to:', period);
+  };
 
   // Fetch parametros data to share with Venta Incremental card
   const { data: parametrosData } = useParametrosOptimos();
@@ -206,9 +215,16 @@ export default function OpportunitiesSection({ opportunities, onChatOpen, onVerA
   return (
     <>
       <div className="mt-8">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Áreas de Oportunidades Identificadas
-        </h3>
+        {/* Title and Temporality Filter */}
+        <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Áreas de Oportunidades Identificadas
+          </h3>
+          <TemporalityFilter
+            defaultActive="month"
+            onChange={handleOpportunitiesTemporalityChange}
+          />
+        </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {sortedOpportunities.map((opportunity, index) => (

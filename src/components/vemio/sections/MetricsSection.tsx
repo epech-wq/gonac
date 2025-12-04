@@ -81,7 +81,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
     if (objectiveValue === 0) return 0;
     // Calculate variation: ((actual - objective) / objective) * 100
     const calculatedVariation = ((actualValue - objectiveValue) / objectiveValue) * 100;
-    
+
     // If stored variation exists and differs significantly (> 0.1%), use calculated value
     if (storedVariation !== undefined && Math.abs(storedVariation - calculatedVariation) > 0.1) {
       console.warn('Variation mismatch detected. Using calculated value:', {
@@ -92,7 +92,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
       });
       return calculatedVariation;
     }
-    
+
     return storedVariation !== undefined ? storedVariation : calculatedVariation;
   };
 
@@ -135,7 +135,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
       {/* Main KPIs - 2 Large Cards */}
       <div className="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
         {/* Ventas Totales */}
-        <div 
+        <div
           className={`relative rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg transition-all ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
           onMouseEnter={(e) => {
             if (enableAnalysis) {
@@ -190,11 +190,10 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
                     metricasData.variacion_ventas_totales_pct
                   );
                   return (
-                    <div className={`flex items-center rounded-full px-2 py-1 text-sm ${
-                      verifiedVariation >= 0 
-                        ? 'bg-white/20 text-white' 
-                        : 'bg-white/10 text-white/80'
-                    }`}>
+                    <div className={`flex items-center rounded-full px-2 py-1 text-sm ${verifiedVariation >= 0
+                      ? 'bg-white/20 text-white'
+                      : 'bg-white/10 text-white/80'
+                      }`}>
                       {getArrowIcon(verifiedVariation)}
                       <span className="ml-1">{formatVariation(verifiedVariation)}</span>
                     </div>
@@ -207,13 +206,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           <div className="mt-2 h-2 rounded-full bg-white/20">
             <div className="h-2 rounded-full bg-white" style={{ width: '82%' }}></div>
           </div>
-          {metricasData && (
-            <div className="mt-2">
-              <span className="text-xs font-medium text-green-100 bg-green-600/30 px-2 py-1 rounded-full">
-                ✓ Datos en vivo
-              </span>
-            </div>
-          )}
           {/* Vemio Analysis Badge */}
           {enableAnalysis && (
             <div className="vemio-badge absolute top-4 right-4 hidden z-10">
@@ -238,7 +230,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
         </div>
 
         {/* Sell-Through */}
-        <div 
+        <div
           className={`relative rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg transition-all flex flex-col ${enableAnalysis ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02]' : ''}`}
           onMouseEnter={(e) => {
             if (enableAnalysis) {
@@ -294,11 +286,10 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
                   );
                   return (
                     <>
-                      <div className={`flex items-center rounded-full px-2 py-1 text-sm ${
-                        verifiedVariation >= 0 
-                          ? 'bg-white/20 text-white' 
-                          : 'bg-white/10 text-white/80'
-                      }`}>
+                      <div className={`flex items-center rounded-full px-2 py-1 text-sm ${verifiedVariation >= 0
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white/10 text-white/80'
+                        }`}>
                         {getArrowIcon(verifiedVariation)}
                         <span className="ml-1">{formatVariation(verifiedVariation)}</span>
                       </div>
@@ -315,13 +306,6 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
               style={{ width: `${Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100)}%` }}
             ></div>
           </div>
-          {metricasData && (
-            <div className="mt-2">
-              <span className="text-xs font-medium text-blue-100 bg-blue-600/30 px-2 py-1 rounded-full">
-                ✓ Datos en vivo
-              </span>
-            </div>
-          )}
           {/* Vemio Analysis Badge */}
           {enableAnalysis && (
             <div className="vemio-badge absolute top-4 right-4 hidden z-10">
@@ -440,7 +424,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
         />
 
         <MetricCard
-          title="Tasa de Quiebre"
+          title="Tasa de Agotados"
           value={`${tasaQuiebrePct.toFixed(1)}%`}
           color="orange"
           size="small"
@@ -455,7 +439,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           onAnalysisClick={() => {
             if (onCardClick) {
               onCardClick({
-                title: 'Tasa de Quiebre',
+                title: 'Tasa de Agotados',
                 value: `${tasaQuiebrePct.toFixed(1)}%`,
                 storeMetrics,
                 metricasData,
