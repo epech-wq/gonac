@@ -20,7 +20,7 @@ const DashboardContent: React.FC = () => {
   // Generate breadcrumb items from navigation state
   const breadcrumbItems: BreadcrumbItem[] = useMemo(() => {
     const items: BreadcrumbItem[] = [];
-    
+
     if (navigationState.canal) {
       items.push({
         label: `Canal: ${navigationState.canal}`,
@@ -84,13 +84,13 @@ const DashboardContent: React.FC = () => {
         value: navigationState.segmentacion,
       });
     }
-    
+
     return items;
   }, [navigationState]);
 
   const handleNavigate = (level: string, value: string) => {
     const newState: NavigationState = {};
-    
+
     // Build state up to the clicked level
     if (level === "canal") {
       newState.canal = value;
@@ -124,10 +124,10 @@ const DashboardContent: React.FC = () => {
     } else if (level === "segmentacion") {
       newState.segmentacion = value as "Hot" | "Balanceadas" | "Slow" | "Críticas" | undefined;
     }
-    
+
     // Preserve other axes
-    if (level !== "canal" && level !== "geografia" && level !== "arbol" && 
-        level !== "cadena" && level !== "cliente") {
+    if (level !== "canal" && level !== "geografia" && level !== "arbol" &&
+      level !== "cadena" && level !== "cliente") {
       newState.canal = navigationState.canal;
       newState.geografia = navigationState.geografia;
       newState.arbol = navigationState.arbol;
@@ -142,7 +142,7 @@ const DashboardContent: React.FC = () => {
     if (level !== "segmentacion") {
       newState.segmentacion = navigationState.segmentacion;
     }
-    
+
     setNavigationState(newState);
   };
 
@@ -279,7 +279,7 @@ const DashboardContent: React.FC = () => {
   const calculateDeviationFromTarget = (target: number, actual: number) => {
     const deviation = ((actual - target) / target) * 100;
     let color: "success" | "warning" | "error" = "success";
-    
+
     if (deviation <= -10) {
       color = "error"; // Rojo: <-10%
     } else if (deviation < 0) {
@@ -287,7 +287,7 @@ const DashboardContent: React.FC = () => {
     } else {
       color = "success"; // Verde: cumple o supera
     }
-    
+
     return {
       value: Math.abs(deviation).toFixed(1),
       isPositive: deviation > 0,
@@ -392,7 +392,7 @@ const DashboardContent: React.FC = () => {
           {kpis.map((kpi) => {
             // Calculate variation vs previous period
             const variation = ((kpi.value - kpi.previousPeriod) / kpi.previousPeriod) * 100;
-            const variationColor: "success" | "error" | "info" = 
+            const variationColor: "success" | "error" | "info" =
               variation > 0 ? "success" : variation < 0 ? "error" : "info";
 
             // Calculate 90-day projection (simple linear projection)
@@ -436,6 +436,15 @@ const DashboardContent: React.FC = () => {
                     {formatValue(kpi.value)}
                   </p>
                 </div>
+
+                {/* Formula - Only for Sell Through */}
+                {kpi.title === "Sell Through" && (
+                  <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-sm font-mono text-gray-700 dark:text-gray-300">
+                      Ventas / (Entradas + Inventario)
+                    </p>
+                  </div>
+                )}
 
                 {/* Previous Period */}
                 <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">

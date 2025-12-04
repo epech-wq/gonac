@@ -265,6 +265,9 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
                 <div className="text-sm opacity-90 mt-1">
                   Inventario inicial: {formatNumber(metricasData?.inventario_inicial_total || 0)} unidades
                 </div>
+                <div className="text-xs opacity-75 mt-2 font-mono border-t border-white/20 pt-2">
+                  Ventas / (Entradas + Inventario)
+                </div>
               </div>
             </div>
             <div className="rounded-full bg-white/20 p-3">
