@@ -3,7 +3,7 @@
  */
 
 import type { Action } from '@/types/tiendas.types';
-import type { TipoAccionGeneral } from '@/components/vemio/modals/WizardAccionesGenerales';
+import type { TipoAccionGeneral } from '@/components/modals/WizardAccionesGenerales';
 
 interface ActionConfig {
   id: TipoAccionGeneral;
