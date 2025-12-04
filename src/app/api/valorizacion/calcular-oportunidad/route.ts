@@ -5,7 +5,7 @@ import { ValorizacionRepository } from '@/repositories/valorizacion.repository';
 /**
  * POST /api/valorizacion/calcular-oportunidad
  * Calculates global impact using optimal parameters
- * Uses: maquinsa.fn_calcular_impacto_optimos_globales
+ * Uses: maquinsa.fn_calcular_impacto_optimos_globales_delta
  * 
  * Body:
  * {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServerSupabaseClient();
     const repository = new ValorizacionRepository(supabase);
 
-    // Call the new SQL function fn_calcular_impacto_optimos_globales
+    // Call the SQL function fn_calcular_impacto_optimos_globales_delta
     const data = await repository.calcularImpactoOptimosGlobales({
       p_dias_inventario_optimo_global: p_dias_inventario_optimo_propuesto,
       p_tamano_pedido_optimo_global: p_tamano_pedido_optimo_propuesto,

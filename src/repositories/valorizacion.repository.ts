@@ -627,7 +627,7 @@ export class ValorizacionRepository {
 
   /**
    * Calculate global impact using optimal parameters
-   * Calls: maquinsa.fn_calcular_impacto_optimos_globales
+   * Calls: maquinsa.fn_calcular_impacto_optimos_globales_delta
    */
   async calcularImpactoOptimosGlobales(params: {
     p_dias_inventario_optimo_global: number;
@@ -637,7 +637,7 @@ export class ValorizacionRepository {
   }): Promise<any> {
     const { data, error } = await this.supabase
       .schema(getDbSchema())
-      .rpc('fn_calcular_impacto_optimos_globales', {
+      .rpc('fn_calcular_impacto_optimos_globales_delta', {
         p_dias_inventario_optimo_global: params.p_dias_inventario_optimo_global,
         p_tamano_pedido_optimo_global: params.p_tamano_pedido_optimo_global,
         p_frecuencia_optima_global: params.p_frecuencia_optima_global,

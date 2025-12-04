@@ -29,56 +29,54 @@ interface OportunidadRow {
   diferencia_valor_tamano_pedido: number;
   diferencia_valor_frecuencia: number;
   impacto: number;
+  pct_valor_capturado?: number;
 }
 
-// Helper function to calculate dynamic range centered on optimo value
+// Helper function to calculate dynamic range that keeps both Real and Optimo centered
 const calculateDynamicRange = (
   actual: number | undefined,
   optimo: number | undefined,
   defaultMin: number,
   defaultMax: number,
-  paddingPercent: number = 0.5 // 50% range on each side of optimo
+  paddingPercent: number = 1.0 // 100% padding on each side for consistent spacing
 ): { min: number; max: number } => {
   // If no optimo value, use default range
   if (optimo === undefined || optimo === null) {
     return { min: defaultMin, max: defaultMax };
   }
 
-  // Calculate a symmetric range around the optimo value
-  // The range will be optimo +/- (optimo * paddingPercent)
-  const rangeSize = Math.max(optimo * paddingPercent, 5); // At least 5 units on each side
-
-  // Create symmetric range around optimo
-  let calculatedMin = optimo - rangeSize;
-  let calculatedMax = optimo + rangeSize;
-
-  // If the calculated range exceeds the default bounds, adjust symmetrically
-  if (calculatedMin < defaultMin) {
-    const deficit = defaultMin - calculatedMin;
-    calculatedMin = defaultMin;
-    calculatedMax = Math.min(defaultMax, optimo + rangeSize + deficit);
+  // Determine the range based on both actual and optimo values
+  const values = [optimo];
+  if (actual !== undefined && actual !== null) {
+    values.push(actual);
   }
 
-  if (calculatedMax > defaultMax) {
-    const excess = calculatedMax - defaultMax;
-    calculatedMax = defaultMax;
-    calculatedMin = Math.max(defaultMin, optimo - rangeSize - excess);
-  }
+  // Find min and max of the values we need to display
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
 
-  // Final symmetric adjustment to ensure optimo is exactly centered
+  // Calculate the span between the values
+  const valueSpan = Math.max(maxValue - minValue, 1); // At least 1 unit span
+
+  // Calculate padding to maintain consistent visual spacing
+  // Use the span itself as padding on each side to ensure dots are well-spaced
+  const padding = valueSpan * paddingPercent;
+
+  // Create range with padding on both sides
+  let calculatedMin = minValue - padding;
+  let calculatedMax = maxValue + padding;
+
+  // Ensure we don't exceed default bounds
+  calculatedMin = Math.max(defaultMin, calculatedMin);
+  calculatedMax = Math.min(defaultMax, calculatedMax);
+
+  // Round to nice numbers
   const actualMin = Math.max(defaultMin, Math.floor(calculatedMin));
   const actualMax = Math.min(defaultMax, Math.ceil(calculatedMax));
 
-  // Calculate the actual distances
-  const distToMin = optimo - actualMin;
-  const distToMax = actualMax - optimo;
-
-  // Make perfectly symmetric by using the smaller distance
-  const symmetricDist = Math.min(distToMin, distToMax);
-
   return {
-    min: Math.max(defaultMin, optimo - symmetricDist),
-    max: Math.min(defaultMax, optimo + symmetricDist)
+    min: actualMin,
+    max: actualMax
   };
 };
 
@@ -154,6 +152,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
   const [oportunidadData, setOportunidadData] = useState<OportunidadRow[]>([]);
   const [impactoGlobalTotal, setImpactoGlobalTotal] = useState<number>(0);
   const [diferenciaImpacto, setDiferenciaImpacto] = useState<number>(0);
+  const [pctValorCapturado, setPctValorCapturado] = useState<number>(0);
   const mountedRef = useRef(false);
 
   // Update sliders when causasData changes, clamping to dynamic ranges
@@ -197,13 +196,16 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
         // Store the returned data
         if (Array.isArray(result.data)) {
           setOportunidadData(result.data);
-          // Extract impacto_global_total and diferencia_impacto from the first row
+          // Extract impacto_global_total, diferencia_impacto, and pct_valor_capturado from the first row
           if (result.data.length > 0) {
             if (result.data[0].impacto_global_total !== undefined) {
               setImpactoGlobalTotal(result.data[0].impacto_global_total);
             }
             if (result.data[0].diferencia_impacto !== undefined) {
               setDiferenciaImpacto(result.data[0].diferencia_impacto);
+            }
+            if (result.data[0].pct_valor_capturado !== undefined) {
+              setPctValorCapturado(result.data[0].pct_valor_capturado);
             }
           }
         }
@@ -247,6 +249,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
       setOportunidadData([]);
       setImpactoGlobalTotal(0);
       setDiferenciaImpacto(0);
+      setPctValorCapturado(0);
     }
   }, [isOpen]);
 
@@ -262,6 +265,11 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
     // Clamp between 0 and 100 to prevent markers from going outside the slider
     return Math.max(0, Math.min(100, position));
   };
+
+  // Use pct_valor_capturado from database if available, otherwise calculate
+  const percentageDifference = pctValorCapturado !== 0
+    ? pctValorCapturado
+    : (impacto > 0 ? ((impactoGlobalTotal - impacto) / impacto) * 100 : 0);
 
   // Helper component for slider with markers
   const SliderWithMarkers = ({
@@ -292,8 +300,8 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
       return clamped;
     });
 
-    // Always position Optimo marker at the center (50%)
-    const optimoPos = 50;
+    // Calculate actual position of Optimo marker based on its value
+    const optimoPos = optimo !== undefined ? calculateMarkerPosition(optimo, validMin, validMax) : 50;
 
     // Calculate the difference from optimo value
     const deltaFromOptimo = optimo !== undefined && optimo !== null
@@ -342,6 +350,17 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
       <div className="relative">
         {/* Markers above slider */}
         <div className="relative h-6 mb-2">
+          {/* Real marker */}
+          {real !== undefined && (
+            <div
+              className="absolute transform -translate-x-1/2"
+              style={{ left: `${calculateMarkerPosition(real, validMin, validMax)}%` }}
+            >
+              <div className="text-center">
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Real</span>
+              </div>
+            </div>
+          )}
           {/* Optimo marker - always centered */}
           <div
             className="absolute transform -translate-x-1/2"
@@ -360,6 +379,15 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
 
             {/* Markers on track - dots */}
             <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none">
+              {/* Real marker dot */}
+              {real !== undefined && (
+                <div
+                  className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${calculateMarkerPosition(real, validMin, validMax)}%` }}
+                >
+                  <div className="w-3 h-3 rounded-full bg-blue-500 dark:bg-blue-400 border-2 border-white dark:border-gray-800 shadow-sm"></div>
+                </div>
+              )}
               {/* Optimo marker dot - always centered */}
               <div
                 className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
@@ -379,6 +407,20 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
               onChange={(e) => handleSliderChange(Number(e.target.value))}
               className="absolute top-0 w-full h-2 bg-transparent appearance-none cursor-pointer z-10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-brand-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
             />
+
+            {/* Tooltip showing current value above slider thumb */}
+            <div
+              className="absolute -top-8 transform -translate-x-1/2 pointer-events-none z-20"
+              style={{ left: `${calculateMarkerPosition(localValue, validMin, validMax)}%` }}
+            >
+              <div className="bg-brand-600 dark:bg-brand-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                {localValue.toFixed(step < 1 ? 1 : 0)}
+              </div>
+              {/* Arrow pointing down */}
+              <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-1">
+                <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-brand-600 dark:border-t-brand-700"></div>
+              </div>
+            </div>
           </div>
           <input
             type="text"
@@ -441,12 +483,29 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
               </p>
             </div>
             <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-              <p className="text-xs text-blue-700 dark:text-blue-400 mb-2">
-                Impacto
-              </p>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
-                {impactoGlobalTotal > 0 ? formatCurrency(impactoGlobalTotal) : '$0'}
-              </p>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <p className="text-xs text-blue-700 dark:text-blue-400 mb-2">
+                    Impacto
+                  </p>
+                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">
+                    {impactoGlobalTotal > 0 ? formatCurrency(impactoGlobalTotal) : '$0'}
+                  </p>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="text-xs text-blue-700 dark:text-blue-400 mb-2">
+                    Cambio
+                  </p>
+                  <p className={`text-lg font-bold ${percentageDifference > 0
+                    ? 'text-green-600 dark:text-green-400'
+                    : percentageDifference < 0
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-600 dark:text-gray-400'
+                    }`}>
+                    {percentageDifference > 0 ? '+' : ''}{percentageDifference.toFixed(1)}%
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
