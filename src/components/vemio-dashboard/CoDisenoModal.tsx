@@ -347,53 +347,74 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
       onChange(clampedValue); // Immediate update for number input
     };
 
+    // Calculate positions for collision detection
+    const currentPos = calculateMarkerPosition(localValue, validMin, validMax);
+    const realPos = real !== undefined ? calculateMarkerPosition(real, validMin, validMax) : null;
+
+    // Check if slider is too close to markers (within 10% threshold)
+    const isNearReal = realPos !== null && Math.abs(currentPos - realPos) < 10;
+    const isNearOptimo = Math.abs(currentPos - optimoPos) < 10;
+
+    // Determine if Real tooltip should be below
+    const realTooltipBelow = isNearReal;
+    // Determine if Optimo tooltip should be below
+    const optimoTooltipBelow = isNearOptimo;
+
     return (
       <div className="relative">
-        {/* Markers above slider */}
-        <div className="relative h-6 mb-2">
-          {/* Real marker */}
-          {real !== undefined && (
-            <div
-              className="absolute transform -translate-x-1/2"
-              style={{ left: `${calculateMarkerPosition(real, validMin, validMax)}%` }}
-            >
-              <div className="text-center">
-                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Real</span>
-              </div>
-            </div>
-          )}
-          {/* Optimo marker - always centered */}
-          <div
-            className="absolute transform -translate-x-1/2"
-            style={{ left: `${optimoPos}%` }}
-          >
-            <div className="text-center">
-              <span className="text-xs font-medium text-green-600 dark:text-green-400">Optimo</span>
-            </div>
-          </div>
-        </div>
-
         <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
+          <div className="flex-1 relative pt-10 pb-10">
             {/* Background track */}
             <div className="h-2 bg-gray-200 rounded-lg dark:bg-gray-700"></div>
 
-            {/* Markers on track - dots */}
-            <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none">
-              {/* Real marker dot */}
+            {/* Markers on track - dots with tooltips */}
+            <div className="absolute top-10 left-0 right-0 h-2 pointer-events-none">
+              {/* Real marker dot with tooltip */}
               {real !== undefined && (
                 <div
                   className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: `${calculateMarkerPosition(real, validMin, validMax)}%` }}
+                  style={{ left: `${realPos}%` }}
                 >
+                  {/* Tooltip - position changes based on proximity to slider */}
+                  <div className={`absolute left-1/2 transform -translate-x-1/2 ${realTooltipBelow ? 'top-6' : '-top-8'}`}>
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                      <div className="text-center">Real</div>
+                      <div className="text-center font-bold">{real.toFixed(step < 1 ? 1 : 0)}</div>
+                    </div>
+                    {/* Arrow pointing up or down based on position */}
+                    <div className={`absolute left-1/2 transform -translate-x-1/2 ${realTooltipBelow ? '-top-1' : '-bottom-1'}`}>
+                      {realTooltipBelow ? (
+                        <div className="w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-blue-600 dark:border-b-blue-500"></div>
+                      ) : (
+                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-600 dark:border-t-blue-500"></div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Dot */}
                   <div className="w-3 h-3 rounded-full bg-blue-500 dark:bg-blue-400 border-2 border-white dark:border-gray-800 shadow-sm"></div>
                 </div>
               )}
-              {/* Optimo marker dot - always centered */}
+              {/* Optimo marker dot with tooltip */}
               <div
                 className="absolute top-1/2 transform -translate-x-1/2 -translate-y-1/2"
                 style={{ left: `${optimoPos}%` }}
               >
+                {/* Tooltip - position changes based on proximity to slider */}
+                <div className={`absolute left-1/2 transform -translate-x-1/2 ${optimoTooltipBelow ? 'top-6' : '-top-8'}`}>
+                  <div className="bg-green-600 dark:bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                    <div className="text-center">Óptimo</div>
+                    <div className="text-center font-bold">{optimo !== undefined ? optimo.toFixed(step < 1 ? 1 : 0) : '-'}</div>
+                  </div>
+                  {/* Arrow pointing up or down based on position */}
+                  <div className={`absolute left-1/2 transform -translate-x-1/2 ${optimoTooltipBelow ? '-top-1' : '-bottom-1'}`}>
+                    {optimoTooltipBelow ? (
+                      <div className="w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-green-600 dark:border-b-green-500"></div>
+                    ) : (
+                      <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-green-600 dark:border-t-green-500"></div>
+                    )}
+                  </div>
+                </div>
+                {/* Dot */}
                 <div className="w-3 h-3 rounded-full bg-green-500 dark:bg-green-400 border-2 border-white dark:border-gray-800 shadow-sm"></div>
               </div>
             </div>
@@ -406,13 +427,13 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
               step={step}
               value={localValue}
               onChange={(e) => handleSliderChange(Number(e.target.value))}
-              className="absolute top-0 w-full h-2 bg-transparent appearance-none cursor-pointer z-10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-brand-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+              className="absolute top-10 w-full h-2 bg-transparent appearance-none cursor-pointer z-10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-brand-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
             />
 
             {/* Tooltip showing current value above slider thumb */}
             <div
-              className="absolute -top-8 transform -translate-x-1/2 pointer-events-none z-20"
-              style={{ left: `${calculateMarkerPosition(localValue, validMin, validMax)}%` }}
+              className="absolute top-0 transform -translate-x-1/2 pointer-events-none z-20"
+              style={{ left: `${currentPos}%` }}
             >
               <div className="bg-brand-600 dark:bg-brand-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
                 {localValue.toFixed(step < 1 ? 1 : 0)}
