@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import ResumenView from "./views/ResumenView";
-import VemioAnalysisChat from "./VemioAnalysisChat";
+import ResumenView from "../components/views/ResumenView";
+import VemioAnalysisChat from "../components/VemioAnalysisChat";
 
-interface VemioDashboardProps {
+interface DashboardProps {
   onChatStateChange?: (isOpen: boolean) => void;
 }
 
-export default function VemioDashboard({ onChatStateChange }: VemioDashboardProps) {
+export default function Dashboard({ onChatStateChange }: DashboardProps) {
   const [chatOpen, setChatOpen] = useState(false);
   const [selectedCardData, setSelectedCardData] = useState<any>(null);
 

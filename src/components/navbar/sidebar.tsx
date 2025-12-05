@@ -9,6 +9,7 @@ import {
   ListIcon,
   ChevronDownIcon,
   HorizontaLDots,
+  PieChartIcon,
 } from "../../icons/index";
 
 type NavItem = {
@@ -21,8 +22,8 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <AiIcon />,
-    name: "Agente Vemio",
+    icon: <PieChartIcon />,
+    name: "Indicadores",
     path: "/",
   },
   {
