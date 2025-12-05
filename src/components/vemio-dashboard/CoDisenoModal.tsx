@@ -32,47 +32,65 @@ interface OportunidadRow {
   pct_valor_capturado?: number;
 }
 
-// Helper function to calculate dynamic range that keeps both Real and Optimo centered
+// Helper function to calculate dynamic range that positions Real at 20% and Optimo at 80%
 const calculateDynamicRange = (
   actual: number | undefined,
   optimo: number | undefined,
   defaultMin: number,
-  defaultMax: number,
-  paddingPercent: number = 1.0 // 100% padding on each side for consistent spacing
+  defaultMax: number
 ): { min: number; max: number } => {
   // If no optimo value, use default range
   if (optimo === undefined || optimo === null) {
     return { min: defaultMin, max: defaultMax };
   }
 
-  // Determine the range based on both actual and optimo values
+  // Determine which value should be at 20% and which at 80%
   const values = [optimo];
   if (actual !== undefined && actual !== null) {
     values.push(actual);
   }
 
-  // Find min and max of the values we need to display
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
+  // Sort values to determine left (20%) and right (80%) positions
+  const sortedValues = [...values].sort((a, b) => a - b);
+  const leftValue = sortedValues[0]; // Lower value at 20%
+  const rightValue = sortedValues[sortedValues.length - 1]; // Higher value at 80%
 
-  // Calculate the span between the values
-  const valueSpan = Math.max(maxValue - minValue, 1); // At least 1 unit span
+  // Calculate range where leftValue is at 20% and rightValue is at 80%
+  // Formula: leftValue = min + 0.2 * (max - min)
+  //          rightValue = min + 0.8 * (max - min)
+  // Solving: rightValue - leftValue = 0.6 * (max - min)
+  //          (max - min) = (rightValue - leftValue) / 0.6
 
-  // Calculate padding to maintain consistent visual spacing
-  // Use the span itself as padding on each side to ensure dots are well-spaced
-  const padding = valueSpan * paddingPercent;
+  const valueSpan = rightValue - leftValue;
 
-  // Create range with padding on both sides
-  let calculatedMin = minValue - padding;
-  let calculatedMax = maxValue + padding;
+  // If values are the same, create a reasonable range around the value
+  if (valueSpan === 0) {
+    const center = optimo;
+    const range = Math.max(center * 0.5, 10); // 50% of value or minimum 10 units
+    return {
+      min: Math.max(defaultMin, center - range / 2),
+      max: Math.min(defaultMax, center + range / 2)
+    };
+  }
 
-  // Ensure we don't exceed default bounds
-  calculatedMin = Math.max(defaultMin, calculatedMin);
-  calculatedMax = Math.min(defaultMax, calculatedMax);
+  // Calculate total range needed (60% of range = valueSpan)
+  const totalRange = valueSpan / 0.6;
 
-  // Round to nice numbers
-  const actualMin = Math.max(defaultMin, Math.floor(calculatedMin));
-  const actualMax = Math.min(defaultMax, Math.ceil(calculatedMax));
+  // Calculate min (leftValue should be at 20% of range)
+  const calculatedMin = leftValue - (0.2 * totalRange);
+  const calculatedMax = calculatedMin + totalRange;
+
+  // Ensure we don't exceed default bounds but keep decimal precision
+  let actualMin = Math.max(defaultMin, calculatedMin);
+  let actualMax = Math.min(defaultMax, calculatedMax);
+
+  // Ensure min < max with a small buffer
+  if (actualMax - actualMin < 1) {
+    // If range is too small, expand it
+    const center = (actualMin + actualMax) / 2;
+    actualMin = Math.max(defaultMin, center - 0.5);
+    actualMax = Math.min(defaultMax, center + 0.5);
+  }
 
   return {
     min: actualMin,
@@ -100,35 +118,28 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
   );
 
   // Calculate dynamic ranges (recalculate when causasData changes)
+  // Ranges are calculated to position Real at 20% and Optimo at 80% of slider width
   const diasInventarioRange = useMemo(() => calculateDynamicRange(
     diasInventarioCausa?.actual,
     diasInventarioCausa?.optimo,
     5,
-    30,
-    0.5
+    30
   ), [diasInventarioCausa?.actual, diasInventarioCausa?.optimo]);
 
   const tamanoPedidoRange = useMemo(() => calculateDynamicRange(
     tamanoPedidoCausa?.actual,
     tamanoPedidoCausa?.optimo,
     0,
-    150,
-    0.5
+    150
   ), [tamanoPedidoCausa?.actual, tamanoPedidoCausa?.optimo]);
 
   const frecuenciaRange = useMemo(() => {
-    const range = calculateDynamicRange(
+    return calculateDynamicRange(
       frecuenciaCausa?.actual,
       frecuenciaCausa?.optimo,
       1,
-      120, // Increased max to 120 to allow values up to 100+
-      0.5
+      120
     );
-    // Ensure min < max (at least a range of 1)
-    if (range.min >= range.max) {
-      return { min: 1, max: 120 };
-    }
-    return range;
   }, [frecuenciaCausa?.actual, frecuenciaCausa?.optimo]);
 
   // Initialize sliders with optimo values from causas, clamped to dynamic ranges
@@ -301,19 +312,35 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
       return clamped;
     });
 
-    // Calculate actual position of Optimo marker based on its value
-    const optimoPos = optimo !== undefined ? calculateMarkerPosition(optimo, validMin, validMax) : 50;
+    // Force static positions: Real at 20%, Optimo at 80%
+    // Determine which value is lower to assign correct positions
+    const realPos = real !== undefined && optimo !== undefined
+      ? (real < optimo ? 20 : 80)
+      : real !== undefined
+        ? 20
+        : null;
+
+    const optimoPos = real !== undefined && optimo !== undefined
+      ? (optimo > real ? 80 : 20)
+      : 80;
 
     // Calculate the difference from optimo value
     const deltaFromOptimo = optimo !== undefined && optimo !== null
       ? localValue - optimo
       : 0;
 
-    // Format the delta display with +/- sign (always show sign)
+    // Format the delta display with +/- sign (always show sign) - truncate instead of round
     const formatDelta = (delta: number): string => {
       if (delta === 0) return '0';
       const sign = delta > 0 ? '+' : '';
-      return `${sign}${delta.toFixed(step < 1 ? 1 : 0)}`;
+      const truncated = Math.trunc(delta * 10) / 10; // Truncate to 1 decimal
+      return `${sign}${truncated.toFixed(1)}`;
+    };
+
+    // Helper to truncate number to 1 decimal place
+    const truncateToOneDecimal = (num: number): string => {
+      const truncated = Math.trunc(num * 10) / 10;
+      return truncated.toFixed(1);
     };
 
     // Sync local value with prop value (clamped to min/max)
@@ -347,9 +374,8 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
       onChange(clampedValue); // Immediate update for number input
     };
 
-    // Calculate positions for collision detection
+    // Calculate current slider position for collision detection
     const currentPos = calculateMarkerPosition(localValue, validMin, validMax);
-    const realPos = real !== undefined ? calculateMarkerPosition(real, validMin, validMax) : null;
 
     // Check if slider is too close to markers (within 10% threshold)
     const isNearReal = realPos !== null && Math.abs(currentPos - realPos) < 10;
@@ -377,16 +403,16 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                 >
                   {/* Tooltip - position changes based on proximity to slider */}
                   <div className={`absolute left-1/2 transform -translate-x-1/2 ${realTooltipBelow ? 'top-6' : '-top-8'}`}>
-                    <div className="bg-blue-600 dark:bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                    <div className="bg-white dark:bg-gray-900 border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
                       <div className="text-center">Real</div>
-                      <div className="text-center font-bold">{real.toFixed(step < 1 ? 1 : 0)}</div>
+                      <div className="text-center font-bold">{truncateToOneDecimal(real)}</div>
                     </div>
                     {/* Arrow pointing up or down based on position */}
                     <div className={`absolute left-1/2 transform -translate-x-1/2 ${realTooltipBelow ? '-top-1' : '-bottom-1'}`}>
                       {realTooltipBelow ? (
-                        <div className="w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-blue-600 dark:border-b-blue-500"></div>
+                        <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-blue-600 dark:border-b-blue-500"></div>
                       ) : (
-                        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-600 dark:border-t-blue-500"></div>
+                        <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-blue-600 dark:border-t-blue-500"></div>
                       )}
                     </div>
                   </div>
@@ -401,16 +427,16 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
               >
                 {/* Tooltip - position changes based on proximity to slider */}
                 <div className={`absolute left-1/2 transform -translate-x-1/2 ${optimoTooltipBelow ? 'top-6' : '-top-8'}`}>
-                  <div className="bg-green-600 dark:bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                  <div className="bg-white dark:bg-gray-900 border-2 border-green-600 dark:border-green-500 text-green-600 dark:text-green-400 text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
                     <div className="text-center">Óptimo</div>
-                    <div className="text-center font-bold">{optimo !== undefined ? optimo.toFixed(step < 1 ? 1 : 0) : '-'}</div>
+                    <div className="text-center font-bold">{optimo !== undefined ? truncateToOneDecimal(optimo) : '-'}</div>
                   </div>
                   {/* Arrow pointing up or down based on position */}
                   <div className={`absolute left-1/2 transform -translate-x-1/2 ${optimoTooltipBelow ? '-top-1' : '-bottom-1'}`}>
                     {optimoTooltipBelow ? (
-                      <div className="w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-green-600 dark:border-b-green-500"></div>
+                      <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-green-600 dark:border-b-green-500"></div>
                     ) : (
-                      <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-green-600 dark:border-t-green-500"></div>
+                      <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-green-600 dark:border-t-green-500"></div>
                     )}
                   </div>
                 </div>
@@ -424,7 +450,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
               type="range"
               min={validMin}
               max={validMax}
-              step={step}
+              step="any"
               value={localValue}
               onChange={(e) => handleSliderChange(Number(e.target.value))}
               className="absolute top-10 w-full h-2 bg-transparent appearance-none cursor-pointer z-10 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-brand-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
@@ -436,7 +462,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
               style={{ left: `${currentPos}%` }}
             >
               <div className="bg-brand-600 dark:bg-brand-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
-                {localValue.toFixed(step < 1 ? 1 : 0)}
+                {truncateToOneDecimal(localValue)}
               </div>
               {/* Arrow pointing down */}
               <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-1">
@@ -561,6 +587,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                   onChange={setDiasInventario}
                   min={diasInventarioRange.min}
                   max={diasInventarioRange.max}
+                  step={0.1}
                   optimo={diasInventarioCausa?.optimo}
                   real={diasInventarioCausa?.actual}
                   label="Dias de inventario"
@@ -577,7 +604,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                   onChange={setTamanoPedido}
                   min={tamanoPedidoRange.min}
                   max={tamanoPedidoRange.max}
-                  step={1}
+                  step={0.1}
                   optimo={tamanoPedidoCausa?.optimo}
                   real={tamanoPedidoCausa?.actual}
                   label="Tamaño de Pedido"
@@ -594,7 +621,7 @@ const CoDisenoModal: React.FC<CoDisenoModalProps> = ({ isOpen, onClose, impacto 
                   onChange={setFrecuenciaOptima}
                   min={frecuenciaRange.min}
                   max={frecuenciaRange.max}
-                  step={1}
+                  step={0.1}
                   optimo={frecuenciaCausa?.optimo}
                   real={frecuenciaCausa?.actual}
                   label="Frecuencia Optima"
