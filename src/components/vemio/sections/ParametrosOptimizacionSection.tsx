@@ -21,7 +21,7 @@ export default function ParametrosOptimizacionSection() {
   const parameters = data?.data ? [
     {
       id: 1,
-      title: "Días de Inventario",
+      title: "Días de Inventario Óptimo",
       optimized: data.data.dias_inventario_optimo,
       actual: data.data.dias_inventario_real,
       unit: "días",
@@ -53,7 +53,7 @@ export default function ParametrosOptimizacionSection() {
   const calculateDeviationFromTarget = (target: number, actual: number, paramId: number) => {
     const deviation = ((actual - target) / target) * 100;
     let color: "success" | "warning" | "error" = "success";
-    
+
     // Frecuencia Óptima (id: 4) - less is better
     if (paramId === 4) {
       if (actual < target) {
@@ -73,7 +73,7 @@ export default function ParametrosOptimizacionSection() {
         color = "error"; // Rojo: más de 10% bajo optimizado
       }
     }
-    
+
     return {
       value: Math.abs(deviation).toFixed(1),
       isPositive: deviation > 0,
@@ -88,7 +88,7 @@ export default function ParametrosOptimizacionSection() {
       <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
         Parámetros de Optimización
       </h3>
-      
+
       {/* Loading State */}
       {loading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

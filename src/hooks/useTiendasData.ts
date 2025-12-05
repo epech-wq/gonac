@@ -16,15 +16,15 @@ import {
 } from '@/utils/tiendas.mappers';
 
 export const useTiendasData = (segment?: string) => {
-  const { data: segmentacionData, loading: loadingSegmentacion, error: errorSegmentacion } = 
+  const { data: segmentacionData, loading: loadingSegmentacion, error: errorSegmentacion } =
     useSegmentacionFormatted({ autoFetch: true });
-  const { data: metricasData, loading: loadingMetricas, error: errorMetricas } = 
+  const { data: metricasData, loading: loadingMetricas, error: errorMetricas } =
     useMetricasFormatted({ autoFetch: true, segment });
-  const { data: valorizacionData, loading: loadingValorizacion } = 
+  const { data: valorizacionData, loading: loadingValorizacion } =
     useValorizacionSummary();
-  const { data: tiendasConOportunidadesData, loading: loadingTiendasConOportunidades } = 
+  const { data: tiendasConOportunidadesData, loading: loadingTiendasConOportunidades } =
     useTiendasConOportunidades();
-  const { data: ventaIncrementalData, loading: loadingVentaIncremental } = 
+  const { data: ventaIncrementalData, loading: loadingVentaIncremental } =
     useVentaIncremental();
 
   const storeMetrics: StoreMetrics = useMemo(() => ({
@@ -34,21 +34,21 @@ export const useTiendasData = (segment?: string) => {
     ventasTotales: metricasData?.ventas_totales_pesos !== undefined && metricasData.ventas_totales_pesos !== null
       ? metricasData.ventas_totales_pesos
       : (segmentacionData?.summary.total_ventas_valor
-          ? parseFloat(segmentacionData.summary.total_ventas_valor.replace(/[^0-9.-]/g, ''))
-          : DEFAULT_METRICS.ventasTotales),
+        ? parseFloat(segmentacionData.summary.total_ventas_valor.replace(/[^0-9.-]/g, ''))
+        : DEFAULT_METRICS.ventasTotales),
     unidadesVendidas: metricasData?.ventas_totales_unidades !== undefined && metricasData.ventas_totales_unidades !== null
       ? metricasData.ventas_totales_unidades
       : (segmentacionData?.summary.total_ventas_unidades
-          ? parseFloat(segmentacionData.summary.total_ventas_unidades.replace(/[^0-9.-]/g, ''))
-          : DEFAULT_METRICS.unidadesVendidas),
+        ? parseFloat(segmentacionData.summary.total_ventas_unidades.replace(/[^0-9.-]/g, ''))
+        : DEFAULT_METRICS.unidadesVendidas),
     ventaPromedio: metricasData?.avg_venta_promedio_diaria
       ? metricasData.avg_venta_promedio_diaria * 7
       : DEFAULT_METRICS.ventaPromedio,
     diasInventario: metricasData?.promedio_dias_inventario !== undefined && metricasData.promedio_dias_inventario !== null
       ? metricasData.promedio_dias_inventario
       : (segmentacionData?.summary.promedio_dias_inventario
-          ? parseFloat(segmentacionData.summary.promedio_dias_inventario)
-          : DEFAULT_METRICS.diasInventario),
+        ? parseFloat(segmentacionData.summary.promedio_dias_inventario)
+        : DEFAULT_METRICS.diasInventario),
   }), [segmentacionData, metricasData]);
 
   const opportunities: Opportunity[] = useMemo(() => {
@@ -57,7 +57,7 @@ export const useTiendasData = (segment?: string) => {
         {
           type: 'agotado',
           title: 'Agotado',
-          description: 'Inventario < 10 días (Tiendas Hot y Balanceadas)',
+          description: 'Riesgo de agotado, escenario de planeación 10 días',
           tiendas: 38,
           impacto: 45000,
           risk: 'Crítico',
@@ -65,8 +65,8 @@ export const useTiendasData = (segment?: string) => {
         },
         {
           type: 'caducidad',
-          title: 'Caducidad',
-          description: 'Inventario remanente post fecha de caducidad (Tiendas Slow y Críticas)',
+          title: 'Exceso de Inventario',
+          description: 'Capital de trabajo e inventario de baja rotación',
           tiendas: 28,
           impacto: 52600,
           risk: 'Alto',
@@ -74,7 +74,7 @@ export const useTiendasData = (segment?: string) => {
         },
         {
           type: 'sinVenta',
-          title: 'Sin Venta',
+          title: 'Venta Crítica',
           description: 'Ventas <= 0 unidades',
           tiendas: 9,
           impacto: 23800,
@@ -136,10 +136,10 @@ export const useTiendasData = (segment?: string) => {
   const segments = useMemo(() => ({
     hot: segmentacionData?.cards.find(c => c.segment.toLowerCase() === 'hot'),
     slow: segmentacionData?.cards.find(c => c.segment.toLowerCase() === 'slow'),
-    balanceadas: segmentacionData?.cards.find(c => 
+    balanceadas: segmentacionData?.cards.find(c =>
       c.segment.toLowerCase() === 'balanceadas' || c.segment.toLowerCase() === 'balanceada'
     ),
-    criticas: segmentacionData?.cards.find(c => 
+    criticas: segmentacionData?.cards.find(c =>
       c.segment.toLowerCase() === 'criticas' || c.segment.toLowerCase() === 'críticas'
     ),
   }), [segmentacionData]);
@@ -149,16 +149,16 @@ export const useTiendasData = (segment?: string) => {
     [opportunities]
   );
 
-  const tiendasConOportunidades = useMemo(() => 
+  const tiendasConOportunidades = useMemo(() =>
     tiendasConOportunidadesData !== null && tiendasConOportunidadesData !== undefined
       ? tiendasConOportunidadesData.tiendas
-      : (valorizacionData 
-          ? valorizacionData.agotado.tiendas + valorizacionData.caducidad.tiendas + valorizacionData.sinVentas.tiendas
-          : 71),
+      : (valorizacionData
+        ? valorizacionData.agotado.tiendas + valorizacionData.caducidad.tiendas + valorizacionData.sinVentas.tiendas
+        : 71),
     [tiendasConOportunidadesData, valorizacionData]
   );
 
-  const porcentajeTiendasConOportunidades = useMemo(() => 
+  const porcentajeTiendasConOportunidades = useMemo(() =>
     tiendasConOportunidadesData !== null && tiendasConOportunidadesData !== undefined
       ? tiendasConOportunidadesData.porcentaje
       : 0,
@@ -174,7 +174,7 @@ export const useTiendasData = (segment?: string) => {
     impactoTotal,
     tiendasConOportunidades,
     porcentajeTiendasConOportunidades,
-    
+
     // Loading states
     loading: loadingSegmentacion || loadingMetricas || loadingValorizacion || loadingTiendasConOportunidades || loadingVentaIncremental,
     error: errorSegmentacion || errorMetricas,

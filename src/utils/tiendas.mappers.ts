@@ -2,25 +2,25 @@
  * Mapper functions for Tiendas data transformations
  */
 
-import type { 
-  RiskLevel, 
-  SegmentType, 
-  DetailRecord 
+import type {
+  RiskLevel,
+  SegmentType,
+  DetailRecord
 } from '@/types/tiendas.types';
-import { 
-  RISK_COLORS, 
-  SEGMENT_COLORS, 
+import {
+  RISK_COLORS,
+  SEGMENT_COLORS,
   OPPORTUNITY_COLORS,
   SEGMENT_TITLES,
-  OPPORTUNITY_DESCRIPTIONS 
+  OPPORTUNITY_DESCRIPTIONS
 } from '@/constants/tiendas.constants';
 
 export const getRiskLevel = (
-  segment: string, 
+  segment: string,
   diasInventario: number
 ): RiskLevel => {
   const normalized = segment.toLowerCase();
-  
+
   if (normalized === 'criticas' || normalized === 'críticas') {
     return 'Crítico';
   }
@@ -60,8 +60,8 @@ export const getOportunidadRiskLevel = (type: string): RiskLevel => {
 export const getOportunidadTitle = (type: string): string => {
   const titles: Record<string, string> = {
     agotado: 'Agotado',
-    caducidad: 'Caducidad',
-    sinVenta: 'Sin Venta',
+    caducidad: 'Exceso de Inventario',
+    sinVenta: 'Venta Crítica',
   };
   return titles[type] || type;
 };
@@ -119,7 +119,7 @@ interface AgotadoItem {
 
 export const transformAgotadoData = (response: ApiResponse): DetailRecord[] => {
   if (!response?.data || !Array.isArray(response.data)) return [];
-  
+
   return response.data.map((item: unknown, index: number) => {
     const agotadoItem = item as AgotadoItem;
     return {
@@ -146,7 +146,7 @@ interface CaducidadItem {
 
 export const transformCaducidadData = (response: ApiResponse): DetailRecord[] => {
   if (!response?.data || !Array.isArray(response.data)) return [];
-  
+
   return response.data.map((item: unknown, index: number) => {
     const caducidadItem = item as CaducidadItem;
     return {
@@ -170,7 +170,7 @@ interface SinVentaItem {
 
 export const transformSinVentasData = (response: ApiResponse): DetailRecord[] => {
   if (!response?.data || !Array.isArray(response.data)) return [];
-  
+
   return response.data.map((item: unknown, index: number) => {
     const sinVentaItem = item as SinVentaItem;
     return {
@@ -201,7 +201,7 @@ interface VentaIncrementalItem {
 
 export const transformVentaIncrementalData = (response: ApiResponse): DetailRecord[] => {
   if (!response?.data || !Array.isArray(response.data)) return [];
-  
+
   return response.data.map((item: unknown, index: number) => {
     const ventaIncrementalItem = item as VentaIncrementalItem;
     return {
