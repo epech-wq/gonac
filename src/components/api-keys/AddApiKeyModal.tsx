@@ -2,8 +2,8 @@
 import Button from "../ui/button/Button";
 import { Modal } from "../ui/modal";
 import { useModal } from "../../hooks/useModal";
-import Label from "../form/Label";
-import Input from "../form/input/InputField";
+import Label from "@/components/lib/form/Label";
+import Input from "@/components/lib/form/input/InputField";
 
 export default function AddApiKeyModal() {
   const addApiKeyModal = useModal();

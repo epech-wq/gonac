@@ -15,6 +15,7 @@ export const RISK_COLORS: Record<RiskLevel, string> = {
   'Crítico': 'bg-red-500 text-white',
   'Alto': 'bg-orange-500 text-white',
   'Medio': 'bg-yellow-500 text-white',
+  'Bajo': 'bg-blue-500 text-white',
 } as const;
 
 export const SEGMENT_COLORS: Record<SegmentType, string> = {
@@ -41,7 +42,7 @@ export const SEGMENT_TITLES: Record<string, string> = {
 
 export const OPPORTUNITY_DESCRIPTIONS: Record<string, string> = {
   agotado: 'Inventario < 10 días (Tiendas Hot y Balanceadas)',
-  caducidad: 'Inventario remanente al 1-feb-2025 (Tiendas Slow y Críticas)',
+  caducidad: 'Inventario remanente post fecha de caducidad (Tiendas Slow y Críticas)',
   sinVenta: 'Ventas <= 0 unidades',
 } as const;
 

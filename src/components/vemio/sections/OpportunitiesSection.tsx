@@ -3,18 +3,18 @@
  */
 
 import { useState } from 'react';
-import OpportunityCard from '../cards/OpportunityCard';
-import WizardAccionesGenerales from '../modals/WizardAccionesGenerales';
-import type { TipoAccionGeneral } from '../modals/WizardAccionesGenerales';
-import { 
+import OpportunityCard from '@/components/cards/OpportunityCard';
+import WizardAccionesGenerales from '@/components/modals/WizardAccionesGenerales';
+import type { TipoAccionGeneral } from '@/components/modals/WizardAccionesGenerales';
+import {
   useAgotadoDetalle,
   useCaducidadDetalle,
-  useSinVentasDetalle 
+  useSinVentasDetalle
 } from '@/hooks/useValorizacion';
-import { 
-  transformAgotadoData, 
-  transformCaducidadData, 
-  transformSinVentasData 
+import {
+  transformAgotadoData,
+  transformCaducidadData,
+  transformSinVentasData
 } from '@/utils/tiendas.mappers';
 import type { Opportunity, OpportunityType, DetailRecord } from '@/types/tiendas.types';
 
@@ -56,9 +56,9 @@ export default function OpportunitiesSection({ opportunities, onChatOpen }: Oppo
   };
 
   const handleActionClick = (actionType: string, opportunity: Opportunity) => {
-    setModalAction({ 
-      tipo: actionType as TipoAccionGeneral, 
-      opportunity 
+    setModalAction({
+      tipo: actionType as TipoAccionGeneral,
+      opportunity
     });
   };
 
@@ -73,27 +73,32 @@ export default function OpportunitiesSection({ opportunities, onChatOpen }: Oppo
 
   const getActionInfo = () => {
     if (!modalAction) return null;
-    
+
     const actionTitles: Record<TipoAccionGeneral, { title: string; description: string; tipo: string }> = {
-      reabasto_urgente: { 
-        title: 'Reabasto Urgente', 
+      reabasto_urgente: {
+        title: 'Reabasto Urgente',
         description: 'Reponer inventario crítico en tiendas afectadas',
         tipo: 'Reabasto'
       },
-      exhibiciones_adicionales: { 
-        title: 'Exhibiciones Adicionales', 
+      exhibiciones_adicionales: {
+        title: 'Exhibiciones Adicionales',
         description: 'Ganar espacio adicional en tiendas con alto ROI',
         tipo: 'Exhibición'
       },
-      promocion_evacuar: { 
-        title: 'Promoción Evacuar Inventario', 
+      promocion_evacuar: {
+        title: 'Promoción Evacuar Inventario',
         description: 'Aplicar descuentos para evacuar productos próximos a caducar',
         tipo: 'Promoción'
       },
-      visita_promotoria: { 
-        title: 'Visita Promotoría', 
+      visita_promotoria: {
+        title: 'Visita Promotoría',
         description: 'Auditar y reorganizar productos sin venta',
         tipo: 'Visita'
+      },
+      cambio_inventario: {
+        title: 'Cambio de Inventario',
+        description: 'Transferir inventario entre tiendas',
+        tipo: 'Cambio'
       }
     };
 
@@ -137,7 +142,7 @@ export default function OpportunitiesSection({ opportunities, onChatOpen }: Oppo
               detailData={getDetailData(opportunity.type)}
               isLoading={getDetailLoading(opportunity.type)}
               onToggleExpand={() => toggleOportunidadExpanded(opportunity.type)}
-              onActionClick={(actionType) => handleActionClick(actionType, opportunity)}
+              onActionClick={(actionType: string) => handleActionClick(actionType, opportunity)}
             />
           ))}
         </div>

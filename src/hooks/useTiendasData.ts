@@ -64,7 +64,7 @@ export const useTiendasData = (segment?: string) => {
         {
           type: 'caducidad',
           title: 'Caducidad',
-          description: 'Inventario remanente al 1-feb-2025 (Tiendas Slow y Críticas)',
+          description: 'Inventario remanente post fecha de caducidad (Tiendas Slow y Críticas)',
           tiendas: 28,
           impacto: 52600,
           risk: 'Alto',

@@ -179,7 +179,7 @@ export class ExhibicionesAdicionalesCalculator {
   private filtrarTiendasHOT(): TiendaConSKUs[] {
     const tiendasHOT = this.data.tiendasSegmentacion.hot.stores;
 
-    return tiendasHOT.map((tienda) => ({
+    return tiendasHOT.map((tienda: any) => ({
       id: tienda.id,
       nombre: tienda.nombre,
       ubicacion: tienda.ubicacion,
@@ -202,7 +202,7 @@ export class ExhibicionesAdicionalesCalculator {
   }> {
     // Mock: Assign SKUs to stores with varying inventory levels
     // In production, this would come from actual store-SKU relationship data
-    return this.data.skus.map((sku) => ({
+    return this.data.skus.map((sku: any) => ({
       id: sku.id,
       nombre: sku.nombre,
       ventasUltimos30Dias: sku.ventasUltimos30Dias,

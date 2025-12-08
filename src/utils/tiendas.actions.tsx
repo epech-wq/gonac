@@ -3,7 +3,7 @@
  */
 
 import type { Action } from '@/types/tiendas.types';
-import type { TipoAccionGeneral } from '@/components/vemio/modals/WizardAccionesGenerales';
+import type { TipoAccionGeneral } from '@/components/modals/WizardAccionesGenerales';
 
 interface ActionConfig {
   id: TipoAccionGeneral;
@@ -37,6 +37,12 @@ const ACTION_CONFIGS: ActionConfig[] = [
     tipo: 'Tiendas Críticas',
     description: 'Visitas de campo para activar ventas en tiendas con bajo desempeño',
   },
+  {
+    id: 'cambio_inventario',
+    title: 'Cambio de Inventario',
+    tipo: 'Mitigar Caducidad - Balanceo',
+    description: 'Transferencias desde tiendas Slow/Dead con riesgo de caducidad hacia tiendas con alta rotación',
+  },
 ];
 
 const ACTION_ICONS = {
@@ -61,6 +67,11 @@ const ACTION_ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   ),
+  cambio_inventario: (
+    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+    </svg>
+  ),
 };
 
 interface SegmentData {
@@ -78,12 +89,14 @@ export const buildActions = (segments: Segments): Action[] => {
   const tiendasReabastoUrgente = (segments.hot?.num_tiendas_segmento || 38) + (segments.balanceadas?.num_tiendas_segmento || 52);
   const tiendasPromocionEvacuar = (segments.slow?.num_tiendas_segmento || 28) + (segments.criticas?.num_tiendas_segmento || 9);
   const tiendasExhibicionesAdicionales = Math.round((segments.hot?.num_tiendas_segmento || 38) * 0.25);
+  const tiendasCambioInventario = (segments.slow?.num_tiendas_segmento || 28) + (segments.criticas?.num_tiendas_segmento || 9);
 
   const tiendasCounts: Record<TipoAccionGeneral, number> = {
     reabasto_urgente: tiendasReabastoUrgente,
     exhibiciones_adicionales: tiendasExhibicionesAdicionales,
     promocion_evacuar: tiendasPromocionEvacuar,
     visita_promotoria: segments.criticas?.num_tiendas_segmento || 9,
+    cambio_inventario: tiendasCambioInventario,
   };
 
   return ACTION_CONFIGS.map(config => ({
