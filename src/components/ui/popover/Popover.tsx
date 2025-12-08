@@ -8,9 +8,11 @@ interface PopoverProps {
   position: Position;
   trigger: React.ReactNode;
   children: ReactNode;
+  className?: string; // Wrapper className
+  popoverClassName?: string; // Popover content className
 }
 
-export default function Popover({ position, trigger, children }: PopoverProps) {
+export default function Popover({ position, trigger, children, className = "", popoverClassName = "w-[300px]" }: PopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -52,14 +54,14 @@ export default function Popover({ position, trigger, children }: PopoverProps) {
   };
 
   return (
-    <div className="relative inline-block">
-      <div ref={triggerRef} onClick={togglePopover}>
+    <div className={`relative inline-block ${className}`}>
+      <div ref={triggerRef} onClick={togglePopover} className="w-full h-full">
         {trigger}
       </div>
       {isOpen && (
         <div
           ref={popoverRef}
-          className={`absolute w-[300px]  z-99999 ${positionClasses[position]}`}
+          className={`absolute ${popoverClassName} z-99999 ${positionClasses[position]}`}
         >
           <div className="w-full bg-white rounded-xl shadow-theme-lg dark:bg-[#1E2634]">
             {children}

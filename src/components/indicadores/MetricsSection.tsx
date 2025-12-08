@@ -2,14 +2,16 @@
  * Metrics Section Component - Main KPIs Display
  */
 
-import MetricCard from '@/components/cards/MetricCard';
-import LargeMetricCard from '@/components/cards/LargeMetricCard';
+import MetricCard from './cards/MetricCard';
+import LargeMetricCard from './cards/LargeMetricCard';
 import { formatCurrency, formatNumber, formatPercentage } from '@/utils/formatters';
 import { METRIC_TARGETS } from '@/constants/tiendas.constants';
 import type { StoreMetrics } from '@/types/tiendas.types';
 import type { MetricsSectionProps, MetricasData } from '@/types/metrics.types';
 import { PieChartIcon } from '@/icons';
 import type { ReactNode } from 'react';
+import Popover from '@/components/ui/popover/Popover';
+import SingleMetricChart from './SingleMetricChart';
 
 export default function MetricsSection({ storeMetrics, metricasData, onCardClick, enableAnalysis = false }: MetricsSectionProps) {
   const sellThroughPct = metricasData?.sell_through_pct ?? 0.2;
@@ -191,49 +193,81 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
       {/* Main KPIs - 2 Large Cards */}
       <div className="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
         {largeMetricCards.map((card) => (
-          <LargeMetricCard
+          <Popover
             key={card.id}
-            title={card.title}
-            value={card.value}
-            subtitle={card.subtitle}
-            icon={card.icon}
-            color={card.color}
-            progressValue={card.progressValue}
-            targetVariation={card.targetVariation}
-            targetValue={card.targetValue}
-            showTarget={card.showTarget}
-          />
+            position="bottom"
+            className="w-full"
+            popoverClassName="w-auto"
+            trigger={
+              <LargeMetricCard
+                title={card.title}
+                value={card.value}
+                subtitle={card.subtitle}
+                icon={card.icon}
+                color={card.color}
+                progressValue={card.progressValue}
+                targetVariation={card.targetVariation}
+                targetValue={card.targetValue}
+                showTarget={card.showTarget}
+              />
+            }
+          >
+            <div className="p-2 w-[500px] max-w-[90vw]">
+              <SingleMetricChart
+                metricId={card.id}
+                storeMetrics={storeMetrics}
+                metricasData={metricasData}
+                height={250}
+              />
+            </div>
+          </Popover>
         ))}
       </div>
 
       {/* Additional Metrics - 5 Small Cards */}
       <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-5">
         {smallMetricCards.map((card) => (
-          <MetricCard
+          <Popover
             key={card.id}
-            title={card.title}
-            value={card.value}
-            color={card.color}
-            size={card.size}
-            showProgress={card.showProgress}
-            progressValue={card.progressValue}
-            enableAnalysis={enableAnalysis}
-            onAnalysisClick={() => {
-              if (onCardClick) {
-                onCardClick({
-                  title: card.title,
-                  value: card.value,
-                  storeMetrics,
-                  metricasData,
-                });
-              }
-            }}
-            storeMetrics={storeMetrics}
-            metricasData={metricasData}
-            targetVariation={card.targetVariation}
-            targetValue={card.targetValue}
-            isInverted={card.isInverted}
-          />
+            position="bottom"
+            className="w-full"
+            popoverClassName="w-auto"
+            trigger={
+              <MetricCard
+                title={card.title}
+                value={card.value}
+                color={card.color}
+                size={card.size}
+                showProgress={card.showProgress}
+                progressValue={card.progressValue}
+                enableAnalysis={enableAnalysis}
+                onAnalysisClick={() => {
+                  if (onCardClick) {
+                    onCardClick({
+                      title: card.title,
+                      value: card.value,
+                      storeMetrics,
+                      metricasData,
+                    });
+                  }
+                }}
+                storeMetrics={storeMetrics}
+                metricasData={metricasData}
+                targetVariation={card.targetVariation}
+                targetValue={card.targetValue}
+                isInverted={card.isInverted}
+              />
+            }
+          >
+            <div className="p-2 w-[400px] max-w-[80vw]">
+              <SingleMetricChart
+                metricId={card.id}
+                storeMetrics={storeMetrics}
+                metricasData={metricasData}
+                height={200}
+              />
+            </div>
+          </Popover>
         ))}
       </div>
     </>

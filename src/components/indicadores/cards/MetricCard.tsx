@@ -3,8 +3,8 @@
  */
 
 import React, { type ReactNode } from 'react';
-import { Card, CardDescription, CardTitle } from '../ui/card';
-import Badge from '../ui/badge/Badge';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import Badge from '@/components/ui/badge/Badge';
 
 interface MetricCardProps {
   title: string;

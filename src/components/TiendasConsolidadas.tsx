@@ -7,7 +7,7 @@
 "use client";
 
 import { useState } from 'react';
-import MetricsSection from '@/components/kpis/MetricsSection';
+import MetricsSection from '@/components/indicadores/MetricsSection';
 import OpportunitiesSection from '@/components/oportunidadesCards/OpportunitiesSection';
 import { useTiendasData } from '@/hooks/useTiendasData';
 

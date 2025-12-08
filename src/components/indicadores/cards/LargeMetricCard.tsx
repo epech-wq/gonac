@@ -4,7 +4,7 @@
  */
 
 import React, { type ReactNode } from 'react';
-import { Card, CardTitle } from '../ui/card';
+import { Card, CardTitle } from '@/components/ui/card';
 import { ArrowUpIcon } from '@/icons';
 
 interface LargeMetricCardProps {
@@ -84,8 +84,8 @@ export default function LargeMetricCard({
         <div className="mt-4 flex items-center justify-end">
           <div className="flex items-center gap-2">
             <div className={`flex items-center rounded-full px-2 py-1 text-sm ${targetVariation >= 0
-                ? BADGE_COLORS.positive
-                : BADGE_COLORS.negative
+              ? BADGE_COLORS.positive
+              : BADGE_COLORS.negative
               }`}>
               {ArrowUpIcon}
               <span className="ml-1">{formatVariation(targetVariation)}</span>
