@@ -3,12 +3,13 @@
  */
 
 import React, { type ReactNode } from 'react';
+import { Card, CardDescription, CardTitle } from '../ui/card';
+import Badge from '../ui/badge/Badge';
 
 interface MetricCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: ReactNode;
   color: 'green' | 'blue' | 'red' | 'orange' | 'purple';
   showProgress?: boolean;
   progressValue?: number;
@@ -21,7 +22,6 @@ interface MetricCardProps {
   metricasData?: any;
   // Target indicator props
   targetVariation?: number;
-  targetVariationFormatted?: string;
   targetValue?: string;
   isInverted?: boolean; // For metrics where lower is better (e.g., days inventory, break rate)
 }
@@ -65,7 +65,6 @@ export default function MetricCard({
   title,
   value,
   subtitle,
-  icon,
   color,
   showProgress = true,
   progressValue = 0,
@@ -77,7 +76,6 @@ export default function MetricCard({
   storeMetrics,
   metricasData,
   targetVariation,
-  targetVariationFormatted,
   targetValue,
   isInverted = false,
 }: MetricCardProps) {
@@ -103,14 +101,14 @@ export default function MetricCard({
     if (objectiveValue === undefined || objectiveValue === 0) {
       return storedVariation;
     }
-    
+
     // For percentage values, they might be in 0-1 format
     const actual = isPercentage ? actualValue : actualValue;
     const objective = isPercentage ? objectiveValue : objectiveValue;
-    
+
     // Calculate variation: ((actual - objective) / objective) * 100
     const calculatedVariation = ((actual - objective) / objective) * 100;
-    
+
     // If stored variation exists and differs significantly (> 0.1%), use calculated value
     if (storedVariation !== undefined && Math.abs(storedVariation - calculatedVariation) > 0.1) {
       console.warn('Variation mismatch detected in MetricCard. Using calculated value:', {
@@ -122,7 +120,7 @@ export default function MetricCard({
       });
       return calculatedVariation;
     }
-    
+
     return storedVariation !== undefined ? storedVariation : calculatedVariation;
   };
 
@@ -139,29 +137,19 @@ export default function MetricCard({
       </svg>
     );
   };
-  
+
   return (
-    <div 
-      className={`relative rounded-lg bg-white dark:bg-gray-800 ${isSmall ? 'p-4' : 'p-6'} border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all cursor-pointer ${enableAnalysis ? 'hover:border-brand-300 dark:hover:border-brand-600' : ''}`}
-      onMouseEnter={() => enableAnalysis && setShowBadge(true)}
-      onMouseLeave={() => enableAnalysis && setShowBadge(false)}
-      onClick={() => enableAnalysis && onAnalysisClick && onAnalysisClick()}
-    >
+    <Card>
       {/* Header con título e icono */}
-      <div className="flex items-center justify-between mb-3">
-        <h4 className={`${isSmall ? 'text-xs' : 'text-sm'} font-medium text-gray-600 dark:text-gray-400`}>
-          {title}
-        </h4>
-        <div className={`rounded-lg ${ICON_BG_COLORS[color]} ${isSmall ? 'p-2' : 'p-2.5'} ${ICON_COLORS[color]}`}>
-          {icon}
-        </div>
-      </div>
-      
+      <CardDescription>
+        {title}
+      </CardDescription>
+
       {/* Valor principal */}
-      <div className={`${isSmall ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 dark:text-white mb-1`}>
+      <CardTitle>
         {value}
-      </div>
-      
+      </CardTitle>
+
       {/* Subtítulo */}
       {subtitle && (
         <div className={`${isSmall ? 'text-xs' : 'text-sm'} text-gray-500 dark:text-gray-400 mb-3`}>
@@ -171,17 +159,17 @@ export default function MetricCard({
 
       {/* Target Indicator */}
       {targetVariation !== undefined && targetValue && (
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between">
           {(() => {
             // Extract actual value and objective from metricasData if available
             let verifiedVariation = targetVariation;
-            
+
             if (metricasData) {
               // Determine actual and objective values based on metric type
               let actualVal: number | undefined;
               let objectiveVal: number | undefined;
               let isPct = false;
-              
+
               if (title === 'Cobertura Numérica' && metricasData.cobertura_pct !== undefined) {
                 actualVal = metricasData.cobertura_pct;
                 objectiveVal = metricasData.objetivo_cobertura_pct;
@@ -202,18 +190,17 @@ export default function MetricCard({
                 actualVal = metricasData.avg_venta_promedio_diaria;
                 objectiveVal = metricasData.objetivo_avg_venta_promedio_diaria;
               }
-              
+
               if (actualVal !== undefined && objectiveVal !== undefined) {
                 verifiedVariation = verifyVariation(actualVal, objectiveVal, targetVariation, isPct) ?? targetVariation;
               }
             }
-            
+
             return (
-              <div className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
-                (isInverted ? verifiedVariation < 0 : verifiedVariation > 0)
-                  ? 'bg-green-50 text-green-700 dark:bg-green-500/20 dark:text-green-400'
-                  : 'bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-400'
-              }`}>
+              <div className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${(isInverted ? verifiedVariation < 0 : verifiedVariation > 0)
+                ? 'bg-green-50 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+                : 'bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                }`}>
                 {getArrowIcon(verifiedVariation)}
                 <span>{formatVariation(verifiedVariation)}</span>
               </div>
@@ -224,48 +211,7 @@ export default function MetricCard({
           </span>
         </div>
       )}
-      
-      {/* Barra de progreso con color específico */}
-      {showProgress && (
-        <div className={`${isSmall ? 'h-1.5' : 'h-2'} rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden`}>
-          <div 
-            className={`${isSmall ? 'h-1.5' : 'h-2'} rounded-full ${barColor} transition-all duration-300`} 
-            style={{ width: `${Math.min(progressValue, 100)}%` }}
-          ></div>
-        </div>
-      )}
-      
-      {/* Badge opcional */}
-      {badge && (
-        <div className="mt-2">
-          <span className={`text-xs font-medium ${BADGE_COLORS[color]} px-2 py-1 rounded-full`}>
-            {badge}
-          </span>
-        </div>
-      )}
-
-      {/* Vemio Analysis Badge - appears on hover */}
-      {enableAnalysis && showBadge && (
-        <div className="absolute top-3 right-3 z-10">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg transition-all">
-            <svg
-              className="h-3.5 w-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-              />
-            </svg>
-            Vemio Analysis
-          </span>
-        </div>
-      )}
-    </div>
+    </Card>
   );
 }
 

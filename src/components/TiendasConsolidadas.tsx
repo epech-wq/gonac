@@ -29,29 +29,6 @@ const SEGMENT_MAP: Record<string, string> = {
 };
 
 export default function TiendasConsolidadas({ onCardClick }: TiendasConsolidadasProps) {
-  const [selectedSegment, setSelectedSegment] = useState<SegmentFilter>('');
-
-  // Map the display segment to the actual database segment value
-  const dbSegment = selectedSegment ? SEGMENT_MAP[selectedSegment] : undefined;
-
-  const {
-    storeMetrics,
-    opportunities,
-    metricasData,
-    impactoTotal,
-    tiendasConOportunidades,
-    loading,
-    error,
-  } = useTiendasData(dbSegment);
-
-  if (loading) return (<div className="h-[600px] w-full flex items-center justify-center gap-2 text-center">
-    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Cargando datos de tiendas...</p>
-  </div>);
-
-  if (error) return (<div className="h-[600px] w-full flex items-center justify-center gap-2 text-center">
-    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Error al cargar datos: {error.message}</p>
-  </div>);
 
   return (
     <div className="relative">
@@ -71,23 +48,8 @@ export default function TiendasConsolidadas({ onCardClick }: TiendasConsolidadas
           </div>
         </div>
 
-        {/* Metrics Section */}
-        <MetricsSection
-          storeMetrics={storeMetrics}
-          metricasData={metricasData}
-          enableAnalysis={true}
-          onCardClick={onCardClick}
-        />
-
-        {/* Impacto Total Banner */}
-        <ImpactoTotalBanner
-          impactoTotal={impactoTotal}
-          tiendasConOportunidades={tiendasConOportunidades}
-          totalTiendas={storeMetrics.totalTiendas}
-        />
-
         {/* Opportunities Section */}
-        <OpportunitiesSection opportunities={opportunities} onChatOpen={onCardClick} />
+        {/* <OpportunitiesSection opportunities={opportunities} onChatOpen={onCardClick} /> */}
       </div>
     </div>
   );

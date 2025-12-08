@@ -1,4 +1,7 @@
 import TiendasConsolidadas from "@/components/TiendasConsolidadas";
+import MetricsSection from "../kpis/MetricsSection";
+import ImpactoTotalBanner from "../oportunitiesBanner/ImpactoTotalBanner";
+import { useTiendasData } from "@/hooks/useTiendasData";
 
 interface ResumenViewProps {
   chatOpen?: boolean;
@@ -6,5 +9,29 @@ interface ResumenViewProps {
 }
 
 export default function ResumenView({ chatOpen, onCardClick }: ResumenViewProps) {
-  return <TiendasConsolidadas chatOpen={chatOpen} onCardClick={onCardClick} />;
+  const {
+    storeMetrics,
+    metricasData,
+    impactoTotal,
+    tiendasConOportunidades,
+  } = useTiendasData();
+
+  return (
+    <>
+      {/* Metrics Section */}
+      <MetricsSection
+        storeMetrics={storeMetrics}
+        metricasData={metricasData}
+        enableAnalysis={true}
+        onCardClick={onCardClick}
+      />
+
+      {/* Impacto Total Banner */}
+      <ImpactoTotalBanner
+        impactoTotal={impactoTotal}
+        tiendasConOportunidades={tiendasConOportunidades}
+        totalTiendas={storeMetrics.totalTiendas}
+      />
+    </>
+  )
 }
