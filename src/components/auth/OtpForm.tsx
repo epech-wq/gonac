@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import React, { useRef, useState } from "react";
-import Label from "@/components/form/Label";
+import Label from "@/components/lib/form/Label";
 
 export default function OtpForm() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);

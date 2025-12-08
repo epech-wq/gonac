@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import Label from "../form/Label";
-import Input from "@/components/form/input/InputField";
+import Label from "@/components/lib/form/Label";
+import Input from "@/components/lib/form/input/InputField";
 
 export default function ResetPasswordForm() {
   return (

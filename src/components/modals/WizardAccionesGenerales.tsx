@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import ReabastoUrgenteCard from "@/components/cards/ReabastoUrgenteCard";
-import ExhibicionesAdicionalesCard from "@/components/cards/ExhibicionesAdicionalesCard";
-import PromocionEvacuarCard from "@/components/cards/PromocionEvacuarCard";
-import VisitaPromotoriaCard from "@/components/cards/VisitaPromotoriaCard";
-import CambioInventarioCard from "@/components/cards/CambioInventarioCard";
+// import ReabastoUrgenteCard from "@/components/cards/ReabastoUrgenteCard";
+// import ExhibicionesAdicionalesCard from "@/components/cards/ExhibicionesAdicionalesCard";
+// import PromocionEvacuarCard from "@/components/cards/PromocionEvacuarCard";
+// import VisitaPromotoriaCard from "@/components/cards/VisitaPromotoriaCard";
+// import CambioInventarioCard from "@/components/cards/CambioInventarioCard";
 
 export type TipoAccionGeneral =
   | "reabasto_urgente"
@@ -221,7 +221,10 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
       case 'reabasto_urgente':
         return (
           <div className="space-y-6">
-            <ReabastoUrgenteCard showTitle={false} showButtons={true} onChatOpen={onChatOpen} />
+            {/* <ReabastoUrgenteCard showTitle={false} showButtons={true} onChatOpen={onChatOpen} /> */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-600 dark:text-gray-400">Reabasto Urgente - Card component not yet implemented</p>
+            </div>
 
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
@@ -245,7 +248,10 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
       case 'exhibiciones_adicionales':
         return (
           <div className="space-y-6">
-            <ExhibicionesAdicionalesCard showTitle={false} showConfig={true} />
+            {/* <ExhibicionesAdicionalesCard showTitle={false} showConfig={true} /> */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-600 dark:text-gray-400">Exhibiciones Adicionales - Card component not yet implemented</p>
+            </div>
 
             <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
@@ -269,7 +275,10 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
       case 'promocion_evacuar':
         return (
           <div className="space-y-6">
-            <PromocionEvacuarCard showTitle={false} showConfig={true} onChatOpen={onChatOpen} />
+            {/* <PromocionEvacuarCard showTitle={false} showConfig={true} onChatOpen={onChatOpen} /> */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-600 dark:text-gray-400">Promoción Evacuar - Card component not yet implemented</p>
+            </div>
 
             <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
@@ -293,7 +302,10 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
       case 'visita_promotoria':
         return (
           <div className="space-y-6">
-            <VisitaPromotoriaCard showTitle={false} showPhoneMockup={true} onChatOpen={onChatOpen} />
+            {/* <VisitaPromotoriaCard showTitle={false} showPhoneMockup={true} onChatOpen={onChatOpen} /> */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-600 dark:text-gray-400">Visita Promotoría - Card component not yet implemented</p>
+            </div>
 
             <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
               <div className="flex items-start gap-3">
@@ -317,9 +329,9 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
       case 'cambio_inventario':
         return (
           <div className="space-y-6">
-            <CambioInventarioCard 
-              showTitle={false} 
-              showConfig={true} 
+            {/* <CambioInventarioCard
+              showTitle={false}
+              showConfig={true}
               onChatOpen={onChatOpen}
               onAprobar={handleEjecutarAccion}
               onAjustar={() => onChatOpen && onChatOpen({
@@ -327,7 +339,10 @@ function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onCha
                 titulo: 'Ajustar Parámetros - Balanceo de Inventarios',
                 contexto: 'Ajuste de parámetros de simulación para balanceo de inventario'
               })}
-            />
+            /> */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-600 dark:text-gray-400">Cambio de Inventario - Card component not yet implemented</p>
+            </div>
 
             <div className="bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 rounded-lg p-4">
               <div className="flex items-start gap-3">

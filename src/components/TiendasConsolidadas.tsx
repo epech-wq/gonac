@@ -9,8 +9,6 @@
 import { useState } from 'react';
 import MetricsSection from '@/components/kpis/MetricsSection';
 import OpportunitiesSection from '@/components/oportunidadesCards/OpportunitiesSection';
-import ImpactoTotalBanner from '@/components/oportunitiesBanner/ImpactoTotalBanner';
-import SegmentationButtons from '@/components/segmentationButtons/SegmentationButtons';
 import { useTiendasData } from '@/hooks/useTiendasData';
 
 interface TiendasConsolidadasProps {

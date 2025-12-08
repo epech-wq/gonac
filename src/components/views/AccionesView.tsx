@@ -1210,7 +1210,7 @@ export default function AccionesView({ data }: AccionesViewProps) {
         {Object.entries(data)
           .filter(([actionType]) => actionType !== 'promocionesHot')
           .map(([actionType, actionData], index) =>
-            renderActionCard(actionType as ActionType, actionData, index + 1)
+            renderActionCard(actionType as ActionType, actionData as Record<string, any>, index + 1)
           )}
       </div>
     </div>

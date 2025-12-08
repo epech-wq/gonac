@@ -1,5 +1,5 @@
 "use client";
-import Switch from "../form/switch/Switch";
+import Switch from "@/components/lib/form/switch/Switch";
 import AddApiKeyModal from "./AddApiKeyModal";
 import { useState } from "react";
 
@@ -194,11 +194,10 @@ export default function ApiKeyTable() {
                 </td>
                 <td className="px-5 py-3 whitespace-nowrap">
                   <span
-                    className={`inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      apiKey.status === "Active"
-                        ? "bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500"
-                        : "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500"
-                    }`}
+                    className={`inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${apiKey.status === "Active"
+                      ? "bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500"
+                      : "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500"
+                      }`}
                   >
                     {apiKey.status}
                   </span>

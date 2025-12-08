@@ -1,6 +1,5 @@
-import TiendasConsolidadas from "@/components/TiendasConsolidadas";
 import MetricsSection from "../kpis/MetricsSection";
-import ImpactoTotalBanner from "../oportunitiesBanner/ImpactoTotalBanner";
+import ImpactoTotalBanner from "../vemio/sections/ImpactoTotalBanner";
 import { useTiendasData } from "@/hooks/useTiendasData";
 
 interface ResumenViewProps {
