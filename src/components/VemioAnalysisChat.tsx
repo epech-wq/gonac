@@ -10,7 +10,7 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-interface MetricCardData {
+export interface MetricCardData {
   title: string;
   value: string | number;
   subtitle?: string;
@@ -30,7 +30,7 @@ interface MetricCardData {
     cobertura_pct?: number;
     ventas_totales_unidades?: number;
   };
-  segmentacionData?: any;
+  segmentacionData?: unknown;
 }
 
 interface VemioAnalysisChatProps {
@@ -107,19 +107,21 @@ export default function VemioAnalysisChat({
   }, [inputValue]);
 
   const generateInitialAnalysis = (data: MetricCardData): string => {
+    const dataWithType = data as MetricCardData & Record<string, unknown>;
+
     // Handle elasticity promotion parameters
-    if ((data as any).tipo === 'elasticidad_promocion') {
-      return generateElasticityRecommendations(data as any);
+    if (dataWithType.tipo === 'elasticidad_promocion') {
+      return generateElasticityRecommendations(dataWithType);
     }
 
     // Handle reabasto urgente parameters (individual)
-    if ((data as any).tipo === 'reabasto_parametro') {
-      return generateReabastoParametroAnalysis(data as any);
+    if (dataWithType.tipo === 'reabasto_parametro') {
+      return generateReabastoParametroAnalysis(dataWithType);
     }
 
     // Handle complete reabasto urgente parameters explanation
-    if ((data as any).tipo === 'reabasto_parametros_completos') {
-      return generateReabastoParametrosCompletosAnalysis(data as any);
+    if (dataWithType.tipo === 'reabasto_parametros_completos') {
+      return generateReabastoParametrosCompletosAnalysis(dataWithType);
     }
 
     let analysis = `## Análisis de ${data.title}\n\n`;
@@ -242,8 +244,9 @@ export default function VemioAnalysisChat({
     return analysis;
   };
 
-  const generateReabastoParametroAnalysis = (data: any): string => {
+  const generateReabastoParametroAnalysis = (data: Record<string, unknown>): string => {
     const { title, value, parametro, valor, descripcion } = data;
+    const valorNum = typeof valor === 'number' ? valor : Number(valor);
 
     let analysis = `## Análisis del Parámetro: ${title}\n\n`;
 
@@ -264,11 +267,11 @@ export default function VemioAnalysisChat({
         analysis += `- **Significado:** Las tiendas HOT y Balanceadas con inventario menor a ${valor} días serán priorizadas para reabasto urgente\n`;
         analysis += `- **Objetivo:** Asegurar que las tiendas de alto desempeño mantengan suficiente inventario para evitar pérdida de ventas\n\n`;
         analysis += `### 💡 Recomendaciones\n\n`;
-        if (valor > 30) {
+        if (valorNum > 30) {
           analysis += `⚠️ **Valor alto:** Un límite de ${valor} días puede ser conservador. Considera:\n`;
           analysis += `- Reducir a **25-30 días** para ser más proactivo en el reabasto\n`;
           analysis += `- Esto permitirá detectar necesidades de reabasto antes de que se vuelvan críticas\n\n`;
-        } else if (valor < 20) {
+        } else if (valorNum < 20) {
           analysis += `⚠️ **Valor bajo:** Un límite de ${valor} días puede ser muy agresivo. Considera:\n`;
           analysis += `- Aumentar a **25-30 días** para evitar reabastos innecesarios\n`;
           analysis += `- Esto reducirá la frecuencia de pedidos y optimizará los costos logísticos\n\n`;
@@ -292,7 +295,7 @@ export default function VemioAnalysisChat({
         analysis += `- **Significado:** ${valor === 0 ? 'No hay tiempo de espera' : `Tiempo de espera de ${valor} días`} en el proceso de reabasto\n`;
         analysis += `- **Objetivo:** Optimizar la planificación considerando el tiempo real de entrega\n\n`;
         analysis += `### 💡 Recomendaciones\n\n`;
-        if (valor === 0) {
+        if (valorNum === 0) {
           analysis += `✅ **Lead Time a 0:** Configuración ideal para:\n`;
           analysis += `- Reabastos inmediatos cuando el inventario está disponible en almacén\n`;
           analysis += `- Minimizar el tiempo entre detección de necesidad y disponibilidad en tienda\n`;
@@ -300,7 +303,7 @@ export default function VemioAnalysisChat({
           analysis += `⚠️ **Consideraciones:**\n`;
           analysis += `- Asegúrate de que tu cadena de suministro puede realmente cumplir con entregas inmediatas\n`;
           analysis += `- Si hay tiempo de procesamiento o transporte, considera ajustar este valor a la realidad operativa\n\n`;
-        } else if (valor > 7) {
+        } else if (valorNum > 7) {
           analysis += `⚠️ **Lead Time alto:** ${valor} días puede ser demasiado tiempo. Considera:\n`;
           analysis += `- Revisar procesos logísticos para reducir el tiempo de entrega\n`;
           analysis += `- Si es posible, reducir a **3-5 días** para ser más competitivo\n`;
@@ -325,12 +328,12 @@ export default function VemioAnalysisChat({
         analysis += `- **Significado:** Después del reabasto, se busca tener ${valor} días de inventario disponible\n`;
         analysis += `- **Objetivo:** Asegurar cobertura suficiente para evitar agotamientos antes del próximo reabasto\n\n`;
         analysis += `### 💡 Recomendaciones\n\n`;
-        if (valor < 7) {
+        if (valorNum < 7) {
           analysis += `⚠️ **Horizonte corto:** ${valor} días puede ser insuficiente. Considera:\n`;
           analysis += `- Aumentar a **10-15 días** para mayor seguridad\n`;
           analysis += `- Esto reduce el riesgo de agotamiento antes del próximo ciclo de reabasto\n`;
           analysis += `- Especialmente importante para tiendas HOT con alta rotación\n\n`;
-        } else if (valor > 20) {
+        } else if (valorNum > 20) {
           analysis += `⚠️ **Horizonte largo:** ${valor} días puede ser excesivo. Considera:\n`;
           analysis += `- Reducir a **10-15 días** para optimizar capital de trabajo\n`;
           analysis += `- Un horizonte muy largo puede llevar a sobreinventario\n`;
@@ -371,8 +374,9 @@ export default function VemioAnalysisChat({
     return analysis;
   };
 
-  const generateReabastoParametrosCompletosAnalysis = (data: any): string => {
+  const generateReabastoParametrosCompletosAnalysis = (data: Record<string, unknown>): string => {
     const { parametros } = data;
+    const params = parametros as Record<string, Record<string, unknown>>;
 
     let analysis = `## Explicación de Parámetros de Reabasto Urgente\n\n`;
     analysis += `VEMIO ha calculado automáticamente los parámetros óptimos para el reabasto urgente basándose en el análisis de tus datos históricos, patrones de venta y características de tus tiendas.\n\n`;
@@ -380,8 +384,8 @@ export default function VemioAnalysisChat({
     analysis += `### 📊 Parámetros Calculados por VEMIO\n\n`;
 
     // Tiempo de reabasto
-    if (parametros.tiempo_reabasto) {
-      const { nombre, valor, unidad } = parametros.tiempo_reabasto;
+    if (params.tiempo_reabasto) {
+      const { nombre, valor, unidad } = params.tiempo_reabasto;
       analysis += `#### ${nombre}: ${valor} ${unidad}\n\n`;
       analysis += `**¿Por qué ${valor} ${unidad}?**\n\n`;
       analysis += `VEMIO analizó el comportamiento de tus tiendas HOT y Balanceadas y determinó que:\n\n`;
@@ -392,11 +396,12 @@ export default function VemioAnalysisChat({
     }
 
     // Lead Time
-    if (parametros.lead_time) {
-      const { nombre, valor, unidad } = parametros.lead_time;
+    if (params.lead_time) {
+      const { nombre, valor, unidad } = params.lead_time;
+      const valorLeadTime = typeof valor === 'number' ? valor : Number(valor);
       analysis += `#### ${nombre}: ${valor} ${unidad}\n\n`;
       analysis += `**¿Por qué ${valor} ${unidad}?**\n\n`;
-      if (valor === 0) {
+      if (valorLeadTime === 0) {
         analysis += `VEMIO identificó que tu operación puede funcionar con Lead Time de ${valor} días porque:\n\n`;
         analysis += `- **Capacidad logística:** Tu cadena de suministro tiene la capacidad de entregas inmediatas o en el mismo día\n`;
         analysis += `- **Inventario disponible:** El almacén central tiene suficiente stock para cubrir reabastos urgentes sin demoras\n`;
@@ -411,8 +416,8 @@ export default function VemioAnalysisChat({
     }
 
     // Horizonte de tiempo
-    if (parametros.horizonte_tiempo) {
-      const { nombre, valor, unidad } = parametros.horizonte_tiempo;
+    if (params.horizonte_tiempo) {
+      const { nombre, valor, unidad } = params.horizonte_tiempo;
       analysis += `#### ${nombre}: ${valor} ${unidad}\n\n`;
       analysis += `**¿Por qué ${valor} ${unidad}?**\n\n`;
       analysis += `VEMIO determinó que ${valor} ${unidad} es el horizonte óptimo después del reabasto porque:\n\n`;
@@ -457,8 +462,11 @@ export default function VemioAnalysisChat({
     return analysis;
   };
 
-  const generateElasticityRecommendations = (data: any): string => {
+  const generateElasticityRecommendations = (data: Record<string, unknown>): string => {
     const { elasticidadPapas, elasticidadTotopos, maxDescuento } = data;
+    const elastPapas = typeof elasticidadPapas === 'number' ? elasticidadPapas : Number(elasticidadPapas);
+    const elastTotopos = typeof elasticidadTotopos === 'number' ? elasticidadTotopos : Number(elasticidadTotopos);
+    const maxDesc = typeof maxDescuento === 'number' ? maxDescuento : Number(maxDescuento);
 
     let analysis = `## Recomendaciones de Parámetros de Elasticidad\n\n`;
 
@@ -470,13 +478,13 @@ export default function VemioAnalysisChat({
     analysis += `### 🎯 Análisis y Recomendaciones\n\n`;
 
     // Analyze Papas elasticity
-    if (elasticidadPapas < 1.2) {
+    if (elastPapas < 1.2) {
       analysis += `**Elasticidad Papas (${elasticidadPapas}):**\n`;
       analysis += `- ⚠️ **Valor bajo:** La elasticidad está por debajo del rango recomendado (1.2-1.8)\n`;
       analysis += `- Esto indica que las ventas de papas no responden suficientemente a los descuentos\n`;
       analysis += `- **Recomendación:** Aumentar a **1.5-1.6** para mejorar la respuesta a promociones\n`;
-      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado sería: ${(1.5 * maxDescuento).toFixed(0)}% (vs ${(elasticidadPapas * maxDescuento).toFixed(0)}% actual)\n\n`;
-    } else if (elasticidadPapas > 2.0) {
+      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado sería: ${(1.5 * maxDesc).toFixed(0)}% (vs ${(elastPapas * maxDesc).toFixed(0)}% actual)\n\n`;
+    } else if (elastPapas > 2.0) {
       analysis += `**Elasticidad Papas (${elasticidadPapas}):**\n`;
       analysis += `- ⚠️ **Valor alto:** La elasticidad está por encima del rango típico (1.2-1.8)\n`;
       analysis += `- Esto puede indicar que los descuentos son demasiado agresivos o hay otros factores influyendo\n`;
@@ -484,18 +492,18 @@ export default function VemioAnalysisChat({
     } else {
       analysis += `**Elasticidad Papas (${elasticidadPapas}):**\n`;
       analysis += `- ✅ **Valor óptimo:** La elasticidad está dentro del rango recomendado\n`;
-      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado en ventas es: **${(elasticidadPapas * maxDescuento).toFixed(0)}%**\n`;
+      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado en ventas es: **${(elastPapas * maxDesc).toFixed(0)}%**\n`;
       analysis += `- Este valor refleja bien la respuesta del mercado a promociones en la categoría de papas\n\n`;
     }
 
     // Analyze Totopos/Mix elasticity
-    if (elasticidadTotopos < 1.5) {
+    if (elastTotopos < 1.5) {
       analysis += `**Elasticidad Mix/Totopos (${elasticidadTotopos}):**\n`;
       analysis += `- ⚠️ **Valor bajo:** La elasticidad está por debajo del rango recomendado (1.5-2.0)\n`;
       analysis += `- Los productos del mix pueden necesitar descuentos más agresivos o mejor posicionamiento\n`;
       analysis += `- **Recomendación:** Aumentar a **1.8-2.0** para maximizar la respuesta promocional\n`;
-      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado sería: ${(1.8 * maxDescuento).toFixed(0)}% (vs ${(elasticidadTotopos * maxDescuento).toFixed(0)}% actual)\n\n`;
-    } else if (elasticidadTotopos > 2.5) {
+      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado sería: ${(1.8 * maxDesc).toFixed(0)}% (vs ${(elastTotopos * maxDesc).toFixed(0)}% actual)\n\n`;
+    } else if (elastTotopos > 2.5) {
       analysis += `**Elasticidad Mix/Totopos (${elasticidadTotopos}):**\n`;
       analysis += `- ⚠️ **Valor muy alto:** La elasticidad está por encima del rango típico (1.5-2.0)\n`;
       analysis += `- Esto puede indicar que los descuentos son excesivos o hay factores estacionales\n`;
@@ -503,22 +511,22 @@ export default function VemioAnalysisChat({
     } else {
       analysis += `**Elasticidad Mix/Totopos (${elasticidadTotopos}):**\n`;
       analysis += `- ✅ **Valor óptimo:** La elasticidad está dentro del rango recomendado\n`;
-      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado en ventas es: **${(elasticidadTotopos * maxDescuento).toFixed(0)}%**\n`;
+      analysis += `- Con ${maxDescuento}% de descuento, el incremento esperado en ventas es: **${(elastTotopos * maxDesc).toFixed(0)}%**\n`;
       analysis += `- Este valor refleja bien la respuesta del mercado a promociones en productos del mix\n\n`;
     }
 
     // Overall recommendations
     analysis += `### 💡 Recomendaciones Generales\n\n`;
 
-    const papasOptimal = elasticidadPapas >= 1.2 && elasticidadPapas <= 1.8;
-    const totoposOptimal = elasticidadTotopos >= 1.5 && elasticidadTotopos <= 2.0;
+    const papasOptimal = elastPapas >= 1.2 && elastPapas <= 1.8;
+    const totoposOptimal = elastTotopos >= 1.5 && elastTotopos <= 2.0;
 
     if (papasOptimal && totoposOptimal) {
       analysis += `✅ **Parámetros bien configurados:** Ambos valores de elasticidad están en rangos óptimos\n\n`;
       analysis += `**Proyección de Impacto:**\n`;
       analysis += `- Con estos parámetros y un descuento del ${maxDescuento}%, puedes esperar:\n`;
-      analysis += `  - Incremento en ventas de Papas: **${(elasticidadPapas * maxDescuento).toFixed(0)}%**\n`;
-      analysis += `  - Incremento en ventas de Mix: **${(elasticidadTotopos * maxDescuento).toFixed(0)}%**\n\n`;
+      analysis += `  - Incremento en ventas de Papas: **${(elastPapas * maxDesc).toFixed(0)}%**\n`;
+      analysis += `  - Incremento en ventas de Mix: **${(elastTotopos * maxDesc).toFixed(0)}%**\n\n`;
     } else {
       analysis += `**Parámetros Sugeridos para Optimización:**\n\n`;
       if (!papasOptimal) {
@@ -535,7 +543,7 @@ export default function VemioAnalysisChat({
 
     analysis += `### 📈 Consideraciones Adicionales\n\n`;
     analysis += `- **Descuento Máximo (${maxDescuento}%):** Asegúrate de que este valor no comprometa los márgenes\n`;
-    analysis += `- **Balance:** La diferencia entre elasticidades (${Math.abs(elasticidadPapas - elasticidadTotopos).toFixed(1)}) es ${Math.abs(elasticidadPapas - elasticidadTotopos) < 0.5 ? 'razonable' : 'significativa'}\n`;
+    analysis += `- **Balance:** La diferencia entre elasticidades (${Math.abs(elastPapas - elastTotopos).toFixed(1)}) es ${Math.abs(elastPapas - elastTotopos) < 0.5 ? 'razonable' : 'significativa'}\n`;
     analysis += `- **Monitoreo:** Revisa los resultados reales vs. proyectados para ajustar estos parámetros\n\n`;
 
     analysis += `### 🔍 Metodología\n\n`;
@@ -567,7 +575,7 @@ export default function VemioAnalysisChat({
       const aiResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: generateAIResponse(userMessage.content, cardData),
+        content: generateAIResponse(),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiResponse]);
@@ -575,7 +583,7 @@ export default function VemioAnalysisChat({
     }, 1000);
   };
 
-  const generateAIResponse = (userQuery: string, data: MetricCardData | null): string => {
+  const generateAIResponse = (): string => {
     // Temporary response for demo purposes
     return `Gracias por tu pregunta. Actualmente, la funcionalidad de análisis conversacional está en desarrollo activo.\n\n` +
       `**Estado del Proyecto:**\n` +
@@ -678,8 +686,8 @@ export default function VemioAnalysisChat({
               )}
               <div
                 className={`max-w-[85%] ${message.role === "user"
-                    ? "bg-brand-100 dark:bg-brand-500/20 rounded-xl rounded-tr-xs px-4 py-3"
-                    : "bg-gray-100 dark:bg-white/5 rounded-xl rounded-tl-xs px-4 py-3"
+                  ? "bg-brand-100 dark:bg-brand-500/20 rounded-xl rounded-tr-xs px-4 py-3"
+                  : "bg-gray-100 dark:bg-white/5 rounded-xl rounded-tl-xs px-4 py-3"
                   }`}
               >
                 <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-6 text-gray-800 dark:text-white/90 whitespace-pre-wrap">

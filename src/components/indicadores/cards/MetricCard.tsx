@@ -9,6 +9,7 @@ interface MetricCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
+  color?: 'green' | 'blue' | 'red' | 'orange' | 'purple';
   showProgress?: boolean;
   progressValue?: number;
   size?: 'small' | 'large';
@@ -132,30 +133,33 @@ export default function MetricCard({
             let verifiedVariation = targetVariation;
 
             if (metricasData) {
+              const data = metricasData as Record<string, unknown>;
+              const storeData = storeMetrics as Record<string, unknown>;
+
               // Determine actual and objective values based on metric type
               let actualVal: number | undefined;
               let objectiveVal: number | undefined;
               let isPct = false;
 
-              if (title === 'Cobertura Numérica' && metricasData.cobertura_pct !== undefined) {
-                actualVal = metricasData.cobertura_pct;
-                objectiveVal = metricasData.objetivo_cobertura_pct;
+              if (title === 'Cobertura Numérica' && data.cobertura_pct !== undefined) {
+                actualVal = data.cobertura_pct as number;
+                objectiveVal = data.objetivo_cobertura_pct as number;
                 isPct = true;
-              } else if (title === 'Cobertura Ponderada' && metricasData.cobertura_ponderada_pct !== undefined) {
-                actualVal = metricasData.cobertura_ponderada_pct;
-                objectiveVal = metricasData.objetivo_cobertura_ponderada_pct;
+              } else if (title === 'Cobertura Ponderada' && data.cobertura_ponderada_pct !== undefined) {
+                actualVal = data.cobertura_ponderada_pct as number;
+                objectiveVal = data.objetivo_cobertura_ponderada_pct as number;
                 isPct = true;
-              } else if (title === 'Días de Inventario' && storeMetrics?.diasInventario !== undefined) {
-                actualVal = storeMetrics.diasInventario;
-                objectiveVal = metricasData.objetivo_promedio_dias_inventario;
-              } else if (title === 'Tasa de Quiebre' && metricasData.porcentaje_agotados_pct !== undefined && targetVariation !== -95.0) {
+              } else if (title === 'Días de Inventario' && storeData?.diasInventario !== undefined) {
+                actualVal = storeData.diasInventario as number;
+                objectiveVal = data.objetivo_promedio_dias_inventario as number;
+              } else if (title === 'Tasa de Quiebre' && data.porcentaje_agotados_pct !== undefined && targetVariation !== -95.0) {
                 // Skip recalculation if targetVariation is hardcoded to -95.0
-                actualVal = metricasData.porcentaje_agotados_pct;
-                objectiveVal = metricasData.objetivo_porcentaje_agotados_pct;
+                actualVal = data.porcentaje_agotados_pct as number;
+                objectiveVal = data.objetivo_porcentaje_agotados_pct as number;
                 isPct = true;
-              } else if (title === 'Venta Promedio Diaria' && metricasData.avg_venta_promedio_diaria !== undefined) {
-                actualVal = metricasData.avg_venta_promedio_diaria;
-                objectiveVal = metricasData.objetivo_avg_venta_promedio_diaria;
+              } else if (title === 'Venta Promedio Diaria' && data.avg_venta_promedio_diaria !== undefined) {
+                actualVal = data.avg_venta_promedio_diaria as number;
+                objectiveVal = data.objetivo_avg_venta_promedio_diaria as number;
               }
 
               if (actualVal !== undefined && objectiveVal !== undefined) {

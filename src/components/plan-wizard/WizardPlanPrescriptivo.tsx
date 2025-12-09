@@ -98,11 +98,10 @@ export default function WizardPlanPrescriptivo({
   oportunidad,
   onClose,
   onComplete,
-  onVolver
 }: WizardPlanPrescriptivoProps) {
   const [pasoActual, setPasoActual] = useState(1);
   const [mounted, setMounted] = useState(false);
-  const [datos, setDatos] = useState<DatosWizard>({
+  const [datos] = useState<DatosWizard>({
     tiendasSeleccionadas: oportunidad?.tiendas || [],
     skusSeleccionados: oportunidad?.skus || [],
     accionSeleccionada: null,
@@ -156,9 +155,11 @@ export default function WizardPlanPrescriptivo({
     }
   };
 
-  const handleActualizarDatos = (nuevosDatos: Partial<DatosWizard>) => {
-    setDatos(prev => ({ ...prev, ...nuevosDatos }));
-  };
+  // Function to update wizard data - currently unused but kept for future use
+  // const handleActualizarDatos = (nuevosDatos: Partial<DatosWizard>) => {
+  //   setDatos(prev => ({ ...prev, ...nuevosDatos }));
+  //   console.log('Datos actualizados:', nuevosDatos);
+  // };
 
   const handleGuardar = () => {
     console.log("Guardando borrador...", datos);

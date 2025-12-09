@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ResumenView from "../components/views/ResumenView";
-import VemioAnalysisChat from "../components/VemioAnalysisChat";
+import VemioAnalysisChat, { type MetricCardData } from "../components/VemioAnalysisChat";
 
 interface DashboardProps {
   onChatStateChange?: (isOpen: boolean) => void;
@@ -10,10 +10,10 @@ interface DashboardProps {
 
 export default function Dashboard({ onChatStateChange }: DashboardProps) {
   const [chatOpen, setChatOpen] = useState(false);
-  const [selectedCardData, setSelectedCardData] = useState<unknown>(null);
+  const [selectedCardData, setSelectedCardData] = useState<MetricCardData | null>(null);
 
   const handleCardClick = (cardData: unknown) => {
-    setSelectedCardData(cardData);
+    setSelectedCardData(cardData as MetricCardData);
     setChatOpen(true);
     onChatStateChange?.(true);
   };
@@ -28,7 +28,7 @@ export default function Dashboard({ onChatStateChange }: DashboardProps) {
     <>
       <div className={`space-y-4 transition-all duration-300 ${chatOpen ? 'pr-[372px]' : ''}`}>
         <div className="min-h-[600px]">
-          <ResumenView chatOpen={chatOpen} onCardClick={handleCardClick} />
+          <ResumenView onCardClick={handleCardClick} />
         </div>
       </div>
 

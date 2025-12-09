@@ -6,27 +6,12 @@
 
 "use client";
 
-import { useState } from 'react';
-import MetricsSection from '@/components/indicadores/MetricsSection';
-import OpportunitiesSection from '@/components/oportunidadesCards/OpportunitiesSection';
-import { useTiendasData } from '@/hooks/useTiendasData';
-
 interface TiendasConsolidadasProps {
   chatOpen?: boolean;
-  onCardClick?: (cardData: any) => void;
+  onCardClick?: (cardData: unknown) => void;
 }
 
-type SegmentFilter = 'Hot' | 'Balanceadas' | 'Slow' | '';
-
-// Map display names to actual database segment values
-const SEGMENT_MAP: Record<string, string> = {
-  'Hot': 'Hot',
-  'Balanceadas': 'Balanceada', // Table uses singular "Balanceada"
-  'Slow': 'Slow',
-  '': '',
-};
-
-export default function TiendasConsolidadas({ onCardClick }: TiendasConsolidadasProps) {
+export default function TiendasConsolidadas({ }: TiendasConsolidadasProps) {
 
   return (
     <div className="relative">

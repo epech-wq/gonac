@@ -1207,10 +1207,10 @@ export default function AccionesView({ data }: AccionesViewProps) {
 
       {/* Action Cards */}
       <div className="space-y-6">
-        {Object.entries(data)
+        {Object.entries(data as Record<string, unknown>)
           .filter(([actionType]) => actionType !== 'promocionesHot')
           .map(([actionType, actionData], index) =>
-            renderActionCard(actionType as ActionType, actionData as Record<string, any>, index + 1)
+            renderActionCard(actionType as ActionType, actionData as Record<string, unknown>, index + 1)
           )}
       </div>
     </div>

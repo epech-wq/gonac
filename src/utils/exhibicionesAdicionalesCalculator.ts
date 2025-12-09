@@ -177,12 +177,15 @@ export class ExhibicionesAdicionalesCalculator {
    * Filter stores to get only HOT segment stores
    */
   private filtrarTiendasHOT(): TiendaConSKUs[] {
-    const tiendasHOT = this.data.tiendasSegmentacion.hot.stores;
+    const data = this.data as Record<string, unknown>;
+    const tiendasSeg = data.tiendasSegmentacion as Record<string, unknown>;
+    const hot = tiendasSeg.hot as Record<string, unknown>;
+    const tiendasHOT = hot.stores as Array<Record<string, unknown>>;
 
-    return tiendasHOT.map((tienda: any) => ({
-      id: tienda.id,
-      nombre: tienda.nombre,
-      ubicacion: tienda.ubicacion,
+    return tiendasHOT.map((tienda: Record<string, unknown>) => ({
+      id: tienda.id as string,
+      nombre: tienda.nombre as string,
+      ubicacion: tienda.ubicacion as string,
       segmento: "hot" as const,
       skus: this.obtenerSKUsDeTienda(),
     }));
@@ -202,12 +205,14 @@ export class ExhibicionesAdicionalesCalculator {
   }> {
     // Mock: Assign SKUs to stores with varying inventory levels
     // In production, this would come from actual store-SKU relationship data
-    return this.data.skus.map((sku: any) => ({
-      id: sku.id,
-      nombre: sku.nombre,
-      ventasUltimos30Dias: sku.ventasUltimos30Dias,
-      inventarioActual: Math.floor(sku.inventarioTotal / 5), // Mock: divide total inventory among stores
-      precioUnitario: this.obtenerPrecioUnitario(sku.id),
+    const data = this.data as Record<string, unknown>;
+    const skus = data.skus as Array<Record<string, unknown>>;
+    return skus.map((sku: Record<string, unknown>) => ({
+      id: sku.id as string,
+      nombre: sku.nombre as string,
+      ventasUltimos30Dias: sku.ventasUltimos30Dias as number,
+      inventarioActual: Math.floor((sku.inventarioTotal as number) / 5), // Mock: divide total inventory among stores
+      precioUnitario: this.obtenerPrecioUnitario(sku.id as string),
     }));
   }
 

@@ -4,9 +4,9 @@
  */
 
 export interface VemioData {
-  skus: any[];
-  tiendas: any[];
-  [key: string]: any;
+  skus: unknown[];
+  tiendas: unknown[];
+  [key: string]: unknown;
 }
 
 export const vemioMockData: VemioData = {

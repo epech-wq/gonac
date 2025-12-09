@@ -64,7 +64,7 @@ interface WizardAccionesGeneralesProps {
   accionInfo: AccionInfo;
   onClose: () => void;
   onComplete?: (datos: DatosAccionGeneral) => void;
-  onChatOpen?: (cardData: any) => void;
+  onChatOpen?: (cardData: unknown) => void;
 }
 
 export default function WizardAccionesGenerales({
@@ -205,10 +205,10 @@ interface Paso1ConfiguracionProps {
   accionInfo: AccionInfo;
   onActualizar: (datos: Partial<DatosAccionGeneral>) => void;
   onEjecutar: () => void;
-  onChatOpen?: (cardData: any) => void;
+  onChatOpen?: (cardData: unknown) => void;
 }
 
-function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar, onChatOpen }: Paso1ConfiguracionProps) {
+function Paso1Configuracion({ datos, accionInfo, onActualizar, onEjecutar }: Paso1ConfiguracionProps) {
   const [parametros] = useState<ParametrosAccionGeneral>(datos.parametros);
 
   const handleEjecutarAccion = () => {
