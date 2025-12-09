@@ -7,13 +7,24 @@ import flatpickr from "flatpickr";
 import { Spanish } from "flatpickr/dist/l10n/es.js";
 import "flatpickr/dist/flatpickr.min.css";
 import { supabase } from "@/lib/supabase";
-import { CatalogsRepository } from "@/repositories/catalogs.repository";
 import { ComboboxOption } from "@/types/catalogs";
+import { HierarchicalMetricsRepository } from "@/repositories/hierarchical-metrics.repository";
+import { HierarchicalMetricsParams } from "@/types/hierarchical-metrics";
 
 interface AdvancedFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: FilterState) => void;
+  catalogOptions: {
+    canal: ComboboxOption[];
+    geografia: ComboboxOption[];
+    arbol: ComboboxOption[];
+    cadenaCliente: ComboboxOption[];
+    categoria: ComboboxOption[];
+    marca: ComboboxOption[];
+    sku: ComboboxOption[];
+  };
+  isLoadingCatalogs: boolean;
 }
 
 export interface FilterState {
@@ -41,86 +52,28 @@ const INITIAL_STATE: FilterState = {
   categoria: "",
   marca: "",
   sku: "",
-  segmentacion: "Hot", // Default as per typical behavior, or empty if preferred
+  segmentacion: "", // Empty by default
   startDate: "",
   endDate: "",
 };
 
 // Segmentacion options (static)
 const SEGMENTACION_OPTIONS: ComboboxOption[] = [
-  { value: "Hot", label: "Hot" },
-  { value: "Balanceadas", label: "Balanceadas" },
-  { value: "Slow", label: "Slow" },
-  { value: "Criticas", label: "Críticas" },
+  { value: "HOT", label: "Hot" },
+  { value: "BALANCEADA", label: "Balanceadas" },
+  { value: "SLOW", label: "Slow" },
 ];
 
 export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
   isOpen,
   onClose,
   onApply,
+  catalogOptions,
+  isLoadingCatalogs,
 }) => {
   const [filters, setFilters] = useState<FilterState>(INITIAL_STATE);
   const datePickerRef = useRef<HTMLInputElement>(null);
   const flatpickrInstance = useRef<flatpickr.Instance | null>(null);
-
-  // Catalog options state
-  const [catalogOptions, setCatalogOptions] = useState({
-    canal: [] as ComboboxOption[],
-    geografia: [] as ComboboxOption[],
-    arbol: [] as ComboboxOption[],
-    cadenaCliente: [] as ComboboxOption[],
-    categoria: [] as ComboboxOption[],
-    marca: [] as ComboboxOption[],
-    sku: [] as ComboboxOption[],
-  });
-
-  const [isLoadingCatalogs, setIsLoadingCatalogs] = useState(true);
-
-  // Load catalog data
-  useEffect(() => {
-    if (isOpen) {
-      loadCatalogs();
-    }
-  }, [isOpen]);
-
-  const loadCatalogs = async () => {
-    setIsLoadingCatalogs(true);
-    const catalogsRepo = new CatalogsRepository(supabase);
-
-    try {
-      const [
-        channels,
-        geographies,
-        hierarchies,
-        chains,
-        categories,
-        brands,
-        products,
-      ] = await Promise.all([
-        catalogsRepo.getChannels(),
-        catalogsRepo.getGeographies(),
-        catalogsRepo.getCommercialHierarchies(),
-        catalogsRepo.getChains(),
-        catalogsRepo.getCategories(),
-        catalogsRepo.getBrands(),
-        catalogsRepo.getProducts(),
-      ]);
-
-      setCatalogOptions({
-        canal: channels,
-        geografia: geographies,
-        arbol: hierarchies,
-        cadenaCliente: chains,
-        categoria: categories,
-        marca: brands,
-        sku: products,
-      });
-    } catch (error) {
-      console.error('Error loading catalogs:', error);
-    } finally {
-      setIsLoadingCatalogs(false);
-    }
-  };
 
   useEffect(() => {
     if (isOpen && datePickerRef.current && !flatpickrInstance.current) {
@@ -160,9 +113,116 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
     };
   }, [isOpen]);
 
-  const handleApply = () => {
+  const handleApply = async () => {
+    // Call the hierarchical metrics function with the applied filters
+    await callHierarchicalMetrics(filters);
+
+    // Pass filters to parent
     onApply(filters);
     onClose();
+  };
+
+  const callHierarchicalMetrics = async (filterState: FilterState) => {
+    // Validate date range
+    if (!filterState.startDate || !filterState.endDate) {
+      console.warn('Date range is required for hierarchical metrics');
+      return;
+    }
+
+    const metricsRepo = new HierarchicalMetricsRepository(supabase);
+
+    // Build the parameters for the stored function
+    const params: HierarchicalMetricsParams = {
+      p_begin_date: filterState.startDate,
+      p_end_date: filterState.endDate,
+      // Default grouping: global (no grouping)
+      p_dim_1: 'global',
+      p_dim_2: 'global',
+      p_dim_3: 'global',
+    };
+
+    // Add filters based on selected values
+    // Cliente filters
+    if (filterState.canal) {
+      // Get the channel name from the selected ID
+      const selectedChannel = catalogOptions.canal.find(c => c.value === filterState.canal);
+      if (selectedChannel) {
+        params.p_filtro_store_channel = [selectedChannel.label];
+      }
+    }
+
+    if (filterState.geografia) {
+      // Get the geography name from the selected ID
+      const selectedGeography = catalogOptions.geografia.find(g => g.value === filterState.geografia);
+      if (selectedGeography) {
+        params.p_filtro_store_region = [selectedGeography.label];
+      }
+    }
+
+    if (filterState.arbol) {
+      // Get the hierarchy name from the selected ID
+      const selectedHierarchy = catalogOptions.arbol.find(h => h.value === filterState.arbol);
+      if (selectedHierarchy) {
+        // Note: You may need to determine which hierarchy level this is
+        // For now, using commercial_coordinator as an example
+        params.p_filtro_store_commercial_coordinator = [selectedHierarchy.label];
+      }
+    }
+
+    if (filterState.cadenaCliente) {
+      // Get the chain name from the selected ID
+      const selectedChain = catalogOptions.cadenaCliente.find(c => c.value === filterState.cadenaCliente);
+      if (selectedChain) {
+        params.p_filtro_store_chain = [selectedChain.label];
+      }
+    }
+
+    // Producto filters
+    if (filterState.categoria) {
+      // Get the category name from the selected ID
+      const selectedCategory = catalogOptions.categoria.find(c => c.value === filterState.categoria);
+      if (selectedCategory) {
+        params.p_filtro_product_category = [selectedCategory.label];
+      }
+    }
+
+    if (filterState.marca) {
+      // Get the brand name from the selected ID
+      const selectedBrand = catalogOptions.marca.find(b => b.value === filterState.marca);
+      if (selectedBrand) {
+        params.p_filtro_product_brand = [selectedBrand.label];
+      }
+    }
+
+    if (filterState.sku) {
+      // Get the product name from the selected ID
+      const selectedProduct = catalogOptions.sku.find(p => p.value === filterState.sku);
+      if (selectedProduct) {
+        // Extract product name from "SKU - Name" format
+        const productName = selectedProduct.label.split(' - ')[1];
+        if (productName) {
+          params.p_filtro_product = [productName];
+        }
+      }
+    }
+
+    // Segmentation filter - pass in uppercase
+    if (filterState.segmentacion) {
+      params.p_filtro_store_segment = [filterState.segmentacion.toUpperCase()];
+    }
+
+    try {
+      console.log('=== Calling fn_hierarchical_metrics ===');
+      console.log('Parameters:', JSON.stringify(params, null, 2));
+
+      const result = await metricsRepo.getHierarchicalMetrics(params);
+
+      console.log('=== Hierarchical Metrics Result ===');
+      console.log('Total rows returned:', result.length);
+      console.log('Data:', JSON.stringify(result, null, 2));
+    } catch (error) {
+      console.error('Error calling hierarchical metrics:', error);
+    }
   };
 
   const updateFilter = (key: keyof FilterState, value: string) => {

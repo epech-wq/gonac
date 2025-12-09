@@ -1,38 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import MetricsSection from "../indicadores/MetricsSection";
 import { useTiendasData } from "@/hooks/useTiendasData";
 import { AdvancedFilterModal, FilterState } from "../filters/AdvancedFilterModal";
 import Breadcrumb from "../ui/breadcrumb/Breadcrumb";
-
-// Filter value to label mappings for breadcrumb display
-const FILTER_LABELS: Record<string, Record<string, string>> = {
-  canal: {
-    autoservicio: "Autoservicio",
-    mayoreo: "Mayoreo",
-    detallista: "Detallista",
-    "e-commerce": "E-Commerce",
-  },
-  geografia: {
-    norte: "Norte",
-    sur: "Sur",
-    centro: "Centro",
-    occidente: "Occidente",
-    noreste: "Noreste",
-  },
-  arbol: {
-    region_1: "Region 1",
-    region_2: "Region 2",
-    zona_a: "Zona A",
-    zona_b: "Zona B",
-  },
-  cadenaCliente: {
-    walmart: "Walmart",
-    soriana: "Soriana",
-    chedraui: "Chedraui",
-    oxxo: "Oxxo",
-    liverpool: "Liverpool",
-  },
-};
+import { supabase } from "@/lib/supabase";
+import { HierarchicalMetricsRepository } from "@/repositories/hierarchical-metrics.repository";
+import { HierarchicalMetricsParams, HierarchicalMetricsResult } from "@/types/hierarchical-metrics";
+import { CatalogsRepository } from "@/repositories/catalogs.repository";
+import { ComboboxOption } from "@/types/catalogs";
 
 interface ResumenViewProps {
   onCardClick?: (cardData: unknown) => void;
@@ -41,54 +16,181 @@ interface ResumenViewProps {
 export default function ResumenView({ onCardClick }: ResumenViewProps) {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterState | null>(null);
+  const [hierarchicalMetrics, setHierarchicalMetrics] = useState<HierarchicalMetricsResult | null>(null);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
+
+  // Catalog options for label lookup - shared with modal
+  const [catalogOptions, setCatalogOptions] = useState({
+    canal: [] as ComboboxOption[],
+    geografia: [] as ComboboxOption[],
+    arbol: [] as ComboboxOption[],
+    cadenaCliente: [] as ComboboxOption[],
+    categoria: [] as ComboboxOption[],
+    marca: [] as ComboboxOption[],
+    sku: [] as ComboboxOption[],
+  });
+
+  const [isLoadingCatalogs, setIsLoadingCatalogs] = useState(true);
 
   const {
-    storeMetrics,
-    metricasData,
+    storeMetrics: fallbackStoreMetrics,
+    metricasData: fallbackMetricasData,
   } = useTiendasData();
 
+  // Map hierarchical metrics to the format expected by the cards
+  const storeMetrics = useMemo(() => {
+    if (!hierarchicalMetrics) {
+      return fallbackStoreMetrics;
+    }
+
+    return {
+      totalTiendas: hierarchicalMetrics.total_unique_stores,
+      ventasTotales: hierarchicalMetrics.total_sales_amount,
+      unidadesVendidas: hierarchicalMetrics.total_units_sold,
+      ventaPromedio: hierarchicalMetrics.avg_daily_sales_amount * 7, // Convert daily to weekly
+      diasInventario: hierarchicalMetrics.inventory_days,
+    };
+  }, [hierarchicalMetrics, fallbackStoreMetrics]);
+
+  const metricasData = useMemo(() => {
+    if (!hierarchicalMetrics) {
+      return fallbackMetricasData;
+    }
+
+    return {
+      sell_through_pct: hierarchicalMetrics.sell_through_pct / 100, // Convert to 0-1 format
+      cobertura_ponderada_pct: fallbackMetricasData?.cobertura_ponderada_pct, // Not available in function
+      porcentaje_agotados_pct: hierarchicalMetrics.out_of_stock_rate_pct,
+      avg_venta_promedio_diaria: hierarchicalMetrics.avg_daily_sales_amount,
+      cobertura_pct: hierarchicalMetrics.numeric_distribution_pct / 100, // Convert to 0-1 format
+      ventas_totales_unidades: hierarchicalMetrics.total_units_sold,
+      ventas_totales_pesos: hierarchicalMetrics.total_sales_amount,
+      promedio_dias_inventario: hierarchicalMetrics.inventory_days,
+      // Keep target/objective values from fallback if available
+      ...fallbackMetricasData,
+    };
+  }, [hierarchicalMetrics, fallbackMetricasData]);
+
+  // Load initial metrics and catalogs on component mount
+  useEffect(() => {
+    loadInitialMetrics();
+    loadCatalogs();
+  }, []);
+
+  const loadCatalogs = async () => {
+    setIsLoadingCatalogs(true);
+    const catalogsRepo = new CatalogsRepository(supabase);
+
+    try {
+      const [
+        channels,
+        geographies,
+        hierarchies,
+        chains,
+        categories,
+        brands,
+        products,
+      ] = await Promise.all([
+        catalogsRepo.getChannels(),
+        catalogsRepo.getGeographies(),
+        catalogsRepo.getCommercialHierarchies(),
+        catalogsRepo.getChains(),
+        catalogsRepo.getCategories(),
+        catalogsRepo.getBrands(),
+        catalogsRepo.getProducts(),
+      ]);
+
+      setCatalogOptions({
+        canal: channels,
+        geografia: geographies,
+        arbol: hierarchies,
+        cadenaCliente: chains,
+        categoria: categories,
+        marca: brands,
+        sku: products,
+      });
+    } catch (error) {
+      console.error('Error loading catalogs:', error);
+    } finally {
+      setIsLoadingCatalogs(false);
+    }
+  };
+
+  const loadInitialMetrics = async () => {
+    setIsLoadingMetrics(true);
+    const metricsRepo = new HierarchicalMetricsRepository(supabase);
+
+    const params: HierarchicalMetricsParams = {
+      p_begin_date: '2024-11-01',
+      p_end_date: '2024-11-30',
+      // Default grouping: global (no grouping)
+      p_dim_1: 'global',
+      p_dim_2: 'global',
+      p_dim_3: 'global',
+    };
+
+    try {
+      console.log('=== Loading Initial Metrics (November 2024) ===');
+      console.log('Parameters:', JSON.stringify(params, null, 2));
+
+      const result = await metricsRepo.getHierarchicalMetrics(params);
+
+      console.log('=== Initial Metrics Result ===');
+      console.log('Total rows returned:', result.length);
+      console.log('Data:', JSON.stringify(result, null, 2));
+
+      // Set the first result (should be only one with global grouping)
+      if (result.length > 0) {
+        setHierarchicalMetrics(result[0]);
+      }
+    } catch (error) {
+      console.error('Error loading initial metrics:', error);
+    } finally {
+      setIsLoadingMetrics(false);
+    }
+  };
+
   const handleApplyFilters = (filters: FilterState) => {
-    // Logic to apply filters would go here
     console.log("Filters applied:", filters);
     setAppliedFilters(filters);
-    // Future integration: pass filters to useTiendasData or API
   };
 
   // Build breadcrumb items based on Cliente section filters
   const getBreadcrumbItems = (): Array<{ label: string; href?: string }> => {
     const items: Array<{ label: string; href?: string }> = [{ label: "Home", href: "/" }];
 
+    // If no filters are applied, only show "Home"
     if (!appliedFilters) {
-      items.push({ label: "Cliente" });
       return items;
     }
 
     // Add Cliente section filters in order: Canal, Geografía, Árbol, Cadena Cliente
+    // Look up the label from catalog options
     if (appliedFilters.canal) {
-      const label = FILTER_LABELS.canal[appliedFilters.canal] || appliedFilters.canal;
+      const option = catalogOptions.canal.find(opt => opt.value === appliedFilters.canal);
+      const label = option?.label || appliedFilters.canal;
       items.push({ label });
     }
 
     if (appliedFilters.geografia) {
-      const label = FILTER_LABELS.geografia[appliedFilters.geografia] || appliedFilters.geografia;
+      const option = catalogOptions.geografia.find(opt => opt.value === appliedFilters.geografia);
+      const label = option?.label || appliedFilters.geografia;
       items.push({ label });
     }
 
     if (appliedFilters.arbol) {
-      const label = FILTER_LABELS.arbol[appliedFilters.arbol] || appliedFilters.arbol;
+      const option = catalogOptions.arbol.find(opt => opt.value === appliedFilters.arbol);
+      const label = option?.label || appliedFilters.arbol;
       items.push({ label });
     }
 
     if (appliedFilters.cadenaCliente) {
-      const label = FILTER_LABELS.cadenaCliente[appliedFilters.cadenaCliente] || appliedFilters.cadenaCliente;
+      const option = catalogOptions.cadenaCliente.find(opt => opt.value === appliedFilters.cadenaCliente);
+      const label = option?.label || appliedFilters.cadenaCliente;
       items.push({ label });
     }
 
-    // If no Cliente filters are selected, show default
-    if (items.length === 1) {
-      items.push({ label: "Cliente" });
-    }
-
+    // If no Cliente filters are selected after applying, still only show "Home"
     return items;
   };
 
@@ -98,6 +200,8 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
         onApply={handleApplyFilters}
+        catalogOptions={catalogOptions}
+        isLoadingCatalogs={isLoadingCatalogs}
       />
 
       {/* Controls Bar */}
