@@ -141,6 +141,7 @@ export default function SignInForm() {
             </p>
           </div>
         </div>
+      </div>
     </div>
   );
 }
