@@ -24,11 +24,11 @@ const navItems: NavItem[] = [
     name: "Indicadores",
     path: "/",
   },
-  {
-    icon: <ListIcon />,
-    name: "Historial",
-    path: "/history",
-  },
+  // {
+  //   icon: <ListIcon />,
+  //   name: "Historial",
+  //   path: "/history",
+  // },
 ];
 
 const Sidebar: React.FC = () => {

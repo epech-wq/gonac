@@ -6,7 +6,7 @@ import ProtectedRoute from "@/components/lib/auth/ProtectedRoute";
 export default function RootPage() {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen dark:bg-gray-900 transition-all duration-300">
+      <div className="dark:bg-gray-900 transition-all duration-300">
         <Dashboard />
       </div>
     </ProtectedRoute>
