@@ -283,7 +283,7 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
 
   // Build breadcrumb items based on Cliente section filters
   const getBreadcrumbItems = (): Array<{ label: string; href?: string }> => {
-    const items: Array<{ label: string; href?: string }> = [{ label: "Home", href: "/" }];
+    const items: Array<{ label: string; href?: string }> = [{ label: "Global", href: "/" }];
 
     // If no filters are applied, only show "Home"
     if (!appliedFilters) {
