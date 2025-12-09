@@ -258,19 +258,36 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 flex justify-between gap-3">
           <button
-            onClick={onClose}
+            onClick={() => {
+              setFilters({
+                ...INITIAL_STATE,
+                startDate: "2024-11-01",
+                endDate: "2024-11-30",
+              });
+              if (flatpickrInstance.current) {
+                flatpickrInstance.current.setDate([new Date(2024, 10, 1), new Date(2024, 10, 30)]);
+              }
+            }}
             className="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
           >
-            Cancelar
+            Limpiar
           </button>
-          <button
-            onClick={handleApply}
-            className="px-6 py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition"
-          >
-            Aplicar Filtros
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleApply}
+              className="px-6 py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 shadow-lg shadow-brand-500/20 transition"
+            >
+              Aplicar Filtros
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

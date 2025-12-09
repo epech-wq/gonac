@@ -18,6 +18,7 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
   const [appliedFilters, setAppliedFilters] = useState<FilterState | null>(null);
   const [hierarchicalMetrics, setHierarchicalMetrics] = useState<HierarchicalMetricsResult | null>(null);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
+  const [metricsError, setMetricsError] = useState<string | null>(null);
 
   // Catalog options for label lookup - shared with modal
   const [catalogOptions, setCatalogOptions] = useState({
@@ -40,36 +41,41 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
   // Map hierarchical metrics to the format expected by the cards
   const storeMetrics = useMemo(() => {
     if (!hierarchicalMetrics) {
-      return fallbackStoreMetrics;
+      return {
+        totalTiendas: 0,
+        ventasTotales: 0,
+        unidadesVendidas: 0,
+        ventaPromedio: 0,
+        diasInventario: 0,
+      };
     }
 
     return {
-      totalTiendas: hierarchicalMetrics.total_unique_stores,
-      ventasTotales: hierarchicalMetrics.total_sales_amount,
-      unidadesVendidas: hierarchicalMetrics.total_units_sold,
-      ventaPromedio: hierarchicalMetrics.avg_daily_sales_amount * 7, // Convert daily to weekly
-      diasInventario: hierarchicalMetrics.inventory_days,
+      totalTiendas: hierarchicalMetrics.total_unique_stores ?? 0,
+      ventasTotales: hierarchicalMetrics.total_sales_amount ?? 0, // Ventas totales => total_sales_amount
+      unidadesVendidas: hierarchicalMetrics.total_units_sold ?? 0, // Unidades vendidas => total_units_sold
+      ventaPromedio: hierarchicalMetrics.avg_daily_sales_amount ? hierarchicalMetrics.avg_daily_sales_amount * 7 : 0, // Convert daily to weekly (not used in cards)
+      diasInventario: hierarchicalMetrics.inventory_days ?? 0, // Días de inventario => inventory_days
     };
-  }, [hierarchicalMetrics, fallbackStoreMetrics]);
+  }, [hierarchicalMetrics]);
 
   const metricasData = useMemo(() => {
     if (!hierarchicalMetrics) {
-      return fallbackMetricasData;
+      return null;
     }
 
     return {
-      sell_through_pct: hierarchicalMetrics.sell_through_pct / 100, // Convert to 0-1 format
-      cobertura_ponderada_pct: fallbackMetricasData?.cobertura_ponderada_pct, // Not available in function
-      porcentaje_agotados_pct: hierarchicalMetrics.out_of_stock_rate_pct,
-      avg_venta_promedio_diaria: hierarchicalMetrics.avg_daily_sales_amount,
-      cobertura_pct: hierarchicalMetrics.numeric_distribution_pct / 100, // Convert to 0-1 format
+      sell_through_pct: hierarchicalMetrics.sell_through_pct != null ? hierarchicalMetrics.sell_through_pct / 100 : undefined, // Sell-Through => sell_through_pct (convert to 0-1 format)
+      cobertura_ponderada_pct: undefined, // Not available in fn_hierarchical_metrics
+      porcentaje_agotados_pct: hierarchicalMetrics.out_of_stock_rate_pct, // Tasa de Agotados => out_of_stock_rate_pct
+      avg_venta_promedio_diaria: hierarchicalMetrics.avg_daily_sales_amount, // Venta Promedio Diaria => avg_daily_sales_amount
+      cobertura_pct: hierarchicalMetrics.numeric_distribution_pct != null ? hierarchicalMetrics.numeric_distribution_pct / 100 : undefined, // Distribución Numérica => numeric_distribution_pct (convert to 0-1 format)
       ventas_totales_unidades: hierarchicalMetrics.total_units_sold,
       ventas_totales_pesos: hierarchicalMetrics.total_sales_amount,
       promedio_dias_inventario: hierarchicalMetrics.inventory_days,
-      // Keep target/objective values from fallback if available
-      ...fallbackMetricasData,
+      initial_inventory: hierarchicalMetrics.initial_inventory, // Inventario inicial => initial_inventory
     };
-  }, [hierarchicalMetrics, fallbackMetricasData]);
+  }, [hierarchicalMetrics]);
 
   // Load initial metrics and catalogs on component mount
   useEffect(() => {
@@ -118,6 +124,7 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
 
   const loadInitialMetrics = async () => {
     setIsLoadingMetrics(true);
+    setMetricsError(null);
     const metricsRepo = new HierarchicalMetricsRepository(supabase);
 
     const params: HierarchicalMetricsParams = {
@@ -142,9 +149,16 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
       // Set the first result (should be only one with global grouping)
       if (result.length > 0) {
         setHierarchicalMetrics(result[0]);
+        setMetricsError(null);
+      } else {
+        // No data returned, set to null to show empty state
+        setHierarchicalMetrics(null);
+        setMetricsError(null);
       }
     } catch (error) {
       console.error('Error loading initial metrics:', error);
+      setMetricsError('Error al cargar los datos. Por favor, intenta de nuevo.');
+      setHierarchicalMetrics(null);
     } finally {
       setIsLoadingMetrics(false);
     }
@@ -166,6 +180,7 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
     }
 
     setIsLoadingMetrics(true);
+    setMetricsError(null);
     const metricsRepo = new HierarchicalMetricsRepository(supabase);
 
     // Build the parameters for the stored function
@@ -251,9 +266,16 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
       // Update the metrics with the filtered result
       if (result.length > 0) {
         setHierarchicalMetrics(result[0]);
+        setMetricsError(null);
+      } else {
+        // No data returned, set to null to show empty state
+        setHierarchicalMetrics(null);
+        setMetricsError(null);
       }
     } catch (error) {
       console.error('Error loading filtered metrics:', error);
+      setMetricsError('Error al cargar los datos. Por favor, intenta de nuevo.');
+      setHierarchicalMetrics(null);
     } finally {
       setIsLoadingMetrics(false);
     }
@@ -325,13 +347,70 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
         </button>
       </div>
 
+      {/* Error State */}
+      {metricsError && !isLoadingMetrics && (
+        <div className="mb-6 p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="flex items-start gap-3">
+            <svg className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-1">
+                Error al cargar los datos
+              </h3>
+              <p className="text-red-700 dark:text-red-300 mb-4">
+                {metricsError}
+              </p>
+              <button
+                onClick={() => appliedFilters ? loadMetricsWithFilters(appliedFilters) : loadInitialMetrics()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reintentar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!metricsError && !isLoadingMetrics && hierarchicalMetrics === null && (
+        <div className="mb-6 p-8 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
+          <svg className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          </svg>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            No hay datos disponibles
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            No se encontraron datos para los filtros seleccionados.
+          </p>
+          {appliedFilters && (
+            <button
+              onClick={() => setIsFilterModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-lg transition shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Ajustar Filtros
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Metrics Section - Cards or Charts */}
-      <MetricsSection
-        storeMetrics={storeMetrics}
-        metricasData={metricasData}
-        enableAnalysis={true}
-        onCardClick={onCardClick}
-      />
+      {!metricsError && (
+        <MetricsSection
+          storeMetrics={storeMetrics}
+          metricasData={metricasData}
+          enableAnalysis={true}
+          onCardClick={onCardClick}
+          isLoading={isLoadingMetrics}
+        />
+      )}
 
       {/* Impacto Total Banner */}
       {/* <ImpactoTotalBanner

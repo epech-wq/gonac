@@ -12,16 +12,16 @@ import type { ReactNode } from 'react';
 import Popover from '@/components/ui/popover/Popover';
 import SingleMetricChart from './SingleMetricChart';
 
-export default function MetricsSection({ storeMetrics, metricasData, onCardClick, enableAnalysis = false }: MetricsSectionProps) {
-  const sellThroughPct = metricasData?.sell_through_pct ?? 0.2;
-  const coberturaPonderadaPct = metricasData?.cobertura_ponderada_pct ?? 0.823;
-  const tasaQuiebrePct = metricasData?.porcentaje_agotados_pct ?? 2.3;
-  const ventaPromedioDiaria = metricasData?.avg_venta_promedio_diaria ?? (storeMetrics.ventaPromedio / 7);
-  const coberturaPct = metricasData?.cobertura_pct ?? 0.83;
+export default function MetricsSection({ storeMetrics, metricasData, onCardClick, enableAnalysis = false, isLoading = false }: MetricsSectionProps) {
+  const sellThroughPct = metricasData?.sell_through_pct;
+  const coberturaPonderadaPct = metricasData?.cobertura_ponderada_pct;
+  const tasaQuiebrePct = metricasData?.porcentaje_agotados_pct;
+  const ventaPromedioDiaria = metricasData?.avg_venta_promedio_diaria;
+  const coberturaPct = metricasData?.cobertura_pct;
 
   // Helper function to calculate variation percentage for sell-through
   const getSellThroughVariation = (): number => {
-    if (!metricasData?.objetivo_sell_through_pct || metricasData.objetivo_sell_through_pct === 0) {
+    if (!metricasData?.objetivo_sell_through_pct || metricasData.objetivo_sell_through_pct === 0 || sellThroughPct == null) {
       return 0;
     }
     // Both are in 0-1 format, calculate variation as percentage
@@ -71,8 +71,8 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
     {
       id: 'ventas-totales',
       title: 'Ventas Totales',
-      value: formatCurrency(storeMetrics.ventasTotales),
-      subtitle: `${formatNumber(storeMetrics.unidadesVendidas)} unidades vendidas`,
+      value: storeMetrics.ventasTotales != null && storeMetrics.ventasTotales > 0 ? formatCurrency(storeMetrics.ventasTotales) : '-',
+      subtitle: storeMetrics.unidadesVendidas != null && storeMetrics.unidadesVendidas > 0 ? `${formatNumber(storeMetrics.unidadesVendidas)} unidades vendidas` : '-',
       icon: (
         <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -98,13 +98,13 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
     {
       id: 'sell-through',
       title: 'Sell-Through',
-      value: formatPercentage(sellThroughPct),
-      subtitle: `Inventario inicial: ${formatNumber(66732)} unidades`,
+      value: sellThroughPct != null ? formatPercentage(sellThroughPct) : '-',
+      subtitle: metricasData?.initial_inventory != null ? `Inventario inicial: ${formatNumber(metricasData.initial_inventory)} unidades` : '-',
       icon: <PieChartIcon className="text-white font-bold" /> as ReactNode,
       color: 'blue' as const,
-      progressValue: Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100),
+      progressValue: sellThroughPct != null ? Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100) : 0,
       targetVariation:
-        metricasData?.objetivo_sell_through_pct !== undefined
+        metricasData?.objetivo_sell_through_pct !== undefined && sellThroughPct != null
           ? verifyVariation(
             sellThroughPct,
             metricasData.objetivo_sell_through_pct,
@@ -116,7 +116,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
           ? formatTargetValue(metricasData.objetivo_sell_through_formatted, true) ||
           `${Math.round(metricasData.objetivo_sell_through_pct * 100)}%`
           : undefined,
-      showTarget: metricasData?.objetivo_sell_through_pct !== undefined,
+      showTarget: metricasData?.objetivo_sell_through_pct !== undefined && sellThroughPct != null,
     },
   ];
 
@@ -124,8 +124,8 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
   const smallMetricCards = [
     {
       id: 'cobertura-numerica',
-      title: 'Cobertura Numérica',
-      value: `${formatNumber(Math.round(coberturaPct * 100))}%`,
+      title: 'Distribución Numérica',
+      value: coberturaPct != null ? `${formatNumber(Math.round(coberturaPct * 100))}%` : '-',
       color: 'blue' as const,
       size: 'small' as const,
       showProgress: false,
@@ -138,11 +138,11 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
     {
       id: 'cobertura-ponderada',
       title: 'Cobertura Ponderada',
-      value: formatPercentage(coberturaPonderadaPct),
+      value: coberturaPonderadaPct != null ? formatPercentage(coberturaPonderadaPct) : '-',
       color: 'green' as const,
       size: 'small' as const,
       showProgress: false,
-      progressValue: ((coberturaPonderadaPct * 100) / METRIC_TARGETS.COBERTURA_PONDERADA) * 100,
+      progressValue: coberturaPonderadaPct != null ? ((coberturaPonderadaPct * 100) / METRIC_TARGETS.COBERTURA_PONDERADA) * 100 : 0,
       targetVariation: metricasData?.variacion_cobertura_ponderada_pct,
       targetValue: formatTargetValue(metricasData?.objetivo_cobertura_ponderada_formatted, true) ||
         (metricasData?.objetivo_cobertura_ponderada_pct !== undefined ? `${Math.round(metricasData.objetivo_cobertura_ponderada_pct * 100)}%` : undefined),
@@ -151,23 +151,23 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
     {
       id: 'dias-inventario',
       title: 'Días de Inventario',
-      value: storeMetrics.diasInventario.toFixed(1),
+      value: storeMetrics.diasInventario != null && storeMetrics.diasInventario > 0 ? storeMetrics.diasInventario.toFixed(1) : '-',
       color: 'red' as const,
       size: 'small' as const,
       showProgress: false,
-      progressValue: (METRIC_TARGETS.DIAS_INVENTARIO / storeMetrics.diasInventario) * 100,
+      progressValue: storeMetrics.diasInventario > 0 ? (METRIC_TARGETS.DIAS_INVENTARIO / storeMetrics.diasInventario) * 100 : 0,
       targetVariation: metricasData?.variacion_promedio_dias_inventario_pct,
       targetValue: metricasData?.objetivo_promedio_dias_inventario_formatted,
       isInverted: true,
     },
     {
-      id: 'tasa-quiebre',
-      title: 'Tasa de Quiebre',
-      value: `${tasaQuiebrePct.toFixed(1)}%`,
+      id: 'tasa-agotados',
+      title: 'Tasa de Agotados',
+      value: tasaQuiebrePct != null ? `${tasaQuiebrePct.toFixed(1)}%` : '-',
       color: 'orange' as const,
       size: 'small' as const,
       showProgress: false,
-      progressValue: ((100 - tasaQuiebrePct) / (100 - METRIC_TARGETS.TASA_QUIEBRE)) * 100,
+      progressValue: tasaQuiebrePct != null ? ((100 - tasaQuiebrePct) / (100 - METRIC_TARGETS.TASA_QUIEBRE)) * 100 : 0,
       targetVariation: -95.0,
       targetValue: formatTargetValue(metricasData?.objetivo_porcentaje_agotados_formatted, true) ||
         (metricasData?.objetivo_porcentaje_agotados_pct !== undefined ? `${Math.round(metricasData.objetivo_porcentaje_agotados_pct * 100)}%` : undefined),
@@ -176,7 +176,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
     {
       id: 'venta-promedio-diaria',
       title: 'Venta Promedio Diaria',
-      value: formatCurrency(ventaPromedioDiaria),
+      value: ventaPromedioDiaria != null && ventaPromedioDiaria > 0 ? formatCurrency(ventaPromedioDiaria) : '-',
       color: 'purple' as const,
       size: 'small' as const,
       showProgress: false,
@@ -186,6 +186,42 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
       isInverted: false,
     },
   ];
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <>
+      {/* Large cards skeleton */}
+      <div className="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4"></div>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40"></div>
+              </div>
+              <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            </div>
+            <div className="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+          </div>
+        ))}
+      </div>
+
+      {/* Small cards skeleton */}
+      <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-3"></div>
+            <div className="h-7 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <>
@@ -223,9 +259,9 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
         ))}
       </div>
 
-      {/* Additional Metrics - 5 Small Cards */}
-      <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-5">
-        {smallMetricCards.map((card) => (
+      {/* Additional Metrics - 4 Small Cards (Cobertura Ponderada hidden) */}
+      <div className="grid grid-cols-1 gap-4 mt-6 md:grid-cols-2 lg:grid-cols-4">
+        {smallMetricCards.filter(card => card.id !== 'cobertura-ponderada').map((card) => (
           <Popover
             key={card.id}
             position="bottom"

@@ -12,6 +12,7 @@ export interface MetricasData {
   avg_venta_promedio_diaria?: number;
   cobertura_pct?: number;
   ventas_totales_unidades?: number;
+  initial_inventory?: number;
   // Target data
   objetivo_ventas_totales_pesos?: number;
   objetivo_ventas_totales_pesos_formatted?: string;
@@ -48,6 +49,7 @@ export interface MetricsSectionProps {
   metricasData: MetricasData | null;
   onCardClick?: (cardData: unknown) => void;
   enableAnalysis?: boolean;
+  isLoading?: boolean;
 }
 
 export interface CardClickData {
