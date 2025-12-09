@@ -20,7 +20,7 @@ import type { Opportunity, OpportunityType, DetailRecord } from '@/types/tiendas
 
 interface OpportunitiesSectionProps {
   opportunities: Opportunity[];
-  onChatOpen?: (cardData: any) => void;
+  onChatOpen?: (cardData: unknown) => void;
 }
 
 export default function OpportunitiesSection({ opportunities, onChatOpen }: OpportunitiesSectionProps) {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { ParametrosOptimosRepository } from '@/repositories/parametrosOptimos.repository';
 import { ParametrosOptimosService } from '@/services/parametrosOptimos.service';
@@ -16,7 +16,7 @@ import { ParametrosOptimosService } from '@/services/parametrosOptimos.service';
  * Example:
  * - GET /api/parametros-optimos
  */
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     // Initialize repository and service
     const supabase = createServerSupabaseClient();
@@ -24,11 +24,11 @@ export async function GET(_request: NextRequest) {
     const service = new ParametrosOptimosService(repository);
 
     const result = await service.getParametrosOptimos();
-    
+
     return NextResponse.json(result);
   } catch (error) {
     console.error('API Error (parametros-optimos):', error);
-    
+
     return NextResponse.json(
       {
         success: false,

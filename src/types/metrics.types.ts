@@ -46,7 +46,7 @@ export interface MetricasData {
 export interface MetricsSectionProps {
   storeMetrics: StoreMetrics;
   metricasData: MetricasData | null;
-  onCardClick?: (cardData: any) => void;
+  onCardClick?: (cardData: unknown) => void;
   enableAnalysis?: boolean;
 }
 

@@ -10,9 +10,9 @@ interface DashboardProps {
 
 export default function Dashboard({ onChatStateChange }: DashboardProps) {
   const [chatOpen, setChatOpen] = useState(false);
-  const [selectedCardData, setSelectedCardData] = useState<any>(null);
+  const [selectedCardData, setSelectedCardData] = useState<unknown>(null);
 
-  const handleCardClick = (cardData: any) => {
+  const handleCardClick = (cardData: unknown) => {
     setSelectedCardData(cardData);
     setChatOpen(true);
     onChatStateChange?.(true);

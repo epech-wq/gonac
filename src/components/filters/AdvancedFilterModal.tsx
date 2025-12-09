@@ -101,10 +101,6 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
     onClose();
   };
 
-  const handleReset = () => {
-    setFilters(INITIAL_STATE);
-  };
-
   const updateFilter = (key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -114,12 +110,6 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
       <div className="p-6 md:p-8">
         <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Filtros Avanzados</h2>
-          <button
-            onClick={handleReset}
-            className="text-sm text-brand-500 hover:text-brand-600 font-medium"
-          >
-            Limpiar Filtros
-          </button>
         </div>
 
         <div className="space-y-8">

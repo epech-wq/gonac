@@ -1,29 +1,95 @@
 import { useState } from "react";
 import MetricsSection from "../indicadores/MetricsSection";
-import ImpactoTotalBanner from "../indicadores/ImpactoTotalBanner";
 import { useTiendasData } from "@/hooks/useTiendasData";
 import { AdvancedFilterModal, FilterState } from "../filters/AdvancedFilterModal";
 import Breadcrumb from "../ui/breadcrumb/Breadcrumb";
 
+// Filter value to label mappings for breadcrumb display
+const FILTER_LABELS: Record<string, Record<string, string>> = {
+  canal: {
+    autoservicio: "Autoservicio",
+    mayoreo: "Mayoreo",
+    detallista: "Detallista",
+    "e-commerce": "E-Commerce",
+  },
+  geografia: {
+    norte: "Norte",
+    sur: "Sur",
+    centro: "Centro",
+    occidente: "Occidente",
+    noreste: "Noreste",
+  },
+  arbol: {
+    region_1: "Region 1",
+    region_2: "Region 2",
+    zona_a: "Zona A",
+    zona_b: "Zona B",
+  },
+  cadenaCliente: {
+    walmart: "Walmart",
+    soriana: "Soriana",
+    chedraui: "Chedraui",
+    oxxo: "Oxxo",
+    liverpool: "Liverpool",
+  },
+};
+
 interface ResumenViewProps {
-  chatOpen?: boolean;
-  onCardClick?: (cardData: any) => void;
+  onCardClick?: (cardData: unknown) => void;
 }
 
-export default function ResumenView({ chatOpen, onCardClick }: ResumenViewProps) {
+export default function ResumenView({ onCardClick }: ResumenViewProps) {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterState | null>(null);
 
   const {
     storeMetrics,
     metricasData,
-    impactoTotal,
-    tiendasConOportunidades,
   } = useTiendasData();
 
   const handleApplyFilters = (filters: FilterState) => {
     // Logic to apply filters would go here
     console.log("Filters applied:", filters);
+    setAppliedFilters(filters);
     // Future integration: pass filters to useTiendasData or API
+  };
+
+  // Build breadcrumb items based on Cliente section filters
+  const getBreadcrumbItems = (): Array<{ label: string; href?: string }> => {
+    const items: Array<{ label: string; href?: string }> = [{ label: "Home", href: "/" }];
+
+    if (!appliedFilters) {
+      items.push({ label: "Cliente" });
+      return items;
+    }
+
+    // Add Cliente section filters in order: Canal, Geografía, Árbol, Cadena Cliente
+    if (appliedFilters.canal) {
+      const label = FILTER_LABELS.canal[appliedFilters.canal] || appliedFilters.canal;
+      items.push({ label });
+    }
+
+    if (appliedFilters.geografia) {
+      const label = FILTER_LABELS.geografia[appliedFilters.geografia] || appliedFilters.geografia;
+      items.push({ label });
+    }
+
+    if (appliedFilters.arbol) {
+      const label = FILTER_LABELS.arbol[appliedFilters.arbol] || appliedFilters.arbol;
+      items.push({ label });
+    }
+
+    if (appliedFilters.cadenaCliente) {
+      const label = FILTER_LABELS.cadenaCliente[appliedFilters.cadenaCliente] || appliedFilters.cadenaCliente;
+      items.push({ label });
+    }
+
+    // If no Cliente filters are selected, show default
+    if (items.length === 1) {
+      items.push({ label: "Cliente" });
+    }
+
+    return items;
   };
 
   return (
@@ -37,7 +103,7 @@ export default function ResumenView({ chatOpen, onCardClick }: ResumenViewProps)
       {/* Controls Bar */}
       <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
         <Breadcrumb
-          items={[{ label: "Home", href: "/" }, { label: "Cliente" }]}
+          items={getBreadcrumbItems()}
           variant="chevron"
         />
         <button
@@ -60,11 +126,11 @@ export default function ResumenView({ chatOpen, onCardClick }: ResumenViewProps)
       />
 
       {/* Impacto Total Banner */}
-      <ImpactoTotalBanner
+      {/* <ImpactoTotalBanner
         impactoTotal={impactoTotal}
         tiendasConOportunidades={tiendasConOportunidades}
         totalTiendas={storeMetrics.totalTiendas}
-      />
+      /> */}
     </>
   )
 }

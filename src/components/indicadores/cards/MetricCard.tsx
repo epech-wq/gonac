@@ -2,77 +2,31 @@
  * Reusable Metric Card Component
  */
 
-import React, { type ReactNode } from 'react';
+import React from 'react';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import Badge from '@/components/ui/badge/Badge';
 
 interface MetricCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  color: 'green' | 'blue' | 'red' | 'orange' | 'purple';
   showProgress?: boolean;
   progressValue?: number;
-  progressColor?: string;
-  badge?: string;
   size?: 'small' | 'large';
   enableAnalysis?: boolean;
   onAnalysisClick?: () => void;
-  storeMetrics?: any;
-  metricasData?: any;
+  storeMetrics?: unknown;
+  metricasData?: unknown;
   // Target indicator props
   targetVariation?: number;
   targetValue?: string;
   isInverted?: boolean; // For metrics where lower is better (e.g., days inventory, break rate)
 }
 
-// Colores para iconos - más saturados y distintivos
-const ICON_COLORS = {
-  green: 'text-green-600 dark:text-green-400',
-  blue: 'text-blue-600 dark:text-blue-400',
-  red: 'text-red-600 dark:text-red-400',
-  orange: 'text-orange-600 dark:text-orange-400',
-  purple: 'text-purple-600 dark:text-purple-400',
-};
-
-// Fondos de iconos - sutiles
-const ICON_BG_COLORS = {
-  green: 'bg-green-50 dark:bg-green-500/10',
-  blue: 'bg-blue-50 dark:bg-blue-500/10',
-  red: 'bg-red-50 dark:bg-red-500/10',
-  orange: 'bg-orange-50 dark:bg-orange-500/10',
-  purple: 'bg-purple-50 dark:bg-purple-500/10',
-};
-
-// Colores de barras de progreso
-const PROGRESS_COLORS = {
-  green: 'bg-green-500',
-  blue: 'bg-blue-500',
-  red: 'bg-red-500',
-  orange: 'bg-orange-500',
-  purple: 'bg-purple-500',
-};
-
-const BADGE_COLORS = {
-  green: 'text-green-700 bg-green-100 dark:text-green-300 dark:bg-green-500/20',
-  blue: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-500/20',
-  red: 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-500/20',
-  orange: 'text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-500/20',
-  purple: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-500/20',
-};
-
 export default function MetricCard({
   title,
   value,
   subtitle,
-  color,
-  showProgress = true,
-  progressValue = 0,
-  progressColor,
-  badge,
   size = 'large',
-  enableAnalysis = false,
-  onAnalysisClick,
   storeMetrics,
   metricasData,
   targetVariation,
@@ -80,8 +34,6 @@ export default function MetricCard({
   isInverted = false,
 }: MetricCardProps) {
   const isSmall = size === 'small';
-  const barColor = progressColor || PROGRESS_COLORS[color];
-  const [showBadge, setShowBadge] = React.useState(false);
 
   // Helper function to format variation with sign
   // Always shows "+" when value is more than objective, "-" when less
@@ -139,14 +91,29 @@ export default function MetricCard({
   };
 
   return (
-    <Card>
+    <Card className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.03] hover:border-gray-300 dark:hover:border-gray-600 group relative">
+      {/* Persistent chart icon button - top right */}
+      <button
+        className="absolute top-3 right-3 flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200 group-hover:scale-110"
+        aria-label="Ver gráfico"
+      >
+        <svg
+          className="h-3.5 w-3.5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      </button>
+
       {/* Header con título e icono */}
       <CardDescription>
         {title}
       </CardDescription>
 
       {/* Valor principal */}
-      <CardTitle>
+      <CardTitle className="group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">
         {value}
       </CardTitle>
 
@@ -159,7 +126,7 @@ export default function MetricCard({
 
       {/* Target Indicator */}
       {targetVariation !== undefined && targetValue && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-2">
           {(() => {
             // Extract actual value and objective from metricasData if available
             let verifiedVariation = targetVariation;

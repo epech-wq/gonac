@@ -15,10 +15,10 @@ import {
 interface ReabastoUrgenteCardProps {
   showTitle?: boolean;
   showButtons?: boolean;
-  onChatOpen?: (cardData: any) => void;
+  onChatOpen?: (cardData: unknown) => void;
 }
 
-export default function ReabastoUrgenteCard({ 
+export default function ReabastoUrgenteCard({
   showTitle = false,
   showButtons = true,
   onChatOpen
@@ -204,11 +204,10 @@ export default function ReabastoUrgenteCard({
           {reabastoDetalle && reabastoDetalle.data.length > 0 && (
             <button
               onClick={() => setShowDetailBySKU(!showDetailBySKU)}
-              className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${
-                showDetailBySKU
+              className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailBySKU
                   ? 'bg-blue-600 border-blue-600 text-white'
                   : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
-              }`}
+                }`}
             >
               <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -216,16 +215,15 @@ export default function ReabastoUrgenteCard({
               Ver detalle por SKU
             </button>
           )}
-          
+
           {/* Ver detalle por Tienda */}
           {reabastoPorTienda && reabastoPorTienda.data.length > 0 && (
             <button
               onClick={() => setShowDetailByTienda(!showDetailByTienda)}
-              className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${
-                showDetailByTienda
+              className={`flex items-center px-4 py-2 rounded-lg border-2 transition-colors ${showDetailByTienda
                   ? 'bg-blue-600 border-blue-600 text-white'
                   : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:text-blue-400'
-              }`}
+                }`}
             >
               <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />

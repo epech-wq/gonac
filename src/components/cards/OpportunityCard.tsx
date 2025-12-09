@@ -28,7 +28,6 @@ export default function OpportunityCard({
   description,
   tiendas,
   impacto,
-  risk,
   impactoColor,
   impactoLabel,
   isExpanded,

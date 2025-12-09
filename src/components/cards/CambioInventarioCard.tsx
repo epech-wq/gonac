@@ -48,7 +48,7 @@ interface SKUDetalle {
 interface CambioInventarioCardProps {
   showTitle?: boolean;
   showConfig?: boolean;
-  onChatOpen?: (cardData: any) => void;
+  onChatOpen?: (cardData: unknown) => void;
   onAprobar?: () => void;
   onAjustar?: () => void;
 }
@@ -100,7 +100,7 @@ export default function CambioInventarioCard({
         // Using dias_hasta_caducidad as initial, and reducing based on quantity to redistribute
         const diasInventarioOrigenInicial = item.dias_hasta_caducidad;
         // Estimate final days: reduce by the days it would take to sell the redistributed quantity
-        const diasInventarioOrigenFinal = Math.max(0, 
+        const diasInventarioOrigenFinal = Math.max(0,
           diasInventarioOrigenInicial - Math.ceil(item.cantidad_a_redistribuir / (item.venta_promedio_diaria_destino || 1))
         );
 
@@ -147,23 +147,23 @@ export default function CambioInventarioCard({
     const totalUnidades = transferencias.reduce((sum, t) => sum + t.unidades, 0);
     const totalValorInventario = transferencias.reduce((sum, t) => sum + t.valorInventario, 0);
     const costoLogistico = totalValorInventario * (costoLogisticoPorcentaje / 100);
-    
+
     const tiendasOrigen = new Set(transferencias.map(t => t.tiendaOrigen));
     const tiendasDestino = new Set(transferencias.map(t => t.tiendaDestino));
-    
+
     const diasInvCriticasInicial = transferencias
       .filter(t => t.segmentoOrigen === 'slow' || t.segmentoOrigen === 'dead')
-      .reduce((sum, t) => sum + t.diasInventarioOrigenInicial, 0) / 
+      .reduce((sum, t) => sum + t.diasInventarioOrigenInicial, 0) /
       transferencias.filter(t => t.segmentoOrigen === 'slow' || t.segmentoOrigen === 'dead').length || 1;
-    
+
     const diasInvCriticasFinal = transferencias
       .filter(t => t.segmentoOrigen === 'slow' || t.segmentoOrigen === 'dead')
-      .reduce((sum, t) => sum + t.diasInventarioOrigenFinal, 0) / 
+      .reduce((sum, t) => sum + t.diasInventarioOrigenFinal, 0) /
       transferencias.filter(t => t.segmentoOrigen === 'slow' || t.segmentoOrigen === 'dead').length || 1;
-    
+
     const diasInvDestinoInicial = transferencias
       .reduce((sum, t) => sum + t.diasInventarioDestinoInicial, 0) / transferencias.length || 0;
-    
+
     const diasInvDestinoFinal = transferencias
       .reduce((sum, t) => sum + t.diasInventarioDestinoFinal, 0) / transferencias.length || 0;
 
@@ -624,85 +624,85 @@ export default function CambioInventarioCard({
             <>
               {/* Tiendas Origen */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Detalle de Tiendas Origen (Slow/Dead)
-              </h4>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tienda</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Segmento</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unidades</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Inicial</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Final</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SKUs</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                  {detallePorTienda.origen.map((tienda) => (
-                    <tr key={tienda.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{tienda.nombre}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
-                          {tienda.segmento}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm text-blue-600 dark:text-blue-400">{formatNumber(tienda.unidadesMovilizar)}</td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{formatCurrency(tienda.valorMovilizar)}</td>
-                      <td className="px-4 py-3 text-right text-sm text-red-600 dark:text-red-400">{tienda.diasInventarioInicial}d</td>
-                      <td className="px-4 py-3 text-right text-sm text-green-600 dark:text-green-400">{tienda.diasInventarioFinal}d</td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{tienda.skus}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Detalle de Tiendas Origen (Slow/Dead)
+                  </h4>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tienda</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Segmento</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unidades</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Inicial</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Final</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SKUs</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                      {detallePorTienda.origen.map((tienda) => (
+                        <tr key={tienda.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{tienda.nombre}</td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                              {tienda.segmento}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-blue-600 dark:text-blue-400">{formatNumber(tienda.unidadesMovilizar)}</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{formatCurrency(tienda.valorMovilizar)}</td>
+                          <td className="px-4 py-3 text-right text-sm text-red-600 dark:text-red-400">{tienda.diasInventarioInicial}d</td>
+                          <td className="px-4 py-3 text-right text-sm text-green-600 dark:text-green-400">{tienda.diasInventarioFinal}d</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{tienda.skus}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-          {/* Tiendas Destino */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/20">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Detalle de Tiendas Destino
-              </h4>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tienda</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Segmento</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unidades</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Inicial</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Final</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SKUs</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                  {detallePorTienda.destino.map((tienda) => (
-                    <tr key={tienda.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{tienda.nombre}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                          {tienda.segmento}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm text-blue-600 dark:text-blue-400">{formatNumber(tienda.unidadesMovilizar)}</td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{formatCurrency(tienda.valorMovilizar)}</td>
-                      <td className="px-4 py-3 text-right text-sm text-yellow-600 dark:text-yellow-400">{tienda.diasInventarioInicial}d</td>
-                      <td className="px-4 py-3 text-right text-sm text-green-600 dark:text-green-400">{tienda.diasInventarioFinal}d</td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{tienda.skus}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+              {/* Tiendas Destino */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/20">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Detalle de Tiendas Destino
+                  </h4>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-800/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tienda</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Segmento</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unidades</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Inicial</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Final</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SKUs</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                      {detallePorTienda.destino.map((tienda) => (
+                        <tr key={tienda.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{tienda.nombre}</td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                              {tienda.segmento}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-blue-600 dark:text-blue-400">{formatNumber(tienda.unidadesMovilizar)}</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{formatCurrency(tienda.valorMovilizar)}</td>
+                          <td className="px-4 py-3 text-right text-sm text-yellow-600 dark:text-yellow-400">{tienda.diasInventarioInicial}d</td>
+                          <td className="px-4 py-3 text-right text-sm text-green-600 dark:text-green-400">{tienda.diasInventarioFinal}d</td>
+                          <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{tienda.skus}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -725,47 +725,47 @@ export default function CambioInventarioCard({
             </div>
           )}
           {!detalleLoading && transferencias.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-indigo-900/20">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Detalle por SKU
-            </h4>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800/50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SKU</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Producto</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unidades</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"># Tiendas Origen</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"># Tiendas Destino</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Origen Inicial</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Origen Final</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Destino Inicial</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Destino Final</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {detallePorSKU.map((sku) => (
-                  <tr key={sku.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{sku.sku}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{sku.producto}</td>
-                    <td className="px-4 py-3 text-right text-sm text-blue-600 dark:text-blue-400">{formatNumber(sku.unidadesMovilizar)}</td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{formatCurrency(sku.valorMovilizar)}</td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{sku.tiendasOrigen}</td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{sku.tiendasDestino}</td>
-                    <td className="px-4 py-3 text-right text-sm text-red-600 dark:text-red-400">{sku.diasInventarioPromedioOrigenInicial}d</td>
-                    <td className="px-4 py-3 text-right text-sm text-green-600 dark:text-green-400">{sku.diasInventarioPromedioOrigenFinal}d</td>
-                    <td className="px-4 py-3 text-right text-sm text-yellow-600 dark:text-yellow-400">{sku.diasInventarioPromedioDestinoInicial}d</td>
-                    <td className="px-4 py-3 text-right text-sm text-green-600 dark:text-green-400">{sku.diasInventarioPromedioDestinoFinal}d</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-indigo-900/20">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Detalle por SKU
+                </h4>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SKU</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Producto</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Unidades</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"># Tiendas Origen</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"># Tiendas Destino</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Origen Inicial</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Origen Final</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Destino Inicial</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Días Inv. Destino Final</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    {detallePorSKU.map((sku) => (
+                      <tr key={sku.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{sku.sku}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{sku.producto}</td>
+                        <td className="px-4 py-3 text-right text-sm text-blue-600 dark:text-blue-400">{formatNumber(sku.unidadesMovilizar)}</td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{formatCurrency(sku.valorMovilizar)}</td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{sku.tiendasOrigen}</td>
+                        <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white">{sku.tiendasDestino}</td>
+                        <td className="px-4 py-3 text-right text-sm text-red-600 dark:text-red-400">{sku.diasInventarioPromedioOrigenInicial}d</td>
+                        <td className="px-4 py-3 text-right text-sm text-green-600 dark:text-green-400">{sku.diasInventarioPromedioOrigenFinal}d</td>
+                        <td className="px-4 py-3 text-right text-sm text-yellow-600 dark:text-yellow-400">{sku.diasInventarioPromedioDestinoInicial}d</td>
+                        <td className="px-4 py-3 text-right text-sm text-green-600 dark:text-green-400">{sku.diasInventarioPromedioDestinoFinal}d</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -845,13 +845,12 @@ export default function CambioInventarioCard({
                           {item.fecha_caducidad ? new Date(item.fecha_caducidad).toLocaleDateString('es-MX') : '-'}
                         </td>
                         <td className="px-4 py-3 text-right text-sm">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            item.dias_hasta_caducidad <= 30 
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.dias_hasta_caducidad <= 30
                               ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                               : item.dias_hasta_caducidad <= 60
-                              ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                              : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          }`}>
+                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                                : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            }`}>
                             {item.dias_hasta_caducidad}d
                           </span>
                         </td>
@@ -871,11 +870,10 @@ export default function CambioInventarioCard({
                           {formatNumber(item.venta_promedio_diaria_destino)}
                         </td>
                         <td className="px-4 py-3 text-right text-sm">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            item.dias_inventario_proyectado <= 10
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.dias_inventario_proyectado <= 10
                               ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
                               : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          }`}>
+                            }`}>
                             {item.dias_inventario_proyectado}d
                           </span>
                         </td>
