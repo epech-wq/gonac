@@ -66,9 +66,10 @@ export default function SingleMetricChart({
           data: generateTrendData(currentValues.coberturaPond, 0.04),
           formatter: (val: number) => `${val.toFixed(1)}%`,
         };
+      case "tasa-agotados":
       case "tasa-quiebre":
         return {
-          title: "Tasa de Quiebre",
+          title: "Tasa de Agotados",
           color: "#F59E0B",
           data: generateTrendData(currentValues.tasaQuiebre, 0.15),
           formatter: (val: number) => `${val.toFixed(2)}%`,
