@@ -100,7 +100,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
       id: 'sell-through',
       title: 'Sell-Through',
       value: sellThroughPct != null ? formatPercentage(sellThroughPct) : '-',
-      subtitle: metricasData?.initial_inventory != null ? `Inventario inicial: ${formatNumber(metricasData.initial_inventory)} unidades` : '-',
+      subtitle: '',
       icon: <PieChartIcon className="text-white font-bold" /> as ReactNode,
       color: 'blue' as const,
       progressValue: sellThroughPct != null ? Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100) : 0,

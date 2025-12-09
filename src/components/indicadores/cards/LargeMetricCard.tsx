@@ -87,7 +87,7 @@ export default function LargeMetricCard({
             <div className="text-3xl font-bold">
               {value}
             </div>
-            <div className="text-sm mt-1">
+            <div className="text-sm mt-1 min-h-[20px]">
               {subtitle}
             </div>
           </div>
