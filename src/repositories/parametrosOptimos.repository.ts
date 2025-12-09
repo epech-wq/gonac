@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ParametrosOptimos } from '@/types/parametrosOptimos';
+import { getDbSchema } from '@/lib/schema';
 
 /**
  * Repository for Parámetros Óptimos
@@ -14,7 +15,7 @@ export class ParametrosOptimosRepository {
    */
   async getParametrosOptimos(): Promise<ParametrosOptimos> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('tab_parametros_optimos')
       .select('dias_inventario_optimo, dias_inventario_real, punto_reorden, punto_reorden_real, tamano_pedido_optimo, tamano_pedido_real, frecuencia_optima, frecuencia_real')
       .limit(1)

@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { AccionesResumen, AccionDetalle } from '@/types/acciones';
+import { getDbSchema } from '@/lib/schema';
 
 /**
  * Acciones Repository
@@ -14,7 +15,7 @@ export class AccionesRepository {
    */
   async getAccionesResumen(): Promise<AccionesResumen> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_resumen_acciones')
       .select(`
         total_tareas,
@@ -54,7 +55,7 @@ export class AccionesRepository {
    */
   async getAccionesDetalle(): Promise<AccionDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_detalle_acciones')
       .select(`
         id_accion,

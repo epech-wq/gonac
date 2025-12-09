@@ -4,6 +4,7 @@ import {
   AccionReabastoPorTienda,
   AccionReabastoDetalle
 } from '@/types/accionReabasto';
+import { getDbSchema } from '@/lib/schema';
 
 /**
  * Repository for Acción #1: Reabasto Urgente
@@ -18,7 +19,7 @@ export class AccionReabastoRepository {
    */
   async getSummary(): Promise<AccionReabastoSummary> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('detalle_accion_uno')
       .select('monto_necesario_pedido, unidades_a_pedir, id_store');
 
@@ -52,7 +53,7 @@ export class AccionReabastoRepository {
    */
   async getPorTienda(): Promise<AccionReabastoPorTienda[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('detalle_accion_uno')
       .select(`
         unidades_a_pedir,
@@ -98,7 +99,7 @@ export class AccionReabastoRepository {
    */
   async getDetalle(): Promise<AccionReabastoDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('detalle_accion_uno')
       .select(`
         id_store,

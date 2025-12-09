@@ -3,6 +3,7 @@ import {
   SegmentacionMetrics,
   SegmentacionDetalle,
 } from '@/types/segmentacion';
+import { getDbSchema } from '@/lib/schema';
 
 export class SegmentacionRepository {
   constructor(private supabase: SupabaseClient) { }
@@ -12,7 +13,7 @@ export class SegmentacionRepository {
    */
   async getMetrics(): Promise<SegmentacionMetrics[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('mvw_metricas_segmentacion_tiendas')
       .select(
         `
@@ -68,7 +69,7 @@ export class SegmentacionRepository {
   async getDetalle(): Promise<SegmentacionDetalle[]> {
     // Fetch segmentation data
     const { data: segmentData, error: segmentError } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('core_segmentacion_tiendas')
       .select('id_store, segment');
 
@@ -84,7 +85,7 @@ export class SegmentacionRepository {
 
     // Fetch store metrics
     const { data: metricsData, error: metricsError } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('core_store_metrics')
       .select('*');
 
@@ -94,7 +95,7 @@ export class SegmentacionRepository {
 
     // Fetch store names
     const { data: storeData, error: storeError } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('core_cat_store')
       .select('id_store, store_name');
 

@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getDbSchema } from '@/lib/schema';
 
 /**
  * Promotoria Summary Interface
@@ -45,7 +46,7 @@ export class PromotoriaRepository {
    */
   async getSummary(): Promise<PromotoriaSummary> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_promotoria_global')
       .select('tiendas_a_visitar, riesgo_total')
       .single();
@@ -72,7 +73,7 @@ export class PromotoriaRepository {
    */
   async getTiendaTopRiesgo(): Promise<PromotoriaTienda> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_promotoria_tienda')
       .select(`
         id_store,
@@ -112,7 +113,7 @@ export class PromotoriaRepository {
    */
   async getProductsSinVentaByStore(id_store: number, limit: number = 3): Promise<PromotoriaProduct[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('vw_promotoria_tienda_sku')
       .select(`
         sku,

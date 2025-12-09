@@ -4,6 +4,7 @@ import {
   ExhibicionROI,
   ExhibicionParams,
 } from '@/types/exhibiciones';
+import { getDbSchema } from '@/lib/schema';
 
 /**
  * Exhibiciones Repository
@@ -20,7 +21,7 @@ export class ExhibicionesRepository {
    */
   async getResumenExhibicion(params: ExhibicionParams): Promise<ExhibicionResumen> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .rpc('fn_obtener_resumen_exhibicion', {
         p_costo_exhibicion: params.costo_exhibicion,
         p_incremento_venta: params.incremento_venta,
@@ -60,7 +61,7 @@ export class ExhibicionesRepository {
     params: ExhibicionParams
   ): Promise<ExhibicionROI[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .rpc('calcular_roi_exhibicion', {
         p_costo_exhibicion: params.costo_exhibicion,
         p_incremento_venta: params.incremento_venta,

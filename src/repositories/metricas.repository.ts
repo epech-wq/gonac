@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { MetricasConsolidadas } from '@/types/metricas';
+import { getDbSchema } from '@/lib/schema';
 
 /**
  * Metricas Repository
@@ -16,7 +17,7 @@ export class MetricasRepository {
    */
   async getMetricasConsolidadas(): Promise<MetricasConsolidadas> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('mvw_metricas_consolidadas')
       .select('*')
       .single(); // Assuming the view returns a single row with aggregated metrics
@@ -43,7 +44,7 @@ export class MetricasRepository {
       promedio_dias_inventario: Number(data.promedio_dias_inventario) || 0,
       porcentaje_agotados_pct: Number(data.porcentaje_agotados_pct) || 0,
       avg_venta_promedio_diaria: Number(data.avg_venta_promedio_diaria) || 0,
-      
+
       // Objectives
       objetivo_ventas_totales_pesos: Number(data.objetivo_ventas_totales_pesos) || 0,
       objetivo_sell_through_pct: Number(data.objetivo_sell_through_pct) || 0,
@@ -52,7 +53,7 @@ export class MetricasRepository {
       objetivo_cobertura_pct: Number(data.objetivo_cobertura_pct) || 0,
       objetivo_cobertura_ponderada_pct: Number(data.objetivo_cobertura_ponderada_pct) || 0,
       objetivo_porcentaje_agotados_pct: Number(data.objetivo_porcentaje_agotados_pct) || 0,
-      
+
       // Differences
       diferencia_ventas_totales_pesos: Number(data.diferencia_ventas_totales_pesos) || 0,
       diferencia_sell_through_pct: Number(data.diferencia_sell_through_pct) || 0,
@@ -61,7 +62,7 @@ export class MetricasRepository {
       diferencia_cobertura_pct: Number(data.diferencia_cobertura_pct) || 0,
       diferencia_cobertura_ponderada_pct: Number(data.diferencia_cobertura_ponderada_pct) || 0,
       diferencia_porcentaje_agotados_pct: Number(data.diferencia_porcentaje_agotados_pct) || 0,
-      
+
       // Variations
       variacion_ventas_totales_pct: Number(data.variacion_ventas_totales_pct) || 0,
       variacion_promedio_dias_inventario_pct: Number(data.variacion_promedio_dias_inventario_pct) || 0,
@@ -106,7 +107,7 @@ export class MetricasRepository {
     category?: string;
   }): Promise<MetricasConsolidadas[]> {
     let query = this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('mvw_metricas_consolidadas')
       .select('*');
 
@@ -141,7 +142,7 @@ export class MetricasRepository {
       promedio_dias_inventario: Number(item.promedio_dias_inventario) || 0,
       porcentaje_agotados_pct: Number(item.porcentaje_agotados_pct) || 0,
       avg_venta_promedio_diaria: Number(item.avg_venta_promedio_diaria) || 0,
-      
+
       // Objectives
       objetivo_ventas_totales_pesos: Number(item.objetivo_ventas_totales_pesos) || 0,
       objetivo_sell_through_pct: Number(item.objetivo_sell_through_pct) || 0,
@@ -150,7 +151,7 @@ export class MetricasRepository {
       objetivo_cobertura_pct: Number(item.objetivo_cobertura_pct) || 0,
       objetivo_cobertura_ponderada_pct: Number(item.objetivo_cobertura_ponderada_pct) || 0,
       objetivo_porcentaje_agotados_pct: Number(item.objetivo_porcentaje_agotados_pct) || 0,
-      
+
       // Differences
       diferencia_ventas_totales_pesos: Number(item.diferencia_ventas_totales_pesos) || 0,
       diferencia_sell_through_pct: Number(item.diferencia_sell_through_pct) || 0,
@@ -159,7 +160,7 @@ export class MetricasRepository {
       diferencia_cobertura_pct: Number(item.diferencia_cobertura_pct) || 0,
       diferencia_cobertura_ponderada_pct: Number(item.diferencia_cobertura_ponderada_pct) || 0,
       diferencia_porcentaje_agotados_pct: Number(item.diferencia_porcentaje_agotados_pct) || 0,
-      
+
       // Variations
       variacion_ventas_totales_pct: Number(item.variacion_ventas_totales_pct) || 0,
       variacion_promedio_dias_inventario_pct: Number(item.variacion_promedio_dias_inventario_pct) || 0,
@@ -185,7 +186,7 @@ export class MetricasRepository {
     // Query without .single() first to see what we get, then take the first result
     // This handles cases where the segment might not match exactly or the table structure is different
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('mvw_metricas_consolidadas_segmentadas')
       .select('*')
       .eq('segment', segment)
@@ -198,7 +199,7 @@ export class MetricasRepository {
     if (!data || data.length === 0) {
       // Try case-insensitive match
       const { data: dataCaseInsensitive, error: errorCaseInsensitive } = await this.supabase
-        .schema('gonac')
+        .schema(getDbSchema())
         .from('mvw_metricas_consolidadas_segmentadas')
         .select('segment')
         .ilike('segment', segment)
@@ -207,11 +208,11 @@ export class MetricasRepository {
       if (errorCaseInsensitive) {
         // If case-insensitive also fails, try to get all segments to show what's available
         const { data: allSegments } = await this.supabase
-          .schema('gonac')
+          .schema(getDbSchema())
           .from('mvw_metricas_consolidadas_segmentadas')
           .select('segment')
           .limit(10);
-        
+
         const availableSegments = allSegments?.map(s => s.segment).join(', ') || 'none found';
         throw new Error(
           `Error fetching segmented metrics for "${segment}". ` +
@@ -223,11 +224,11 @@ export class MetricasRepository {
       if (!dataCaseInsensitive || dataCaseInsensitive.length === 0) {
         // Get all available segments to help with debugging
         const { data: allSegments } = await this.supabase
-          .schema('gonac')
+          .schema(getDbSchema())
           .from('mvw_metricas_consolidadas_segmentadas')
           .select('segment')
           .limit(10);
-        
+
         const availableSegments = allSegments?.map(s => s.segment).join(', ') || 'none found';
         throw new Error(
           `No data returned from segmented metrics view for segment: "${segment}". ` +
@@ -237,7 +238,7 @@ export class MetricasRepository {
 
       // Re-fetch full data with case-insensitive match
       const { data: fullDataCaseInsensitive, error: fullError } = await this.supabase
-        .schema('gonac')
+        .schema(getDbSchema())
         .from('mvw_metricas_consolidadas_segmentadas')
         .select('*')
         .ilike('segment', segment)
@@ -276,7 +277,7 @@ export class MetricasRepository {
       promedio_dias_inventario: Number(data.promedio_dias_inventario) || 0,
       porcentaje_agotados_pct: Number(data.porcentaje_agotados_pct) || 0,
       avg_venta_promedio_diaria: Number(data.avg_venta_promedio_diaria) || 0,
-      
+
       // Objectives
       objetivo_ventas_totales_pesos: Number(data.objetivo_ventas_totales_pesos) || 0,
       objetivo_sell_through_pct: Number(data.objetivo_sell_through_pct) || 0,
@@ -285,7 +286,7 @@ export class MetricasRepository {
       objetivo_cobertura_pct: Number(data.objetivo_cobertura_pct) || 0,
       objetivo_cobertura_ponderada_pct: Number(data.objetivo_cobertura_ponderada_pct) || 0,
       objetivo_porcentaje_agotados_pct: Number(data.objetivo_porcentaje_agotados_pct) || 0,
-      
+
       // Differences
       diferencia_ventas_totales_pesos: Number(data.diferencia_ventas_totales_pesos) || 0,
       diferencia_sell_through_pct: Number(data.diferencia_sell_through_pct) || 0,
@@ -294,7 +295,7 @@ export class MetricasRepository {
       diferencia_cobertura_pct: Number(data.diferencia_cobertura_pct) || 0,
       diferencia_cobertura_ponderada_pct: Number(data.diferencia_cobertura_ponderada_pct) || 0,
       diferencia_porcentaje_agotados_pct: Number(data.diferencia_porcentaje_agotados_pct) || 0,
-      
+
       // Variations
       variacion_ventas_totales_pct: Number(data.variacion_ventas_totales_pct) || 0,
       variacion_promedio_dias_inventario_pct: Number(data.variacion_promedio_dias_inventario_pct) || 0,

@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DescuentoParams, DescuentoMetrics, CategoriaConCaducidad, CategoryStats } from '@/types/descuento';
+import { getDbSchema } from '@/lib/schema';
 
 /**
  * Descuento Repository
@@ -15,7 +16,7 @@ export class DescuentoRepository {
   async calcularMetricasDescuento(
     params: DescuentoParams
   ): Promise<DescuentoMetrics> {
-    const { data, error } = await this.supabase.schema('gonac').rpc('calcular_metricas_descuento', {
+    const { data, error } = await this.supabase.schema(getDbSchema()).rpc('calcular_metricas_descuento', {
       p_descuento: params.descuento,
       p_elasticidad: params.elasticidad,
       p_categoria: params.categoria,
@@ -88,7 +89,7 @@ export class DescuentoRepository {
    */
   async getCategoriasDisponibles(): Promise<string[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('core_cat_product')
       .select('category')
       .not('category', 'is', null);
@@ -107,7 +108,7 @@ export class DescuentoRepository {
    */
   async getStoresBySegment(segments: string[]): Promise<string[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('core_segmentacion_tiendas')
       .select('id_store')
       .in('segment', segments);
@@ -129,7 +130,7 @@ export class DescuentoRepository {
 
     // Then get SKUs
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('core_store_sku_metrics')
       .select(`
         sku,
@@ -157,7 +158,7 @@ export class DescuentoRepository {
    */
   async getTopCategoriasConCaducidad(limit: number = 2): Promise<CategoriaConCaducidad[]> {
     const { data: caducidadData, error: caducidadError } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('caducidad_detalle')
       .select(`
         sku,
@@ -218,7 +219,7 @@ export class DescuentoRepository {
 
     // Fetch products filtered by categories
     const { data: productData, error: productError } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('core_cat_product')
       .select(`
         sku,
@@ -243,7 +244,7 @@ export class DescuentoRepository {
 
     // Fetch store metrics for these SKUs
     const { data: storeData, error: storeError } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('core_store_sku_metrics')
       .select('sku, id_store')
       .in('sku', skus);

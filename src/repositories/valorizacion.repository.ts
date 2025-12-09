@@ -5,6 +5,7 @@ import {
   CaducidadDetalle,
   SinVentasDetalle
 } from '@/types/valorizacion';
+import { getDbSchema } from '@/lib/schema';
 
 /**
  * Valorizacion Repository
@@ -69,7 +70,7 @@ export class ValorizacionRepository {
    */
   private async getAgotadoData(): Promise<ValorizacionItem> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('agotamiento_detalle')
       .select('id_store, impacto');
 
@@ -92,7 +93,7 @@ export class ValorizacionRepository {
    */
   private async getCaducidadData(): Promise<ValorizacionItem> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('caducidad_detalle')
       .select('id_store, impacto');
 
@@ -115,7 +116,7 @@ export class ValorizacionRepository {
    */
   private async getSinVentasData(): Promise<ValorizacionItem> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('sin_ventas_detalle')
       .select('id_store, impacto');
 
@@ -155,7 +156,7 @@ export class ValorizacionRepository {
    */
   async getAgotadoDetalle(): Promise<AgotadoDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('agotamiento_detalle')
       .select(`
         segment,
@@ -203,7 +204,7 @@ export class ValorizacionRepository {
    */
   async getCaducidadDetalle(): Promise<CaducidadDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('caducidad_detalle')
       .select(`
         segment,
@@ -253,7 +254,7 @@ export class ValorizacionRepository {
    */
   async getSinVentasDetalle(): Promise<SinVentasDetalle[]> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('sin_ventas_detalle')
       .select(`
         impacto,
@@ -297,7 +298,7 @@ export class ValorizacionRepository {
    */
   async getTiendasConOportunidades(): Promise<number> {
     const { data, error } = await this.supabase
-      .schema('gonac')
+      .schema(getDbSchema())
       .from('metricas_riesgo')
       .select('tiendas')
       .eq('valorizacion', 'Total')
@@ -320,14 +321,14 @@ export class ValorizacionRepository {
    */
   async getAgotadoPorTienda(): Promise<Array<{ store_name: string; impacto_total: number; registros: number }>> {
     const detalle = await this.getAgotadoDetalle();
-    
+
     if (!detalle || detalle.length === 0) {
       return [];
     }
 
     // Group by store_name
     const storeMap = new Map<string, { impacto: number; count: number }>();
-    
+
     detalle.forEach((item) => {
       const existing = storeMap.get(item.store_name) || { impacto: 0, count: 0 };
       storeMap.set(item.store_name, {
@@ -349,14 +350,14 @@ export class ValorizacionRepository {
    */
   async getAgotadoPorSKU(): Promise<Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>> {
     const detalle = await this.getAgotadoDetalle();
-    
+
     if (!detalle || detalle.length === 0) {
       return [];
     }
 
     // Group by product_name
     const productMap = new Map<string, { impacto: number; count: number; stores: Set<string> }>();
-    
+
     detalle.forEach((item) => {
       const existing = productMap.get(item.product_name) || { impacto: 0, count: 0, stores: new Set<string>() };
       existing.stores.add(item.store_name);
@@ -381,14 +382,14 @@ export class ValorizacionRepository {
    */
   async getCaducidadPorTienda(): Promise<Array<{ store_name: string; impacto_total: number; registros: number }>> {
     const detalle = await this.getCaducidadDetalle();
-    
+
     if (!detalle || detalle.length === 0) {
       return [];
     }
 
     // Group by store_name
     const storeMap = new Map<string, { impacto: number; count: number }>();
-    
+
     detalle.forEach((item) => {
       const existing = storeMap.get(item.store_name) || { impacto: 0, count: 0 };
       storeMap.set(item.store_name, {
@@ -410,14 +411,14 @@ export class ValorizacionRepository {
    */
   async getCaducidadPorSKU(): Promise<Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>> {
     const detalle = await this.getCaducidadDetalle();
-    
+
     if (!detalle || detalle.length === 0) {
       return [];
     }
 
     // Group by product_name
     const productMap = new Map<string, { impacto: number; count: number; stores: Set<string> }>();
-    
+
     detalle.forEach((item) => {
       const existing = productMap.get(item.product_name) || { impacto: 0, count: 0, stores: new Set<string>() };
       existing.stores.add(item.store_name);
@@ -442,14 +443,14 @@ export class ValorizacionRepository {
    */
   async getSinVentasPorTienda(): Promise<Array<{ store_name: string; impacto_total: number; registros: number }>> {
     const detalle = await this.getSinVentasDetalle();
-    
+
     if (!detalle || detalle.length === 0) {
       return [];
     }
 
     // Group by store_name
     const storeMap = new Map<string, { impacto: number; count: number }>();
-    
+
     detalle.forEach((item) => {
       const existing = storeMap.get(item.store_name) || { impacto: 0, count: 0 };
       storeMap.set(item.store_name, {
@@ -471,14 +472,14 @@ export class ValorizacionRepository {
    */
   async getSinVentasPorSKU(): Promise<Array<{ product_name: string; impacto_total: number; registros: number; tiendas_afectadas: number }>> {
     const detalle = await this.getSinVentasDetalle();
-    
+
     if (!detalle || detalle.length === 0) {
       return [];
     }
 
     // Group by product_name
     const productMap = new Map<string, { impacto: number; count: number; stores: Set<string> }>();
-    
+
     detalle.forEach((item) => {
       const existing = productMap.get(item.product_name) || { impacto: 0, count: 0, stores: new Set<string>() };
       existing.stores.add(item.store_name);
