@@ -6,10 +6,7 @@ import { ButtonsGroup } from "@/components/ui/buttons-group/ButtonsGroup";
 import flatpickr from "flatpickr";
 import { Spanish } from "flatpickr/dist/l10n/es.js";
 import "flatpickr/dist/flatpickr.min.css";
-import { supabase } from "@/lib/supabase";
 import { ComboboxOption } from "@/types/catalogs";
-import { HierarchicalMetricsRepository } from "@/repositories/hierarchical-metrics.repository";
-import { HierarchicalMetricsParams } from "@/types/hierarchical-metrics";
 
 interface AdvancedFilterModalProps {
   isOpen: boolean;
@@ -76,11 +73,21 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
   const flatpickrInstance = useRef<flatpickr.Instance | null>(null);
 
   useEffect(() => {
-    if (isOpen && datePickerRef.current && !flatpickrInstance.current) {
+    if (isOpen && datePickerRef.current) {
+      // Destroy existing instance if it exists
+      if (flatpickrInstance.current) {
+        flatpickrInstance.current.destroy();
+        flatpickrInstance.current = null;
+      }
+
+      // Create new instance with Date objects for better compatibility
       flatpickrInstance.current = flatpickr(datePickerRef.current, {
         mode: "range",
         dateFormat: "d M Y",
         locale: Spanish,
+        minDate: new Date(2024, 0, 1), // January 1, 2024
+        maxDate: new Date(2024, 11, 31), // December 31, 2024
+        defaultDate: [new Date(2024, 10, 1), new Date(2024, 10, 30)], // November 1-30, 2024 (month is 0-indexed)
         onChange: (selectedDates) => {
           if (selectedDates.length === 2) {
             setFilters((prev) => ({
@@ -103,6 +110,13 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
           }
         },
       });
+
+      // Set initial filter values
+      setFilters((prev) => ({
+        ...prev,
+        startDate: "2024-11-01",
+        endDate: "2024-11-30",
+      }));
     }
 
     return () => {
@@ -113,116 +127,10 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
     };
   }, [isOpen]);
 
-  const handleApply = async () => {
-    // Call the hierarchical metrics function with the applied filters
-    await callHierarchicalMetrics(filters);
-
-    // Pass filters to parent
+  const handleApply = () => {
+    // Pass filters to parent (ResumenView will handle the API call)
     onApply(filters);
     onClose();
-  };
-
-  const callHierarchicalMetrics = async (filterState: FilterState) => {
-    // Validate date range
-    if (!filterState.startDate || !filterState.endDate) {
-      console.warn('Date range is required for hierarchical metrics');
-      return;
-    }
-
-    const metricsRepo = new HierarchicalMetricsRepository(supabase);
-
-    // Build the parameters for the stored function
-    const params: HierarchicalMetricsParams = {
-      p_begin_date: filterState.startDate,
-      p_end_date: filterState.endDate,
-      // Default grouping: global (no grouping)
-      p_dim_1: 'global',
-      p_dim_2: 'global',
-      p_dim_3: 'global',
-    };
-
-    // Add filters based on selected values
-    // Cliente filters
-    if (filterState.canal) {
-      // Get the channel name from the selected ID
-      const selectedChannel = catalogOptions.canal.find(c => c.value === filterState.canal);
-      if (selectedChannel) {
-        params.p_filtro_store_channel = [selectedChannel.label];
-      }
-    }
-
-    if (filterState.geografia) {
-      // Get the geography name from the selected ID
-      const selectedGeography = catalogOptions.geografia.find(g => g.value === filterState.geografia);
-      if (selectedGeography) {
-        params.p_filtro_store_region = [selectedGeography.label];
-      }
-    }
-
-    if (filterState.arbol) {
-      // Get the hierarchy name from the selected ID
-      const selectedHierarchy = catalogOptions.arbol.find(h => h.value === filterState.arbol);
-      if (selectedHierarchy) {
-        // Note: You may need to determine which hierarchy level this is
-        // For now, using commercial_coordinator as an example
-        params.p_filtro_store_commercial_coordinator = [selectedHierarchy.label];
-      }
-    }
-
-    if (filterState.cadenaCliente) {
-      // Get the chain name from the selected ID
-      const selectedChain = catalogOptions.cadenaCliente.find(c => c.value === filterState.cadenaCliente);
-      if (selectedChain) {
-        params.p_filtro_store_chain = [selectedChain.label];
-      }
-    }
-
-    // Producto filters
-    if (filterState.categoria) {
-      // Get the category name from the selected ID
-      const selectedCategory = catalogOptions.categoria.find(c => c.value === filterState.categoria);
-      if (selectedCategory) {
-        params.p_filtro_product_category = [selectedCategory.label];
-      }
-    }
-
-    if (filterState.marca) {
-      // Get the brand name from the selected ID
-      const selectedBrand = catalogOptions.marca.find(b => b.value === filterState.marca);
-      if (selectedBrand) {
-        params.p_filtro_product_brand = [selectedBrand.label];
-      }
-    }
-
-    if (filterState.sku) {
-      // Get the product name from the selected ID
-      const selectedProduct = catalogOptions.sku.find(p => p.value === filterState.sku);
-      if (selectedProduct) {
-        // Extract product name from "SKU - Name" format
-        const productName = selectedProduct.label.split(' - ')[1];
-        if (productName) {
-          params.p_filtro_product = [productName];
-        }
-      }
-    }
-
-    // Segmentation filter - pass in uppercase
-    if (filterState.segmentacion) {
-      params.p_filtro_store_segment = [filterState.segmentacion.toUpperCase()];
-    }
-
-    try {
-      console.log('=== Calling fn_hierarchical_metrics ===');
-      console.log('Parameters:', JSON.stringify(params, null, 2));
-
-      const result = await metricsRepo.getHierarchicalMetrics(params);
-
-      console.log('=== Hierarchical Metrics Result ===');
-      console.log('Total rows returned:', result.length);
-      console.log('Data:', JSON.stringify(result, null, 2));
-    } catch (error) {
-      console.error('Error calling hierarchical metrics:', error);
-    }
   };
 
   const updateFilter = (key: keyof FilterState, value: string) => {

@@ -150,9 +150,113 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
     }
   };
 
-  const handleApplyFilters = (filters: FilterState) => {
+  const handleApplyFilters = async (filters: FilterState) => {
     console.log("Filters applied:", filters);
     setAppliedFilters(filters);
+
+    // Reload metrics with the new filters
+    await loadMetricsWithFilters(filters);
+  };
+
+  const loadMetricsWithFilters = async (filterState: FilterState) => {
+    // Validate date range
+    if (!filterState.startDate || !filterState.endDate) {
+      console.warn('Date range is required for hierarchical metrics');
+      return;
+    }
+
+    setIsLoadingMetrics(true);
+    const metricsRepo = new HierarchicalMetricsRepository(supabase);
+
+    // Build the parameters for the stored function
+    const params: HierarchicalMetricsParams = {
+      p_begin_date: filterState.startDate,
+      p_end_date: filterState.endDate,
+      // Default grouping: global (no grouping)
+      p_dim_1: 'global',
+      p_dim_2: 'global',
+      p_dim_3: 'global',
+    };
+
+    // Add filters based on selected values
+    // Cliente filters
+    if (filterState.canal) {
+      const selectedChannel = catalogOptions.canal.find(c => c.value === filterState.canal);
+      if (selectedChannel) {
+        params.p_filtro_store_channel = [selectedChannel.label];
+      }
+    }
+
+    if (filterState.geografia) {
+      const selectedGeography = catalogOptions.geografia.find(g => g.value === filterState.geografia);
+      if (selectedGeography) {
+        params.p_filtro_store_region = [selectedGeography.label];
+      }
+    }
+
+    if (filterState.arbol) {
+      const selectedHierarchy = catalogOptions.arbol.find(h => h.value === filterState.arbol);
+      if (selectedHierarchy) {
+        params.p_filtro_store_commercial_coordinator = [selectedHierarchy.label];
+      }
+    }
+
+    if (filterState.cadenaCliente) {
+      const selectedChain = catalogOptions.cadenaCliente.find(c => c.value === filterState.cadenaCliente);
+      if (selectedChain) {
+        params.p_filtro_store_chain = [selectedChain.label];
+      }
+    }
+
+    // Producto filters
+    if (filterState.categoria) {
+      const selectedCategory = catalogOptions.categoria.find(c => c.value === filterState.categoria);
+      if (selectedCategory) {
+        params.p_filtro_product_category = [selectedCategory.label];
+      }
+    }
+
+    if (filterState.marca) {
+      const selectedBrand = catalogOptions.marca.find(b => b.value === filterState.marca);
+      if (selectedBrand) {
+        params.p_filtro_product_brand = [selectedBrand.label];
+      }
+    }
+
+    if (filterState.sku) {
+      const selectedProduct = catalogOptions.sku.find(p => p.value === filterState.sku);
+      if (selectedProduct) {
+        const productName = selectedProduct.label.split(' - ')[1];
+        if (productName) {
+          params.p_filtro_product = [productName];
+        }
+      }
+    }
+
+    // Segmentation filter
+    if (filterState.segmentacion) {
+      params.p_filtro_store_segment = [filterState.segmentacion.toUpperCase()];
+    }
+
+    try {
+      console.log('=== Loading Metrics with Filters ===');
+      console.log('Parameters:', JSON.stringify(params, null, 2));
+
+      const result = await metricsRepo.getHierarchicalMetrics(params);
+
+      console.log('=== Filtered Metrics Result ===');
+      console.log('Total rows returned:', result.length);
+      console.log('Data:', JSON.stringify(result, null, 2));
+
+      // Update the metrics with the filtered result
+      if (result.length > 0) {
+        setHierarchicalMetrics(result[0]);
+      }
+    } catch (error) {
+      console.error('Error loading filtered metrics:', error);
+    } finally {
+      setIsLoadingMetrics(false);
+    }
   };
 
   // Build breadcrumb items based on Cliente section filters
