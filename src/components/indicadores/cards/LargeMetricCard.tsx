@@ -17,6 +17,7 @@ interface LargeMetricCardProps {
   targetVariation?: number;
   targetValue?: string;
   showTarget?: boolean;
+  showProgress?: boolean;
 }
 
 // Gradient colors for icons and progress bars
@@ -53,6 +54,7 @@ export default function LargeMetricCard({
   targetVariation,
   targetValue,
   showTarget = true,
+  showProgress = true,
 }: LargeMetricCardProps) {
   // Helper function to format variation with sign
   const formatVariation = (val: number): string => {
@@ -112,12 +114,14 @@ export default function LargeMetricCard({
       )}
 
       {/* Progress Bar */}
-      <div className={`mt-2 h-2 rounded-full ${PROGRESS_BG_COLORS[color]}`}>
-        <div
-          className={`h-2 rounded-full bg-gradient-to-r ${GRADIENT_COLORS[color]} transition-all duration-300`}
-          style={{ width: `${Math.min(Math.max(progressValue, 0), 100)}%` }}
-        />
-      </div>
+      {showProgress && (
+        <div className={`mt-2 h-2 rounded-full ${PROGRESS_BG_COLORS[color]}`}>
+          <div
+            className={`h-2 rounded-full bg-gradient-to-r ${GRADIENT_COLORS[color]} transition-all duration-300`}
+            style={{ width: `${Math.min(Math.max(progressValue, 0), 100)}%` }}
+          />
+        </div>
+      )}
     </Card>
   );
 }

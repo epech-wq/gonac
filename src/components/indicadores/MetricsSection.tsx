@@ -80,6 +80,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
       ) as ReactNode,
       color: 'green' as const,
       progressValue: 82,
+      showProgress: false,
       targetVariation:
         metricasData?.variacion_ventas_totales_pct !== undefined &&
           metricasData?.objetivo_ventas_totales_pesos !== undefined
@@ -103,6 +104,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
       icon: <PieChartIcon className="text-white font-bold" /> as ReactNode,
       color: 'blue' as const,
       progressValue: sellThroughPct != null ? Math.min(((sellThroughPct * 100) / METRIC_TARGETS.SELL_THROUGH) * 100, 100) : 0,
+      showProgress: false,
       targetVariation:
         metricasData?.objetivo_sell_through_pct !== undefined && sellThroughPct != null
           ? verifyVariation(
@@ -244,6 +246,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
                 targetVariation={card.targetVariation}
                 targetValue={card.targetValue}
                 showTarget={card.showTarget}
+                showProgress={card.showProgress}
               />
             }
           >
