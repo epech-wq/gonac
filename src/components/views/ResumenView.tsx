@@ -234,10 +234,12 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
     // Add filters based on selected values (apply to both global and monthly params)
     const applyFilters = (params: HierarchicalMetricsParams) => {
       // Cliente filters
-      if (filterState.canal) {
-        const selectedChannel = catalogOptions.canal.find(c => c.value === filterState.canal);
-        if (selectedChannel) {
-          params.p_filtro_store_channel = [selectedChannel.label];
+      if (filterState.canal.length > 0) {
+        const selectedLabels = filterState.canal
+          .map(id => catalogOptions.canal.find(c => c.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_channel = selectedLabels;
         }
       }
 
@@ -306,41 +308,53 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
         }
       }
 
-      if (filterState.cadenaCliente) {
-        const selectedChain = catalogOptions.cadenaCliente.find(c => c.value === filterState.cadenaCliente);
-        if (selectedChain) {
-          params.p_filtro_store_chain = [selectedChain.label];
+      if (filterState.cadenaCliente.length > 0) {
+        const selectedLabels = filterState.cadenaCliente
+          .map(id => catalogOptions.cadenaCliente.find(c => c.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_chain = selectedLabels;
         }
       }
 
       // Producto filters
-      if (filterState.categoria) {
-        const selectedCategory = catalogOptions.categoria.find(c => c.value === filterState.categoria);
-        if (selectedCategory) {
-          params.p_filtro_product_category = [selectedCategory.label];
+      if (filterState.categoria.length > 0) {
+        const selectedLabels = filterState.categoria
+          .map(id => catalogOptions.categoria.find(c => c.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_product_category = selectedLabels;
         }
       }
 
-      if (filterState.marca) {
-        const selectedBrand = catalogOptions.marca.find(b => b.value === filterState.marca);
-        if (selectedBrand) {
-          params.p_filtro_product_brand = [selectedBrand.label];
+      if (filterState.marca.length > 0) {
+        const selectedLabels = filterState.marca
+          .map(id => catalogOptions.marca.find(b => b.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_product_brand = selectedLabels;
         }
       }
 
-      if (filterState.sku) {
-        const selectedProduct = catalogOptions.sku.find(p => p.value === filterState.sku);
-        if (selectedProduct) {
-          const productName = selectedProduct.label.split(' - ')[1];
-          if (productName) {
-            params.p_filtro_product = [productName];
-          }
+      if (filterState.sku.length > 0) {
+        const selectedLabels = filterState.sku
+          .map(id => {
+            const product = catalogOptions.sku.find(p => p.value === id);
+            if (product) {
+              const productName = product.label.split(' - ')[1];
+              return productName;
+            }
+            return null;
+          })
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_product = selectedLabels;
         }
       }
 
       // Segmentation filter
-      if (filterState.segmentacion) {
-        params.p_filtro_store_segment = [filterState.segmentacion.toUpperCase()];
+      if (filterState.segmentacion.length > 0) {
+        params.p_filtro_store_segment = filterState.segmentacion.map(s => s.toUpperCase());
       }
     };
 
@@ -386,6 +400,26 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
     }
   };
 
+  // Count active filters
+  const getActiveFilterCount = (): number => {
+    if (!appliedFilters) return 0;
+    return [
+      ...appliedFilters.canal,
+      ...appliedFilters.geografiaState,
+      ...appliedFilters.geografiaCity,
+      ...appliedFilters.geografiaRegion,
+      ...appliedFilters.arbolCommercialDirector,
+      ...appliedFilters.arbolCommercialManager,
+      ...appliedFilters.arbolRegionalLeader,
+      ...appliedFilters.arbolCommercialCoordinator,
+      ...appliedFilters.cadenaCliente,
+      ...appliedFilters.categoria,
+      ...appliedFilters.marca,
+      ...appliedFilters.sku,
+      ...appliedFilters.segmentacion,
+    ].length;
+  };
+
   // Build breadcrumb items based on Cliente section filters
   const getBreadcrumbItems = (): Array<{ label: string; href?: string }> => {
     const items: Array<{ label: string; href?: string }> = [{ label: "Global", href: "/" }];
@@ -397,10 +431,15 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
 
     // Add Cliente section filters in order: Canal, Geografía, Árbol, Cadena Cliente
     // Look up the label from catalog options
-    if (appliedFilters.canal) {
-      const option = catalogOptions.canal.find(opt => opt.value === appliedFilters.canal);
-      const label = option?.label || appliedFilters.canal;
-      items.push({ label });
+    if (appliedFilters.canal.length > 0) {
+      const labels = appliedFilters.canal
+        .map(id => catalogOptions.canal.find(opt => opt.value === id)?.label)
+        .filter(Boolean);
+      if (labels.length === 1) {
+        items.push({ label: labels[0] as string });
+      } else if (labels.length > 1) {
+        items.push({ label: `${labels.length} Canales` });
+      }
     }
 
     // Geografia - show all selected items from all levels
@@ -438,10 +477,15 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
       }
     }
 
-    if (appliedFilters.cadenaCliente) {
-      const option = catalogOptions.cadenaCliente.find(opt => opt.value === appliedFilters.cadenaCliente);
-      const label = option?.label || appliedFilters.cadenaCliente;
-      items.push({ label });
+    if (appliedFilters.cadenaCliente.length > 0) {
+      const labels = appliedFilters.cadenaCliente
+        .map(id => catalogOptions.cadenaCliente.find(opt => opt.value === id)?.label)
+        .filter(Boolean);
+      if (labels.length === 1) {
+        items.push({ label: labels[0] as string });
+      } else if (labels.length > 1) {
+        items.push({ label: `${labels.length} Cadenas` });
+      }
     }
 
     // If no Cliente filters are selected after applying, still only show "Home"
@@ -466,12 +510,21 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
         />
         <button
           onClick={() => setIsFilterModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-sm relative"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
           Filtros
+          {(() => {
+            const count = getActiveFilterCount();
+            if (count === 0) return null;
+            return (
+              <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-brand-500 text-white text-xs font-bold rounded-full">
+                {count > 9 ? '9+' : count}
+              </span>
+            );
+          })()}
         </button>
       </div>
 

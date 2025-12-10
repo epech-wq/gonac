@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { Modal } from "@/components/ui/modal";
-import { Combobox } from "@/components/ui/combobox/Combobox";
+import { MultiSelectCombobox } from "@/components/ui/combobox/MultiSelectCombobox";
 import { MultiLevelCombobox } from "@/components/ui/combobox/MultiLevelCombobox";
-import { ButtonsGroup } from "@/components/ui/buttons-group/ButtonsGroup";
+import { MultiSelectButtonsGroup } from "@/components/ui/buttons-group/MultiSelectButtonsGroup";
 import flatpickr from "flatpickr";
 import { Spanish } from "flatpickr/dist/l10n/es.js";
 import "flatpickr/dist/flatpickr.min.css";
@@ -27,7 +27,7 @@ interface AdvancedFilterModalProps {
 
 export interface FilterState {
   // Section 1: Cliente
-  canal: string;
+  canal: string[];
   // Geografia - multiple levels
   geografiaState: string[];
   geografiaCity: string[];
@@ -37,20 +37,20 @@ export interface FilterState {
   arbolCommercialManager: string[];
   arbolRegionalLeader: string[];
   arbolCommercialCoordinator: string[];
-  cadenaCliente: string;
+  cadenaCliente: string[];
   // Section 2: Producto
-  categoria: string;
-  marca: string;
-  sku: string;
+  categoria: string[];
+  marca: string[];
+  sku: string[];
   // Section 3: Segmentacion
-  segmentacion: string;
+  segmentacion: string[];
   // Section 4: Fecha
   startDate: string;
   endDate: string;
 }
 
 const INITIAL_STATE: FilterState = {
-  canal: "",
+  canal: [],
   geografiaState: [],
   geografiaCity: [],
   geografiaRegion: [],
@@ -58,11 +58,11 @@ const INITIAL_STATE: FilterState = {
   arbolCommercialManager: [],
   arbolRegionalLeader: [],
   arbolCommercialCoordinator: [],
-  cadenaCliente: "",
-  categoria: "",
-  marca: "",
-  sku: "",
-  segmentacion: "",
+  cadenaCliente: [],
+  categoria: [],
+  marca: [],
+  sku: [],
+  segmentacion: [],
   startDate: "",
   endDate: "",
 };
@@ -146,7 +146,7 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
     onClose();
   };
 
-  const updateFilter = (key: keyof FilterState, value: string) => {
+  const updateFilter = (key: keyof FilterState, value: string | string[]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -214,10 +214,10 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
               Cliente
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Combobox
+              <MultiSelectCombobox
                 label="Canal"
                 options={catalogOptions.canal}
-                value={filters.canal}
+                values={filters.canal}
                 onChange={(val) => updateFilter("canal", val)}
                 disabled={isLoadingCatalogs}
               />
@@ -255,10 +255,10 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
                   'Coordinador Comercial': 'commercial_coordinator'
                 }}
               />
-              <Combobox
+              <MultiSelectCombobox
                 label="Cadena Cliente"
                 options={catalogOptions.cadenaCliente}
-                value={filters.cadenaCliente}
+                values={filters.cadenaCliente}
                 onChange={(val) => updateFilter("cadenaCliente", val)}
                 disabled={isLoadingCatalogs}
               />
@@ -274,24 +274,24 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
               Producto
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Combobox
+              <MultiSelectCombobox
                 label="Categoría"
                 options={catalogOptions.categoria}
-                value={filters.categoria}
+                values={filters.categoria}
                 onChange={(val) => updateFilter("categoria", val)}
                 disabled={isLoadingCatalogs}
               />
-              <Combobox
+              <MultiSelectCombobox
                 label="Marca"
                 options={catalogOptions.marca}
-                value={filters.marca}
+                values={filters.marca}
                 onChange={(val) => updateFilter("marca", val)}
                 disabled={isLoadingCatalogs}
               />
-              <Combobox
+              <MultiSelectCombobox
                 label="SKU"
                 options={catalogOptions.sku}
-                value={filters.sku}
+                values={filters.sku}
                 onChange={(val) => updateFilter("sku", val)}
                 disabled={isLoadingCatalogs}
               />
@@ -307,10 +307,10 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
               Segmentación
             </h3>
             <div className="md:w-3/4">
-              <ButtonsGroup
+              <MultiSelectButtonsGroup
                 label="Tipo de Segmentación"
                 options={SEGMENTACION_OPTIONS}
-                value={filters.segmentacion}
+                values={filters.segmentacion}
                 onChange={(val) => updateFilter("segmentacion", val)}
               />
             </div>
