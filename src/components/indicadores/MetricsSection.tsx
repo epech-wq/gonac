@@ -12,7 +12,7 @@ import type { ReactNode } from 'react';
 import Popover from '@/components/ui/popover/Popover';
 import SingleMetricChart from './SingleMetricChart';
 
-export default function MetricsSection({ storeMetrics, metricasData, onCardClick, enableAnalysis = false, isLoading = false }: MetricsSectionProps) {
+export default function MetricsSection({ storeMetrics, metricasData, monthlyMetrics = [], onCardClick, enableAnalysis = false, isLoading = false }: MetricsSectionProps) {
   const sellThroughPct = metricasData?.sell_through_pct;
   const coberturaPonderadaPct = metricasData?.cobertura_ponderada_pct;
   const tasaQuiebrePct = metricasData?.porcentaje_agotados_pct;
@@ -253,8 +253,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
             <div className="p-2 w-[500px] max-w-[90vw]">
               <SingleMetricChart
                 metricId={card.id}
-                storeMetrics={storeMetrics}
-                metricasData={metricasData}
+                monthlyMetrics={monthlyMetrics}
                 height={250}
               />
             </div>
@@ -300,8 +299,7 @@ export default function MetricsSection({ storeMetrics, metricasData, onCardClick
             <div className="p-2 w-[400px] max-w-[80vw]">
               <SingleMetricChart
                 metricId={card.id}
-                storeMetrics={storeMetrics}
-                metricasData={metricasData}
+                monthlyMetrics={monthlyMetrics}
                 height={200}
               />
             </div>

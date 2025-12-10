@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Combobox } from "@/components/ui/combobox/Combobox";
+import { MultiLevelCombobox } from "@/components/ui/combobox/MultiLevelCombobox";
 import { ButtonsGroup } from "@/components/ui/buttons-group/ButtonsGroup";
 import flatpickr from "flatpickr";
 import { Spanish } from "flatpickr/dist/l10n/es.js";
@@ -27,8 +28,15 @@ interface AdvancedFilterModalProps {
 export interface FilterState {
   // Section 1: Cliente
   canal: string;
-  geografia: string;
-  arbol: string;
+  // Geografia - multiple levels
+  geografiaState: string[];
+  geografiaCity: string[];
+  geografiaRegion: string[];
+  // Arbol - multiple levels
+  arbolCommercialDirector: string[];
+  arbolCommercialManager: string[];
+  arbolRegionalLeader: string[];
+  arbolCommercialCoordinator: string[];
   cadenaCliente: string;
   // Section 2: Producto
   categoria: string;
@@ -43,13 +51,18 @@ export interface FilterState {
 
 const INITIAL_STATE: FilterState = {
   canal: "",
-  geografia: "",
-  arbol: "",
+  geografiaState: [],
+  geografiaCity: [],
+  geografiaRegion: [],
+  arbolCommercialDirector: [],
+  arbolCommercialManager: [],
+  arbolRegionalLeader: [],
+  arbolCommercialCoordinator: [],
   cadenaCliente: "",
   categoria: "",
   marca: "",
   sku: "",
-  segmentacion: "", // Empty by default
+  segmentacion: "",
   startDate: "",
   endDate: "",
 };
@@ -137,6 +150,33 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Handler for geografia multi-level changes
+  const handleGeografiaChange = (level: string, values: string[]) => {
+    const levelMap: Record<string, keyof FilterState> = {
+      'Estado': 'geografiaState',
+      'Ciudad': 'geografiaCity',
+      'Región': 'geografiaRegion'
+    };
+    const key = levelMap[level];
+    if (key) {
+      setFilters((prev) => ({ ...prev, [key]: values }));
+    }
+  };
+
+  // Handler for arbol multi-level changes
+  const handleArbolChange = (level: string, values: string[]) => {
+    const levelMap: Record<string, keyof FilterState> = {
+      'Director Comercial': 'arbolCommercialDirector',
+      'Gerente Comercial': 'arbolCommercialManager',
+      'Líder Regional': 'arbolRegionalLeader',
+      'Coordinador Comercial': 'arbolCommercialCoordinator'
+    };
+    const key = levelMap[level];
+    if (key) {
+      setFilters((prev) => ({ ...prev, [key]: values }));
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-4xl w-full mx-4">
       <div className="p-6 md:p-8">
@@ -181,19 +221,39 @@ export const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
                 onChange={(val) => updateFilter("canal", val)}
                 disabled={isLoadingCatalogs}
               />
-              <Combobox
+              <MultiLevelCombobox
                 label="Geografía"
                 options={catalogOptions.geografia}
-                value={filters.geografia}
-                onChange={(val) => updateFilter("geografia", val)}
+                values={{
+                  'Estado': filters.geografiaState,
+                  'Ciudad': filters.geografiaCity,
+                  'Región': filters.geografiaRegion
+                }}
+                onChange={handleGeografiaChange}
                 disabled={isLoadingCatalogs}
+                levelLabels={{
+                  'Estado': 'state',
+                  'Ciudad': 'city',
+                  'Región': 'region'
+                }}
               />
-              <Combobox
+              <MultiLevelCombobox
                 label="Árbol"
                 options={catalogOptions.arbol}
-                value={filters.arbol}
-                onChange={(val) => updateFilter("arbol", val)}
+                values={{
+                  'Director Comercial': filters.arbolCommercialDirector,
+                  'Gerente Comercial': filters.arbolCommercialManager,
+                  'Líder Regional': filters.arbolRegionalLeader,
+                  'Coordinador Comercial': filters.arbolCommercialCoordinator
+                }}
+                onChange={handleArbolChange}
                 disabled={isLoadingCatalogs}
+                levelLabels={{
+                  'Director Comercial': 'commercial_director',
+                  'Gerente Comercial': 'commercial_manager',
+                  'Líder Regional': 'regional_leader',
+                  'Coordinador Comercial': 'commercial_coordinator'
+                }}
               />
               <Combobox
                 label="Cadena Cliente"

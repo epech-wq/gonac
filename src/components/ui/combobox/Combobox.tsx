@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 interface ComboboxOption {
   value: string;
   label: string;
+  group?: string;
 }
 
 interface ComboboxProps {
@@ -43,6 +44,18 @@ export const Combobox: React.FC<ComboboxProps> = ({
   const filteredOptions = options.filter((option) =>
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Group options if they have a group property
+  const groupedOptions = filteredOptions.reduce((acc, option) => {
+    const groupName = option.group || 'default';
+    if (!acc[groupName]) {
+      acc[groupName] = [];
+    }
+    acc[groupName].push(option);
+    return acc;
+  }, {} as Record<string, ComboboxOption[]>);
+
+  const hasGroups = filteredOptions.some(opt => opt.group);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -92,24 +105,54 @@ export const Combobox: React.FC<ComboboxProps> = ({
 
           <div className="overflow-y-auto flex-1 p-1">
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className={`
-                    px-3 py-2 text-sm rounded-md cursor-pointer transition-colors
-                    ${value === option.value
-                      ? "bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
-                  `}
-                  onClick={() => {
-                    onChange(option.value);
-                    setIsOpen(false);
-                    setSearchTerm("");
-                  }}
-                >
-                  {option.label}
-                </div>
-              ))
+              hasGroups ? (
+                Object.entries(groupedOptions).map(([groupName, groupOptions]) => (
+                  <div key={groupName}>
+                    {groupName !== 'default' && (
+                      <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        {groupName}
+                      </div>
+                    )}
+                    {groupOptions.map((option) => (
+                      <div
+                        key={option.value}
+                        className={`
+                          px-3 py-2 text-sm rounded-md cursor-pointer transition-colors
+                          ${value === option.value
+                            ? "bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400"
+                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
+                        `}
+                        onClick={() => {
+                          onChange(option.value);
+                          setIsOpen(false);
+                          setSearchTerm("");
+                        }}
+                      >
+                        {option.label}
+                      </div>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                filteredOptions.map((option) => (
+                  <div
+                    key={option.value}
+                    className={`
+                      px-3 py-2 text-sm rounded-md cursor-pointer transition-colors
+                      ${value === option.value
+                        ? "bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
+                    `}
+                    onClick={() => {
+                      onChange(option.value);
+                      setIsOpen(false);
+                      setSearchTerm("");
+                    }}
+                  >
+                    {option.label}
+                  </div>
+                ))
+              )
             ) : (
               <div className="px-3 py-2 text-sm text-gray-400 text-center">
                 No se encontraron resultados

@@ -1,10 +1,9 @@
 "use client";
-import React from "react";
+import React, { useMemo } from "react";
 import dynamic from "next/dynamic";
 import { formatCurrency } from '@/utils/formatters';
-import { generateTrendData, getChartOptions } from './chartUtils';
-import type { StoreMetrics } from '@/types/tiendas.types';
-import type { MetricasData } from '@/types/metrics.types';
+import { getChartOptions } from './chartUtils';
+import { HierarchicalMetricsResult } from '@/types/hierarchical-metrics';
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -12,28 +11,62 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 
 interface SingleMetricChartProps {
   metricId: string;
-  storeMetrics: StoreMetrics;
-  metricasData: MetricasData | null;
+  monthlyMetrics: HierarchicalMetricsResult[];
   height?: number;
 }
 
+// Helper function to format month labels (YYYY-MM -> "Month YYYY")
+const formatMonthLabel = (dimTime: string): string => {
+  const [year, month] = dimTime.split('-');
+  const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  const monthIndex = parseInt(month, 10) - 1;
+  return `${monthNames[monthIndex]} ${year}`;
+};
+
 export default function SingleMetricChart({
   metricId,
-  storeMetrics,
-  metricasData,
+  monthlyMetrics,
   height = 280
 }: SingleMetricChartProps) {
 
-  // Extract REAL current values from database
-  const currentValues = {
-    ventasTotales: storeMetrics.ventasTotales,
-    sellThrough: (metricasData?.sell_through_pct ?? 0.2) * 100, // Convert to percentage
-    coberturaNum: (metricasData?.cobertura_pct ?? 0.83) * 100,
-    coberturaPond: (metricasData?.cobertura_ponderada_pct ?? 0.823) * 100,
-    tasaQuiebre: metricasData?.porcentaje_agotados_pct ?? 2.3,
-    ventaPromDiaria: metricasData?.avg_venta_promedio_diaria ?? (storeMetrics.ventaPromedio / 7),
-    diasInventario: storeMetrics.diasInventario,
-  };
+  // Transform data based on metric ID
+  const chartData = useMemo(() => {
+    return monthlyMetrics.map((row: HierarchicalMetricsResult) => {
+      let value = 0;
+
+      switch (metricId) {
+        case "ventas-totales":
+          value = row.total_sales_amount;
+          break;
+        case "sell-through":
+          value = row.sell_through_pct;
+          break;
+        case "cobertura-numerica":
+          value = row.numeric_distribution_pct;
+          break;
+        case "tasa-agotados":
+        case "tasa-quiebre":
+          value = row.out_of_stock_rate_pct;
+          break;
+        case "venta-promedio-diaria":
+          value = row.avg_daily_sales_amount;
+          break;
+        case "dias-inventario":
+          value = row.inventory_days;
+          break;
+        default:
+          value = 0;
+      }
+
+      return {
+        x: formatMonthLabel(row.dim_time), // Format: "Enero 2024"
+        y: value,
+      };
+    });
+  }, [monthlyMetrics, metricId]);
 
   // Define chart configs based on ID
   const getChartConfig = (id: string) => {
@@ -42,28 +75,24 @@ export default function SingleMetricChart({
         return {
           title: "Ventas Totales",
           color: "#10B981",
-          data: generateTrendData(currentValues.ventasTotales, 0.15),
           formatter: (val: number) => formatCurrency(val),
         };
       case "sell-through":
         return {
           title: "Sell-Through",
           color: "#3B82F6",
-          data: generateTrendData(currentValues.sellThrough, 0.08),
           formatter: (val: number) => `${val.toFixed(1)}%`,
         };
       case "cobertura-numerica":
         return {
-          title: "Cobertura Numérica",
+          title: "Distribución Numérica",
           color: "#3B82F6",
-          data: generateTrendData(currentValues.coberturaNum, 0.03),
           formatter: (val: number) => `${val.toFixed(1)}%`,
         };
       case "cobertura-ponderada":
         return {
           title: "Cobertura Ponderada",
           color: "#10B981",
-          data: generateTrendData(currentValues.coberturaPond, 0.04),
           formatter: (val: number) => `${val.toFixed(1)}%`,
         };
       case "tasa-agotados":
@@ -71,21 +100,18 @@ export default function SingleMetricChart({
         return {
           title: "Tasa de Agotados",
           color: "#F59E0B",
-          data: generateTrendData(currentValues.tasaQuiebre, 0.15),
           formatter: (val: number) => `${val.toFixed(2)}%`,
         };
       case "venta-promedio-diaria":
         return {
           title: "Venta Promedio Diaria",
           color: "#8B5CF6",
-          data: generateTrendData(currentValues.ventaPromDiaria, 0.12),
           formatter: (val: number) => formatCurrency(val),
         };
       case "dias-inventario":
         return {
           title: "Días de Inventario",
           color: "#EF4444",
-          data: generateTrendData(currentValues.diasInventario, 0.10),
           formatter: (val: number) => `${val.toFixed(1)} días`,
         };
       default:
@@ -99,6 +125,14 @@ export default function SingleMetricChart({
     return <div>Chart data not available for {metricId}</div>;
   }
 
+  if (chartData.length === 0) {
+    return (
+      <div className="w-full p-8 text-center text-gray-500 dark:text-gray-400">
+        No hay datos disponibles
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white px-4 pt-4">
@@ -110,7 +144,7 @@ export default function SingleMetricChart({
           series={[
             {
               name: chartConfig.title,
-              data: chartConfig.data,
+              data: chartData,
             },
           ]}
           type="area"

@@ -60,4 +60,11 @@ export interface Product {
 export interface ComboboxOption {
   value: string;
   label: string;
+  group?: string; // For grouped options
+}
+
+// Grouped combobox option format
+export interface GroupedComboboxOption {
+  group: string;
+  options: ComboboxOption[];
 }

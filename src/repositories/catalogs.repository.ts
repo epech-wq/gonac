@@ -57,16 +57,24 @@ export class CatalogsRepository {
       .from('core_cat_geography')
       .select('id_geography, geography_code, geography_level, geography_name')
       .eq('is_active', true)
-      .order('geography_name');
+      .order('geography_level, geography_name');
 
     if (error) {
       console.error('Error fetching geographies:', error);
       return [];
     }
 
+    // Map geography_level to display names
+    const levelNames: Record<string, string> = {
+      'state': 'Estado',
+      'city': 'Ciudad',
+      'region': 'Región'
+    };
+
     return (data || []).map(item => ({
       value: item.id_geography.toString(),
-      label: item.geography_name
+      label: item.geography_name,
+      group: levelNames[item.geography_level] || item.geography_level
     }));
   }
 
@@ -76,16 +84,25 @@ export class CatalogsRepository {
       .from('core_cat_commercial_hierarchy')
       .select('id_commercial_hierarchy, hierarchy_code, hierarchy_level, hierarchy_name')
       .eq('is_active', true)
-      .order('hierarchy_name');
+      .order('hierarchy_level, hierarchy_name');
 
     if (error) {
       console.error('Error fetching commercial hierarchies:', error);
       return [];
     }
 
+    // Map hierarchy_level to display names
+    const levelNames: Record<string, string> = {
+      'commercial_director': 'Director Comercial',
+      'commercial_manager': 'Gerente Comercial',
+      'regional_leader': 'Líder Regional',
+      'commercial_coordinator': 'Coordinador Comercial'
+    };
+
     return (data || []).map(item => ({
       value: item.id_commercial_hierarchy.toString(),
-      label: item.hierarchy_name
+      label: item.hierarchy_name,
+      group: levelNames[item.hierarchy_level] || item.hierarchy_level
     }));
   }
 

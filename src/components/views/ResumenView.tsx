@@ -17,6 +17,7 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterState | null>(null);
   const [hierarchicalMetrics, setHierarchicalMetrics] = useState<HierarchicalMetricsResult | null>(null);
+  const [monthlyMetrics, setMonthlyMetrics] = useState<HierarchicalMetricsResult[]>([]);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true);
   const [metricsError, setMetricsError] = useState<string | null>(null);
 
@@ -127,7 +128,7 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
     setMetricsError(null);
     const metricsRepo = new HierarchicalMetricsRepository(supabase);
 
-    const params: HierarchicalMetricsParams = {
+    const globalParams: HierarchicalMetricsParams = {
       p_begin_date: '2024-11-01',
       p_end_date: '2024-11-30',
       // Default grouping: global (no grouping)
@@ -136,29 +137,53 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
       p_dim_3: 'global',
     };
 
+    // Fetch monthly data for charts (last 6 months)
+    const endDate = new Date('2024-11-30');
+    const startDate = new Date(endDate);
+    startDate.setMonth(startDate.getMonth() - 5);
+
+    const monthlyParams: HierarchicalMetricsParams = {
+      p_begin_date: startDate.toISOString().split('T')[0],
+      p_end_date: endDate.toISOString().split('T')[0],
+      p_dim_1: 'global',
+      p_dim_2: 'global',
+      p_dim_3: 'monthly',
+    };
+
     try {
       console.log('=== Loading Initial Metrics (November 2024) ===');
-      console.log('Parameters:', JSON.stringify(params, null, 2));
+      console.log('Global Parameters:', JSON.stringify(globalParams, null, 2));
+      console.log('Monthly Parameters:', JSON.stringify(monthlyParams, null, 2));
 
-      const result = await metricsRepo.getHierarchicalMetrics(params);
+      // Fetch both global and monthly data in parallel
+      const [globalResult, monthlyResult] = await Promise.all([
+        metricsRepo.getHierarchicalMetrics(globalParams),
+        metricsRepo.getHierarchicalMetrics(monthlyParams),
+      ]);
 
       console.log('=== Initial Metrics Result ===');
-      console.log('Total rows returned:', result.length);
-      console.log('Data:', JSON.stringify(result, null, 2));
+      console.log('Global rows returned:', globalResult.length);
+      console.log('Monthly rows returned:', monthlyResult.length);
+      console.log('Global Data:', JSON.stringify(globalResult, null, 2));
+      console.log('Monthly Data:', JSON.stringify(monthlyResult, null, 2));
 
       // Set the first result (should be only one with global grouping)
-      if (result.length > 0) {
-        setHierarchicalMetrics(result[0]);
+      if (globalResult.length > 0) {
+        setHierarchicalMetrics(globalResult[0]);
         setMetricsError(null);
       } else {
         // No data returned, set to null to show empty state
         setHierarchicalMetrics(null);
         setMetricsError(null);
       }
+
+      // Set monthly data for charts
+      setMonthlyMetrics(monthlyResult);
     } catch (error) {
       console.error('Error loading initial metrics:', error);
       setMetricsError('Error al cargar los datos. Por favor, intenta de nuevo.');
       setHierarchicalMetrics(null);
+      setMonthlyMetrics([]);
     } finally {
       setIsLoadingMetrics(false);
     }
@@ -183,8 +208,8 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
     setMetricsError(null);
     const metricsRepo = new HierarchicalMetricsRepository(supabase);
 
-    // Build the parameters for the stored function
-    const params: HierarchicalMetricsParams = {
+    // Build the parameters for the stored function (global)
+    const globalParams: HierarchicalMetricsParams = {
       p_begin_date: filterState.startDate,
       p_end_date: filterState.endDate,
       // Default grouping: global (no grouping)
@@ -193,89 +218,169 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
       p_dim_3: 'global',
     };
 
-    // Add filters based on selected values
-    // Cliente filters
-    if (filterState.canal) {
-      const selectedChannel = catalogOptions.canal.find(c => c.value === filterState.canal);
-      if (selectedChannel) {
-        params.p_filtro_store_channel = [selectedChannel.label];
-      }
-    }
+    // Build parameters for monthly data (charts)
+    const endDate = new Date(filterState.endDate);
+    const startDate = new Date(endDate);
+    startDate.setMonth(startDate.getMonth() - 5);
 
-    if (filterState.geografia) {
-      const selectedGeography = catalogOptions.geografia.find(g => g.value === filterState.geografia);
-      if (selectedGeography) {
-        params.p_filtro_store_region = [selectedGeography.label];
-      }
-    }
+    const monthlyParams: HierarchicalMetricsParams = {
+      p_begin_date: startDate.toISOString().split('T')[0],
+      p_end_date: filterState.endDate,
+      p_dim_1: 'global',
+      p_dim_2: 'global',
+      p_dim_3: 'monthly',
+    };
 
-    if (filterState.arbol) {
-      const selectedHierarchy = catalogOptions.arbol.find(h => h.value === filterState.arbol);
-      if (selectedHierarchy) {
-        params.p_filtro_store_commercial_coordinator = [selectedHierarchy.label];
-      }
-    }
-
-    if (filterState.cadenaCliente) {
-      const selectedChain = catalogOptions.cadenaCliente.find(c => c.value === filterState.cadenaCliente);
-      if (selectedChain) {
-        params.p_filtro_store_chain = [selectedChain.label];
-      }
-    }
-
-    // Producto filters
-    if (filterState.categoria) {
-      const selectedCategory = catalogOptions.categoria.find(c => c.value === filterState.categoria);
-      if (selectedCategory) {
-        params.p_filtro_product_category = [selectedCategory.label];
-      }
-    }
-
-    if (filterState.marca) {
-      const selectedBrand = catalogOptions.marca.find(b => b.value === filterState.marca);
-      if (selectedBrand) {
-        params.p_filtro_product_brand = [selectedBrand.label];
-      }
-    }
-
-    if (filterState.sku) {
-      const selectedProduct = catalogOptions.sku.find(p => p.value === filterState.sku);
-      if (selectedProduct) {
-        const productName = selectedProduct.label.split(' - ')[1];
-        if (productName) {
-          params.p_filtro_product = [productName];
+    // Add filters based on selected values (apply to both global and monthly params)
+    const applyFilters = (params: HierarchicalMetricsParams) => {
+      // Cliente filters
+      if (filterState.canal) {
+        const selectedChannel = catalogOptions.canal.find(c => c.value === filterState.canal);
+        if (selectedChannel) {
+          params.p_filtro_store_channel = [selectedChannel.label];
         }
       }
-    }
 
-    // Segmentation filter
-    if (filterState.segmentacion) {
-      params.p_filtro_store_segment = [filterState.segmentacion.toUpperCase()];
-    }
+      // Geografia filters - handle multiple levels
+      if (filterState.geografiaState.length > 0) {
+        const selectedLabels = filterState.geografiaState
+          .map(id => catalogOptions.geografia.find(g => g.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_state = selectedLabels;
+        }
+      }
+
+      if (filterState.geografiaCity.length > 0) {
+        const selectedLabels = filterState.geografiaCity
+          .map(id => catalogOptions.geografia.find(g => g.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_city = selectedLabels;
+        }
+      }
+
+      if (filterState.geografiaRegion.length > 0) {
+        const selectedLabels = filterState.geografiaRegion
+          .map(id => catalogOptions.geografia.find(g => g.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_region = selectedLabels;
+        }
+      }
+
+      // Arbol filters - handle multiple levels
+      if (filterState.arbolCommercialDirector.length > 0) {
+        const selectedLabels = filterState.arbolCommercialDirector
+          .map(id => catalogOptions.arbol.find(h => h.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_commercial_director = selectedLabels;
+        }
+      }
+
+      if (filterState.arbolCommercialManager.length > 0) {
+        const selectedLabels = filterState.arbolCommercialManager
+          .map(id => catalogOptions.arbol.find(h => h.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_commercial_manager = selectedLabels;
+        }
+      }
+
+      if (filterState.arbolRegionalLeader.length > 0) {
+        const selectedLabels = filterState.arbolRegionalLeader
+          .map(id => catalogOptions.arbol.find(h => h.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_regional_leader = selectedLabels;
+        }
+      }
+
+      if (filterState.arbolCommercialCoordinator.length > 0) {
+        const selectedLabels = filterState.arbolCommercialCoordinator
+          .map(id => catalogOptions.arbol.find(h => h.value === id)?.label)
+          .filter(Boolean) as string[];
+        if (selectedLabels.length > 0) {
+          params.p_filtro_store_commercial_coordinator = selectedLabels;
+        }
+      }
+
+      if (filterState.cadenaCliente) {
+        const selectedChain = catalogOptions.cadenaCliente.find(c => c.value === filterState.cadenaCliente);
+        if (selectedChain) {
+          params.p_filtro_store_chain = [selectedChain.label];
+        }
+      }
+
+      // Producto filters
+      if (filterState.categoria) {
+        const selectedCategory = catalogOptions.categoria.find(c => c.value === filterState.categoria);
+        if (selectedCategory) {
+          params.p_filtro_product_category = [selectedCategory.label];
+        }
+      }
+
+      if (filterState.marca) {
+        const selectedBrand = catalogOptions.marca.find(b => b.value === filterState.marca);
+        if (selectedBrand) {
+          params.p_filtro_product_brand = [selectedBrand.label];
+        }
+      }
+
+      if (filterState.sku) {
+        const selectedProduct = catalogOptions.sku.find(p => p.value === filterState.sku);
+        if (selectedProduct) {
+          const productName = selectedProduct.label.split(' - ')[1];
+          if (productName) {
+            params.p_filtro_product = [productName];
+          }
+        }
+      }
+
+      // Segmentation filter
+      if (filterState.segmentacion) {
+        params.p_filtro_store_segment = [filterState.segmentacion.toUpperCase()];
+      }
+    };
+
+    applyFilters(globalParams);
+    applyFilters(monthlyParams);
 
     try {
       console.log('=== Loading Metrics with Filters ===');
-      console.log('Parameters:', JSON.stringify(params, null, 2));
+      console.log('Global Parameters:', JSON.stringify(globalParams, null, 2));
+      console.log('Monthly Parameters:', JSON.stringify(monthlyParams, null, 2));
 
-      const result = await metricsRepo.getHierarchicalMetrics(params);
+      // Fetch both global and monthly data in parallel
+      const [globalResult, monthlyResult] = await Promise.all([
+        metricsRepo.getHierarchicalMetrics(globalParams),
+        metricsRepo.getHierarchicalMetrics(monthlyParams),
+      ]);
 
       console.log('=== Filtered Metrics Result ===');
-      console.log('Total rows returned:', result.length);
-      console.log('Data:', JSON.stringify(result, null, 2));
+      console.log('Global rows returned:', globalResult.length);
+      console.log('Monthly rows returned:', monthlyResult.length);
+      console.log('Global Data:', JSON.stringify(globalResult, null, 2));
+      console.log('Monthly Data:', JSON.stringify(monthlyResult, null, 2));
 
       // Update the metrics with the filtered result
-      if (result.length > 0) {
-        setHierarchicalMetrics(result[0]);
+      if (globalResult.length > 0) {
+        setHierarchicalMetrics(globalResult[0]);
         setMetricsError(null);
       } else {
         // No data returned, set to null to show empty state
         setHierarchicalMetrics(null);
         setMetricsError(null);
       }
+
+      // Set monthly data for charts
+      setMonthlyMetrics(monthlyResult);
     } catch (error) {
       console.error('Error loading filtered metrics:', error);
       setMetricsError('Error al cargar los datos. Por favor, intenta de nuevo.');
       setHierarchicalMetrics(null);
+      setMonthlyMetrics([]);
     } finally {
       setIsLoadingMetrics(false);
     }
@@ -298,16 +403,39 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
       items.push({ label });
     }
 
-    if (appliedFilters.geografia) {
-      const option = catalogOptions.geografia.find(opt => opt.value === appliedFilters.geografia);
-      const label = option?.label || appliedFilters.geografia;
-      items.push({ label });
+    // Geografia - show all selected items from all levels
+    const allGeografiaIds = [
+      ...appliedFilters.geografiaState,
+      ...appliedFilters.geografiaCity,
+      ...appliedFilters.geografiaRegion
+    ];
+    if (allGeografiaIds.length > 0) {
+      const labels = allGeografiaIds
+        .map(id => catalogOptions.geografia.find(opt => opt.value === id)?.label)
+        .filter(Boolean);
+      if (labels.length === 1) {
+        items.push({ label: labels[0] as string });
+      } else if (labels.length > 1) {
+        items.push({ label: `${labels.length} Geografías` });
+      }
     }
 
-    if (appliedFilters.arbol) {
-      const option = catalogOptions.arbol.find(opt => opt.value === appliedFilters.arbol);
-      const label = option?.label || appliedFilters.arbol;
-      items.push({ label });
+    // Arbol - show all selected items from all levels
+    const allArbolIds = [
+      ...appliedFilters.arbolCommercialDirector,
+      ...appliedFilters.arbolCommercialManager,
+      ...appliedFilters.arbolRegionalLeader,
+      ...appliedFilters.arbolCommercialCoordinator
+    ];
+    if (allArbolIds.length > 0) {
+      const labels = allArbolIds
+        .map(id => catalogOptions.arbol.find(opt => opt.value === id)?.label)
+        .filter(Boolean);
+      if (labels.length === 1) {
+        items.push({ label: labels[0] as string });
+      } else if (labels.length > 1) {
+        items.push({ label: `${labels.length} Jerarquías` });
+      }
     }
 
     if (appliedFilters.cadenaCliente) {
@@ -406,6 +534,7 @@ export default function ResumenView({ onCardClick }: ResumenViewProps) {
         <MetricsSection
           storeMetrics={storeMetrics}
           metricasData={metricasData}
+          monthlyMetrics={monthlyMetrics}
           enableAnalysis={true}
           onCardClick={onCardClick}
           isLoading={isLoadingMetrics}

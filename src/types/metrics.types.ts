@@ -47,6 +47,7 @@ export interface MetricasData {
 export interface MetricsSectionProps {
   storeMetrics: StoreMetrics;
   metricasData: MetricasData | null;
+  monthlyMetrics?: import('./hierarchical-metrics').HierarchicalMetricsResult[];
   onCardClick?: (cardData: unknown) => void;
   enableAnalysis?: boolean;
   isLoading?: boolean;
